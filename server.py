@@ -367,6 +367,9 @@ class VOMRequestHandler(http.server.SimpleHTTPRequestHandler):
         if self.path == '/api/load':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
             self.end_headers()
             if os.path.exists(DB_FILE):
                 try:
