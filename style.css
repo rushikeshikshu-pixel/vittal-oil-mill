@@ -180,6 +180,19 @@ h1, h2, h3, h4, h5, h6 {
     flex-direction: column;
     gap: 8px;
     flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.nav-menu::-webkit-scrollbar {
+    width: 4px;
+}
+.nav-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+.nav-menu::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
 }
 
 .nav-item {
