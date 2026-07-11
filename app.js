@@ -29,7 +29,8 @@ const PRODUCTS = [
     { id: 'gm-pp-mm', name: 'MM PP', category: 'Bardan' },
     { id: 'gm-pp-gm', name: 'GM PP', category: 'Bardan' },
     { id: 'gm-pp-kg', name: 'KG PP', category: 'Bardan' },
-    { id: 'gm-pp-murgi', name: 'Murgi', category: 'Bardan' }
+    { id: 'gm-pp-murgi', name: 'Murgi', category: 'Bardan' },
+    { id: 'jute-bag', name: 'Old Gunny Bags (Jute bag)', category: 'Bardan' }
 ];
 
 // Initial Opening Stocks for June 2026 (matching Excel sheet starting values)
@@ -53,7 +54,8 @@ const INITIAL_OPENING_STOCKS = {
     'gm-pp-mm': 0.00,
     'gm-pp-gm': 0.00,
     'gm-pp-kg': 0.00,
-    'gm-pp-murgi': 0.00
+    'gm-pp-murgi': 0.00,
+    'jute-bag': 0.00
 };
 
 // --- SYSTEM STATE ---
@@ -757,6 +759,22 @@ function setupEventListeners() {
 
     // Form Submissions
     document.getElementById('unload-form').addEventListener('submit', handleUnloadSubmit);
+    
+    // Auto-select supplier location (place) on supplier selection
+    const handleUnloadSupplierChange = (e) => {
+        const name = e.target.value.trim();
+        const supp = state.suppliers.find(s => s.name.trim().toLowerCase() === name.toLowerCase());
+        if (supp && supp.address) {
+            const place = supp.address.split(',')[0].trim();
+            document.getElementById('unload-place').value = place;
+        }
+    };
+    const unloadSupplierInput = document.getElementById('unload-supplier');
+    if (unloadSupplierInput) {
+        unloadSupplierInput.addEventListener('input', handleUnloadSupplierChange);
+        unloadSupplierInput.addEventListener('change', handleUnloadSupplierChange);
+    }
+
     document.getElementById('sales-form').addEventListener('submit', handleSalesSubmit);
     document.getElementById('customer-form').addEventListener('submit', handleCustomerSubmit);
     document.getElementById('supplier-form').addEventListener('submit', handleSupplierSubmit);
@@ -1420,12 +1438,7 @@ function addUnloadToStockLedger(unload) {
         }
     }
 
-    // Initialize daily storage if empty
     if (!state.stockDaily[monthKey]) state.stockDaily[monthKey] = {};
-    if (!state.stockDaily[monthKey][productKey]) state.stockDaily[monthKey][productKey] = {};
-    if (!state.stockDaily[monthKey][productKey][day]) {
-        state.stockDaily[monthKey][productKey][day] = { receipt: 0, issue: 0 };
-    }
 
     // Raw seed receipts are dynamically calculated in getDayLog.
     // Only track Inbound Bardan packaging bag receipt in stockDaily:
@@ -2672,7 +2685,18 @@ function compileInvoiceBill() {
     }
     document.getElementById('preview-notebook-math').innerHTML = notebookHtml;
 
-    const taxAmount = (subtotalAmount * taxPercent) / 100;
+    let taxBaseAmount = 0;
+    if (mode === 'inward') {
+        items.forEach(item => {
+            const discountVal = parseFloat(item.discount) || 0;
+            const baseRate = !isNaN(cRateOverride) && cRateOverride > 0 ? cRateOverride : (item.rate - discountVal);
+            const bagTotal = item.bagQty * (item.bagRate || 0);
+            taxBaseAmount += (item.weight * baseRate) + bagTotal;
+        });
+    } else {
+        taxBaseAmount = subtotalAmount;
+    }
+    const taxAmount = (taxBaseAmount * taxPercent) / 100;
     const grandTotal = subtotalAmount + taxAmount + adjustment;
 
     document.getElementById('preview-total-weight').textContent = `${totalQty.toFixed(2)} units`;
@@ -4624,9 +4648,10 @@ function renderGSTSummary() {
     state.unloads.forEach(u => {
         if (!inMonth(u.date)) return;
         const val = (parseFloat(u.weight) || 0) * (parseFloat(u.rate) || 0);
+        const bagVal = (parseInt(u.bagQty) || 0) * (parseFloat(u.bagRate) || 0);
         const rate = u.gstRate !== undefined ? parseFloat(u.gstRate) : 5;
-        purchaseValue += val;
-        gstPaid += val * rate / 100;
+        purchaseValue += (val + bagVal);
+        gstPaid += (val + bagVal) * rate / 100;
         purchaseCount++;
     });
 
