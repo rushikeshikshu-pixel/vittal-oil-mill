@@ -482,23 +482,7 @@ async function loadState() {
                     renderAllViews();
                     return;
                 } else {
-                    // Host DB is empty, check if we have localStorage data to migrate
-                    const localSaved = getStorageItem('vitthal_mill_state');
-                    if (localSaved) {
-                        try {
-                            state = JSON.parse(localSaved);
-                            sanitizeStateArrays();
-                            updateSyncStatus('warning', 'Migrating Local Data...');
-                            // Save to Host DB immediately to bootstrap it!
-                            await saveState();
-                            renderAllViews();
-                            return;
-                        } catch (e) {
-                            console.error("Local data parsing failed", e);
-                        }
-                    }
-
-                    // Host DB is empty and no local data to migrate - Bootstrap with defaults
+                    // Host DB is empty - Bootstrap with defaults
                     resetStateToDefault();
                     const cloudActive = await checkFirebaseStatus();
                     if (!cloudActive) {
