@@ -1,0 +1,2627 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitthal Oil Mill OS - Industrial Logbook & ERP</title>
+    <link rel="icon" type="image/x-icon" href="mill_app_icon.ico">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js for High-End Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ROLE-BASED ACCESS: LOGIN GATE -->
+    <div id="login-gate" class="login-gate" style="display:none;">
+        <div class="login-card">
+            <div class="login-logo"><i class="fa-solid fa-oil-well"></i></div>
+            <h1>Vitthal Oil Mill</h1>
+            <p class="login-sub">Select your role to sign in</p>
+            <div class="login-roles" id="login-roles"><!-- injected --></div>
+            <form id="login-form" style="display:none;">
+                <p class="login-selected-role" id="login-selected-role"></p>
+                <input type="password" id="login-pin" inputmode="numeric" autocomplete="off" placeholder="Enter PIN" class="form-control" style="text-align:center; letter-spacing:4px; font-size:1.2rem;">
+                <div id="login-error" class="login-error"></div>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                    <button type="button" class="btn btn-secondary" onclick="cancelLoginRole()" style="flex:1;">Back</button>
+                    <button type="submit" class="btn btn-primary" style="flex:2;"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+                </div>
+            </form>
+            <p class="login-note">Role-based access organises who does what. It is a workflow control, not data encryption.</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-oil-well"></i>
+                </div>
+                <div class="brand-info">
+                    <h1>Vitthal Oil Mill</h1>
+                    <span>Management OS</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-item" data-tab="unloads">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
+                    <span>Raw Unloads</span>
+                </button>
+                <button class="nav-item" data-tab="sales">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>Outbound Sales</span>
+                </button>
+                <button class="nav-item" data-tab="stock">
+                    <i class="fa-solid fa-table-cells"></i>
+                    <span>Stock Ledger</span>
+                </button>
+                <button class="nav-item" data-tab="spares">
+                    <i class="fa-solid fa-gears"></i>
+                    <span>Spare Parts</span>
+                </button>
+                <button class="nav-item" data-tab="repairs">
+                    <i class="fa-solid fa-wrench"></i>
+                    <span>Maintenance</span>
+                </button>
+                <button class="nav-item" data-tab="invoices">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Invoice Builder</span>
+                </button>
+                <button class="nav-item" data-tab="production">
+                    <i class="fa-solid fa-industry"></i>
+                    <span>Production</span>
+                </button>
+                <button class="nav-item" data-tab="refining">
+                    <i class="fa-solid fa-flask-vial"></i>
+                    <span>Oil Refining</span>
+                </button>
+                <button class="nav-item" data-tab="party-accounts">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Party Accounts</span>
+                </button>
+                <button class="nav-item" data-tab="transport">
+                    <i class="fa-solid fa-truck-moving"></i>
+                    <span>Transport</span>
+                </button>
+                <button class="nav-item" data-tab="analytics">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Data Analytics</span>
+                </button>
+                <button class="nav-item" data-tab="data-mgmt">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Database</span>
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div id="active-role-badge" style="display:none; align-items:center; gap:8px; padding:8px 10px; margin-bottom:8px; border-radius:8px; background:var(--bg-card-hover); font-size:0.78rem;">
+                    <i class="fa-solid fa-user-shield" style="color:var(--accent-primary);"></i>
+                    <span id="active-role-label" style="flex:1; font-weight:600;">Administrator</span>
+                    <button id="logout-btn" class="btn btn-secondary btn-sm" onclick="logoutRole()" title="Sign out" style="padding:3px 8px;"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+                <button id="theme-toggle" class="theme-btn" title="Toggle Theme">
+                    <i class="fa-solid fa-moon"></i>
+                    <span>Dark Mode</span>
+                </button>
+                <div class="system-time">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="live-clock">14:52 PM</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- App Header -->
+            <header class="app-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="global-search" placeholder="Search unloads, sales, clients, lorry numbers or spares...">
+                </div>
+                <div class="header-actions">
+                    <span id="sync-status-badge" class="badge badge-info" style="margin-right: 8px; display: inline-flex; align-items: center; gap: 6px;"><i class="fa-solid fa-cloud"></i> Local Storage</span>
+                    <button class="btn btn-secondary" id="seed-mock-btn" style="display: none;">
+                        <i class="fa-solid fa-database"></i> Seed Mock Data
+                    </button>
+                    <div class="dropdown" id="quick-action-dropdown" style="position: relative; display: inline-block;">
+                        <button class="btn btn-primary" id="quick-action-btn" onclick="toggleQuickActionMenu()" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-plus"></i> New Entry <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 2px;"></i>
+                        </button>
+                        <div class="dropdown-menu" id="quick-action-menu" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1100; min-width: 240px; padding: 6px 0; margin-top: 8px;">
+                            <a class="dropdown-item" href="#" onclick="triggerQuickAction('unload')" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-primary); text-decoration: none; font-size: 0.88rem; transition: var(--transition);">
+                                <i class="fa-solid fa-truck-ramp-box text-primary"></i> Log Raw Material Load
+                            </a>
+                            <a class="dropdown-item" href="#" onclick="triggerQuickAction('sales')" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-primary); text-decoration: none; font-size: 0.88rem; transition: var(--transition);">
+                                <i class="fa-solid fa-cart-shopping text-success"></i> Record Sales Dispatch
+                            </a>
+                            <a class="dropdown-item" href="#" onclick="triggerQuickAction('production')" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-primary); text-decoration: none; font-size: 0.88rem; transition: var(--transition);">
+                                <i class="fa-solid fa-industry text-warning"></i> Log Crushing run
+                            </a>
+                            <a class="dropdown-item" href="#" onclick="triggerQuickAction('payment')" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: var(--text-primary); text-decoration: none; font-size: 0.88rem; transition: var(--transition);">
+                                <i class="fa-solid fa-wallet text-info"></i> Post Payment / Payout
+                            </a>
+                        </div>
+                    </div>
+                    <div class="user-profile">
+                        <div class="avatar">VM</div>
+                        <div class="user-details">
+                            <h3>Rishi</h3>
+                            <span>Administrator</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Views Containers -->
+            <div class="content-body">
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="dashboard" class="tab-pane active">
+                    <div class="pane-header">
+                        <h2>Analytics & Operations Overview</h2>
+                        <p>Real-time status of seed stock, manufactured oils/khal, sales revenue, logistics, and repairs.</p>
+                    </div>
+                    
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Sales Revenue (Monthly)</span>
+                                <h3 class="kpi-value" id="kpi-sales-revenue">₹0</h3>
+                                <span class="kpi-meta" id="kpi-sales-volume">0.00 Qtl Sold</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-droplet"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Crude Oil Closing Stock</span>
+                                <h3 class="kpi-value" id="kpi-oil-stock">0.00</h3>
+                                <span class="kpi-meta">Gaad: <span id="kpi-gaad-stock">0.00</span> | Wash: <span id="kpi-wash-stock">0.00</span></span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Low Stock Spares</span>
+                                <h3 class="kpi-value" id="kpi-low-spares">0</h3>
+                                <span class="kpi-meta">Requires urgent purchase</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Pending Repairs</span>
+                                <h3 class="kpi-value" id="kpi-pending-repairs">0</h3>
+                                <span class="kpi-meta">Active breakdowns tracked</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts & Insights Row -->
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <h3>Raw Material Purchases vs. Manufactured Product Sales</h3>
+                            <div class="chart-container">
+                                <canvas id="productionChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Maintenance Cost by Category</h3>
+                            <div class="chart-container">
+                                <canvas id="repairChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activities Row -->
+                    <div class="recent-row">
+                        <div class="recent-card">
+                            <h3>Recent Lorry Unloads (Purchases)</h3>
+                            <div class="table-responsive-mini">
+                                <table class="mini-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Supplier</th>
+                                            <th>Lorry No.</th>
+                                            <th>Weight (Qtl)</th>
+                                            <th>FOR Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-unloads-tbody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No unloads logged yet. Use "Seed Mock Data".</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="recent-card">
+                            <h3>Recent Outward Sales</h3>
+                            <div class="table-responsive-mini">
+                                <table class="mini-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Customer</th>
+                                            <th>Product</th>
+                                            <th>Qty (Qtl)</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recent-sales-tbody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No sales logged yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 2. RAW MATERIAL UNLOADS VIEW -->
+                <section id="unloads" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>Daily Raw Material Unload Report</h2>
+                            <p>Track inward seeds, freight costs, FOR pricing, and supplier locations.</p>
+                        </div>
+                        <div class="header-action-group">
+                            <button class="btn btn-secondary" onclick="openModal('supplier-modal')">
+                                <i class="fa-solid fa-user-plus"></i> New Supplier
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('unload-modal')">
+                                <i class="fa-solid fa-plus"></i> Add Lorry Load
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Inner tab navigation for unloads -->
+                    <div class="inner-tabs mb-3">
+                        <button class="inner-tab-btn active" data-subtab="unloads-register" onclick="switchUnloadsSubtab('unloads-register')">
+                            <i class="fa-solid fa-list-check"></i> Purchase Register
+                        </button>
+                        <button class="inner-tab-btn" data-subtab="supplier-directory" onclick="switchUnloadsSubtab('supplier-directory')">
+                            <i class="fa-solid fa-address-book"></i> Supplier Directory
+                        </button>
+                    </div>
+                    
+                    <!-- SUBTAB 1: UNLOADS REGISTER -->
+                    <div id="unloads-register-subtab" class="unloads-subpane active">
+                    
+                    <!-- Search and filters -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Filter Supplier</label>
+                            <select id="filter-unload-supplier" class="filter-select">
+                                <option value="">All Suppliers</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Place</label>
+                            <input type="text" id="filter-unload-place" placeholder="e.g. Pachod">
+                        </div>
+                        <div class="filter-group">
+                            <label>Lorry No.</label>
+                            <input type="text" id="filter-unload-lorry" placeholder="e.g. MH-16">
+                        </div>
+                        <button class="btn btn-secondary" id="clear-unload-filters" title="Reset Filters">
+                            <i class="fa-solid fa-filter-circle-xmark"></i> Clear
+                        </button>
+                    </div>
+                    
+                    <!-- Table Grid -->
+                    <div class="table-card">
+                        <div class="table-actions-strip">
+                            <span id="selected-lorries-count">0 items selected</span>
+                            <button class="btn btn-accent btn-sm" id="bulk-bill-btn" disabled>
+                                <i class="fa-solid fa-calculator"></i> Calculate Selected Bill
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="unload-table">
+                                <thead>
+                                    <tr>
+                                        <th width="40px"><input type="checkbox" id="select-all-unloads"></th>
+                                        <th>Date</th>
+                                        <th>Supplier Name</th>
+                                        <th>Place</th>
+                                        <th>Lorry No.</th>
+                                        <th>Inv / Rec Weight (Qtl)</th>
+                                        <th>Shortage (Qtl)</th>
+                                        <th>Base Rate (₹)</th>
+                                        <th>Freight (₹)</th>
+                                        <th>Discount (₹)</th>
+                                        <th>GST (%)</th>
+                                        <th>FOR (₹)</th>
+                                        <th>Silo</th>
+                                        <th>Quality / Remark</th>
+                                        <th width="100px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unload-tbody">
+                                    <tr>
+                                        <td colspan="16" class="text-center text-muted py-4">No unload records found. Click "Add Lorry Load" or seed mock data.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </div> <!-- Close unloads-register-subtab -->
+                    
+                    <!-- SUBTAB 2: SUPPLIER DIRECTORY -->
+                    <div id="supplier-directory-subtab" class="unloads-subpane">
+                        <div class="card p-3">
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Supplier Name</th>
+                                            <th>Contact Person</th>
+                                            <th>Phone Number</th>
+                                            <th>GSTIN Number</th>
+                                            <th>Address</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="suppliers-tbody">
+                                        <!-- Populated dynamically by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. OUTBOUND SALES VIEW (IMPROVED) -->
+                <section id="sales" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>Outbound Finished Goods Sales Hub</h2>
+                            <p>Manage product dispatches, clients directory, outward tax invoices, and receivables.</p>
+                        </div>
+                        <div class="header-action-group">
+                            <button class="btn btn-secondary" onclick="openModal('customer-modal')">
+                                <i class="fa-solid fa-user-plus"></i> New Customer
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('sales-modal')">
+                                <i class="fa-solid fa-cart-plus"></i> Record Sale
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Inner tab navigation for sales -->
+                    <div class="inner-tabs mb-3">
+                        <button class="inner-tab-btn active" data-subtab="sales-register" onclick="switchSalesSubtab('sales-register')">
+                            <i class="fa-solid fa-list-check"></i> Dispatches Register
+                        </button>
+                        <button class="inner-tab-btn" data-subtab="client-directory" onclick="switchSalesSubtab('client-directory')">
+                            <i class="fa-solid fa-address-book"></i> Customers & GST Directory
+                        </button>
+                        <button class="inner-tab-btn" data-subtab="invoice-archive" onclick="switchSalesSubtab('invoice-archive')">
+                            <i class="fa-solid fa-boxes-packing"></i> Invoices Archive
+                        </button>
+                    </div>
+
+                    <!-- SUBTAB 1: DISPATCHES REGISTER -->
+                    <div id="sales-register-subtab" class="sales-subpane active">
+                        <!-- Sales KPIs inside register -->
+                        <div class="sales-mini-kpis mb-3">
+                            <div class="mini-kpi">
+                                <span>Total Sales (June/July)</span>
+                                <strong id="sales-kpi-total">₹0</strong>
+                            </div>
+                            <div class="mini-kpi">
+                                <span>Received Payments</span>
+                                <strong class="text-success" id="sales-kpi-paid">₹0</strong>
+                            </div>
+                            <div class="mini-kpi">
+                                <span>Outstanding Receivables</span>
+                                <strong class="text-danger" id="sales-kpi-pending">₹0</strong>
+                            </div>
+                        </div>
+
+                        <!-- Search and filters -->
+                        <div class="filter-bar">
+                            <div class="filter-group">
+                                <label>Filter Customer</label>
+                                <select id="filter-sales-customer" class="filter-select">
+                                    <option value="">All Customers</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Product Sold</label>
+                                <select id="filter-sales-product" class="filter-select">
+                                    <option value="">All Products</option>
+                                    <option value="oil-crude">Crud Oil</option>
+                                    <option value="oil-wash">Wash Oil</option>
+                                    <option value="khal-mm">Khal MM</option>
+                                    <option value="khal-km">Khal KM</option>
+                                    <option value="ch-oms">Cotton Hulls (OMS)</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Payment Status</label>
+                                <select id="filter-sales-status" class="filter-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="Paid">Paid / Cleared</option>
+                                    <option value="Pending">Pending Payment</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Table Grid -->
+                        <div class="table-card">
+                            <div class="table-actions-strip">
+                                <span id="selected-sales-count">0 items selected</span>
+                                <button class="btn btn-accent btn-sm" id="sales-invoice-btn" disabled>
+                                    <i class="fa-solid fa-file-invoice"></i> Compile Tax Invoice
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="sales-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="40px"><input type="checkbox" id="select-all-sales"></th>
+                                            <th>Date</th>
+                                            <th>Invoice No</th>
+                                            <th>Customer Name</th>
+                                            <th>Product</th>
+                                            <th>Qty (Qtl)</th>
+                                            <th>Rate (₹/Qtl)</th>
+                                            <th>Subtotal (₹)</th>
+                                            <th>Lorry / Tanker No</th>
+                                            <th>Destination</th>
+                                            <th>Status</th>
+                                            <th width="100px">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sales-tbody">
+                                        <tr>
+                                            <td colspan="12" class="text-center text-muted py-4">No sales records logged. Use "Record Sale" or seed mock data.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUBTAB 2: CLIENT DIRECTORY -->
+                    <div id="client-directory-subtab" class="sales-subpane">
+                        <div class="table-card">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Client Name</th>
+                                            <th>Contact Person</th>
+                                            <th>Phone Number</th>
+                                            <th>GSTIN Number</th>
+                                            <th>Billing Address</th>
+                                            <th>Default Credit Terms</th>
+                                            <th width="100px">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customers-tbody">
+                                        <!-- Loaded by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUBTAB 3: INVOICES ARCHIVE -->
+                    <div id="invoice-archive-subtab" class="sales-subpane">
+                        <div class="table-card">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice Date</th>
+                                            <th>Invoice ID</th>
+                                            <th>Customer Name</th>
+                                            <th>Billing Type</th>
+                                            <th>Total Weight</th>
+                                            <th>Grand Total (₹)</th>
+                                            <th>GST Tax (₹)</th>
+                                            <th>Items Contributed</th>
+                                            <th width="120px">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="invoices-archive-tbody">
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted py-4">No compiled invoices archived yet. Generate them in the Invoice Builder pane.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 4. STOCK STATEMENT VIEW -->
+                <section id="stock" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>Stock Statement Ledger</h2>
+                            <p>Daily receipts, issues, and closing balances grid. Replicates the Excel sheet statement.</p>
+                        </div>
+                        <div class="header-action-group">
+                            <select id="stock-month-selector" class="filter-select">
+                                <option value="2026-06" selected>June 2026</option>
+                                <option value="2026-07">July 2026</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="openModal('quick-stock-modal')">
+                                <i class="fa-solid fa-edit"></i> Edit Day Entry
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="ledger-container">
+                        <div class="table-responsive">
+                            <table class="ledger-grid-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="sticky-col first-col">Sr. No.</th>
+                                        <th rowspan="2" class="sticky-col second-col">Product Name</th>
+                                        <th rowspan="2">Op. St</th>
+                                        <th rowspan="2">Receipt</th>
+                                        <th rowspan="2">Issue</th>
+                                        <th rowspan="2">Cl. St</th>
+                                        <th colspan="31" class="text-center">Daily Receipt/Issue Grid for the Month</th>
+                                        <th rowspan="2" class="total-col">Total</th>
+                                    </tr>
+                                    <tr id="days-header-row">
+                                        <!-- Will be filled by js: 1 to 31 -->
+                                    </tr>
+                                </thead>
+                                <tbody id="stock-tbody">
+                                    <!-- Populated dynamically by app.js -->
+                                </tbody>
+                                <tfoot>
+                                    <tr id="stock-total-row-1" class="total-row bg-subtle">
+                                        <td colspan="2" class="sticky-col first-two-col text-right font-bold">Cotton Seed Receipts Total</td>
+                                        <td id="tot-op-seed-rec">0.00</td>
+                                        <td id="tot-rec-seed-rec">0.00</td>
+                                        <td id="tot-iss-seed-rec">0.00</td>
+                                        <td id="tot-cl-seed-rec" class="font-bold">0.00</td>
+                                        <!-- 31 days receipt total cells will be loaded by JS -->
+                                    </tr>
+                                    <tr id="stock-total-row-2" class="total-row bg-subtle-2">
+                                        <td colspan="2" class="sticky-col first-two-col text-right font-bold">Khal Receipts Total</td>
+                                        <td id="tot-op-khal-rec">0.00</td>
+                                        <td id="tot-rec-khal-rec">0.00</td>
+                                        <td id="tot-iss-khal-rec">0.00</td>
+                                        <td id="tot-cl-khal-rec" class="font-bold">0.00</td>
+                                        <!-- 31 days receipt total cells will be loaded by JS -->
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 5. SPARE PARTS VIEW -->
+                <section id="spares" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>Spare Parts Inventory</h2>
+                            <p>Manage mechanical and electrical components, stock level status, and safety thresholds.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('spare-modal')">
+                            <i class="fa-solid fa-plus"></i> Add Spare Part
+                        </button>
+                    </div>
+                    
+                    <!-- Search & Filter bar for Spares -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Search Spare</label>
+                            <input type="text" id="search-spare" placeholder="Name or part number...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Machine / Area</label>
+                            <select id="filter-spare-machine" class="filter-select">
+                                <option value="">All Machinery</option>
+                                <option value="Expander">Expander Section</option>
+                                <option value="Filter Press">Filter Press Section</option>
+                                <option value="Boiler">Boiler House</option>
+                                <option value="Decanter">Decanter & Centrifuge</option>
+                                <option value="Electrical">Motors & Electricals</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Stock Filter</label>
+                            <select id="filter-spare-status" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="low">Low Stock / Reorder</option>
+                                <option value="ok">Healthy Levels</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Grid of spares cards or table -->
+                    <div class="table-card">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Part Code</th>
+                                        <th>Part Name</th>
+                                        <th>Machinery / Area</th>
+                                        <th>Current Stock</th>
+                                        <th>Min Level</th>
+                                        <th>Unit Cost (₹)</th>
+                                        <th>Total Value (₹)</th>
+                                        <th>Status</th>
+                                        <th width="120px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="spares-tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">No spare parts defined yet. Seed mock data to view template parts.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 6. MAINTENANCE & REPAIR VIEW -->
+                <section id="repairs" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>Machinery Repair & Maintenance Logs</h2>
+                            <p>Register breakdowns, routine servicings, parts consumption, and engineering costs.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('repair-modal')">
+                            <i class="fa-solid fa-screwdriver-wrench"></i> Log Maintenance Job
+                        </button>
+                    </div>
+
+                    <!-- Maintenance KPI Strip -->
+                    <div class="kpi-grid mb-3" id="maintenance-kpis" style="grid-template-columns: repeat(4, 1fr); margin-top: 10px;">
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total Machinery Tracked</span>
+                                <h3 class="kpi-value" id="maint-kpi-total-machines">0</h3>
+                                <span class="kpi-meta">Unique machines</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Active Breakdowns</span>
+                                <h3 class="kpi-value" id="maint-kpi-active-breakdowns">0</h3>
+                                <span class="kpi-meta" id="maint-kpi-active-breakdowns-meta">Needs immediate repair</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Low Spares Alert</span>
+                                <h3 class="kpi-value" id="maint-kpi-low-spares">0</h3>
+                                <span class="kpi-meta">Below minimum level</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Maintenance Cost (YTD)</span>
+                                <h3 class="kpi-value" id="maint-kpi-total-cost">₹0</h3>
+                                <span class="kpi-meta">Spares + Service fees</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Machinery Run-Hours & Service Schedule -->
+                    <div class="card p-3 mb-3" id="machine-schedule-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                            <div>
+                                <span class="text-sm font-bold">⏰ Machinery Run-Hours & Service Schedule</span>
+                                <span class="text-xs text-muted" id="machine-alert-summary" style="margin-left:8px;"></span>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="openModal('machine-modal')">
+                                <i class="fa-solid fa-gear"></i> Register Machine
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table text-xs" id="machine-schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Machine</th>
+                                        <th>Category</th>
+                                        <th class="text-end">Run Hours</th>
+                                        <th class="text-end">Since Service</th>
+                                        <th class="text-end">Interval</th>
+                                        <th class="text-center">Service Progress</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="machine-schedule-tbody"></tbody>
+                            </table>
+                        </div>
+                        <div id="machine-empty-state" style="display:none; text-align:center; padding:28px 20px; color:var(--text-secondary);">
+                            <i class="fa-solid fa-gears" style="font-size:2.2rem; opacity:0.2; margin-bottom:10px; display:block;"></i>
+                            <p class="text-sm">No machinery registered. Click <strong>Register Machine</strong> to track run-hours and service due-dates.</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Machine Name</label>
+                            <select id="filter-repair-machine" class="filter-select">
+                                <option value="">All Machinery</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Job Type</label>
+                            <select id="filter-repair-type" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="Breakdown">Breakdown Repair</option>
+                                <option value="Preventive">Preventive Maintenance</option>
+                                <option value="Routine">Routine Service</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="filter-repair-status" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="Completed">Completed</option>
+                                <option value="In-progress">In-Progress</option>
+                                <option value="Pending">Pending Parts</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Repair Logs Table -->
+                    <div class="table-card">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Machine / Equipment</th>
+                                        <th>Maintenance Type</th>
+                                        <th>Description of Issue</th>
+                                        <th>Spare Parts Consumed</th>
+                                        <th>Contractor / Engineer</th>
+                                        <th>Total Cost (₹)</th>
+                                        <th>Status</th>
+                                        <th width="100px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repairs-tbody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">No repairs logged. Seed mock data to check sample maintenance logs.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 7. INVOICE BUILDER VIEW -->
+                <section id="invoices" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>Vitthal Billing & Invoice Workspace</h2>
+                        <p>Generate accounts statements: Raw Material Purchase Payables (Inward) or Finished Products Sales Invoice (Outbound).</p>
+                    </div>
+
+                    <!-- GST Input Tax Credit (ITC) Summary -->
+                    <div class="card p-3 mb-3" id="gst-itc-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                            <span class="text-sm font-bold">🧾 GST Input Tax Credit (ITC) Summary</span>
+                            <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+                                <div class="form-group" style="margin:0;">
+                                    <label class="text-xs">Tax Period</label>
+                                    <input type="month" id="gst-month" class="form-control text-xs" onchange="renderGSTSummary()" style="min-width:130px;">
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label class="text-xs" title="Output GST rate applied to sales value">Output GST % (sales)</label>
+                                    <input type="number" id="gst-output-rate" class="form-control text-xs" value="5" step="0.5" min="0" onchange="renderGSTSummary()" style="min-width:90px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); gap:12px;">
+                            <div class="kpi-card success">
+                                <div class="kpi-icon"><i class="fa-solid fa-arrow-down-long"></i></div>
+                                <div class="kpi-data">
+                                    <span class="kpi-title" title="Input tax paid on purchases — claimable as ITC">GST Paid on Purchases (ITC)</span>
+                                    <h3 class="kpi-value" id="gst-paid-value">₹0</h3>
+                                    <span class="kpi-meta" id="gst-paid-meta">0 purchases</span>
+                                </div>
+                            </div>
+                            <div class="kpi-card primary">
+                                <div class="kpi-icon"><i class="fa-solid fa-arrow-up-long"></i></div>
+                                <div class="kpi-data">
+                                    <span class="kpi-title" title="Output tax collected on sales — payable to govt">GST Collected on Sales</span>
+                                    <h3 class="kpi-value" id="gst-collected-value">₹0</h3>
+                                    <span class="kpi-meta" id="gst-collected-meta">0 sales</span>
+                                </div>
+                            </div>
+                            <div class="kpi-card warning">
+                                <div class="kpi-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                                <div class="kpi-data">
+                                    <span class="kpi-title">Net GST Position</span>
+                                    <h3 class="kpi-value" id="gst-net-value">₹0</h3>
+                                    <span class="kpi-meta" id="gst-net-meta">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-muted mt-2" style="margin-bottom:0;">Purchase GST uses each unload's own rate. Sales GST uses the Output % above (edible-oil default 5%). Net = Collected − ITC: positive means payable to govt, negative is credit carried forward.</p>
+                    </div>
+
+                    <div class="invoice-workspace">
+                        <div class="invoice-form-side">
+                            <div class="card">
+                                <h3>Invoice Parameters</h3>
+                                <div class="form-group mb-3">
+                                    <label>Invoice Billing Mode</label>
+                                    <select id="bill-mode-select" class="form-control">
+                                        <option value="inward" selected>Inward Raw Material Purchase Payouts</option>
+                                        <option value="outward">Outward Finished Products Sales Bill</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label id="bill-party-label">Select Supplier</label>
+                                    <select id="bill-supplier-select" class="form-control">
+                                        <option value="">-- Choose Supplier --</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label>Selected Transaction Items</label>
+                                    <div class="bill-lorries-checklist" id="bill-lorries-list">
+                                        <span class="text-muted small">Select a mode and supplier to load active loads.</span>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group mb-3 col-6">
+                                        <label id="rate-override-label">Custom FOR Rate (₹/Qtl)</label>
+                                        <input type="number" id="bill-custom-rate" class="form-control" placeholder="Override rate">
+                                    </div>
+                                    <div class="form-group mb-3 col-6">
+                                        <label>Invoice Date</label>
+                                        <input type="date" id="bill-date" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group mb-3 col-6">
+                                        <label>GST / Taxes (%)</label>
+                                        <select id="bill-tax-percent" class="form-control">
+                                            <option value="0" selected>0% (No Tax / Raw Seed)</option>
+                                            <option value="5">5% (Oil & Cake Standard)</option>
+                                            <option value="12">12%</option>
+                                            <option value="18">18% (Finished Oils)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group mb-3 col-6">
+                                        <label>Freight / Adjustments (₹)</label>
+                                        <input type="number" id="bill-adjustments" class="form-control" value="0">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary w-100" id="generate-invoice-btn">
+                                    <i class="fa-solid fa-calculator"></i> Compile Bill Calculations
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Output side -->
+                        <div class="invoice-preview-side">
+                            <div class="invoice-preview-card" id="invoice-bill-sheet">
+                                <div class="preview-empty-state" id="invoice-empty-msg">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                    <h3>Calculations Ledger Preview</h3>
+                                    <p>Select billing mode and supplier, tick transaction items, and compile to generate the Vitthal Oil Mill receipt statement.</p>
+                                </div>
+                                <div class="invoice-ledger" id="invoice-ledger-content" style="display:none;">
+                                    <div class="invoice-logo-header">
+                                        <div class="ledger-brand">
+                                            <h2>VITTHAL OIL MILL</h2>
+                                            <p>Industrial Estate, Majalgaon Road, Maharashtra</p>
+                                            <p id="preview-invoice-subtitle">Seed Unloading & Calculations Receipt Log</p>
+                                        </div>
+                                        <div class="ledger-meta-info text-right">
+                                            <p><strong>Invoice/Receipt No:</strong> <span id="preview-receipt-id">#VOM-2026-001</span></p>
+                                            <p><strong>Date:</strong> <span id="preview-bill-date">09/07/2026</span></p>
+                                        </div>
+                                    </div>
+                                    <hr class="divider">
+                                    
+                                    <div class="ledger-details">
+                                        <div>
+                                            <p><strong><span id="preview-party-type-label">Supplier</span> Name:</strong> <span id="preview-supplier-name">Kunal Cotton</span></p>
+                                            <p id="preview-party-gstin-row" style="display:none;"><small><strong>GSTIN:</strong> <span id="preview-party-gstin">-</span></small></p>
+                                            <p id="preview-party-address-row" style="display:none;"><small><strong>Address:</strong> <span id="preview-party-address">-</span></small></p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p><strong>Period:</strong> <span id="preview-bill-period">05/07 to 06/07</span></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Notebook Calculation Display -->
+                                    <div class="notebook-styled-box">
+                                        <div class="notebook-header">
+                                            <span>Notebook Style Weight & FOR Math</span>
+                                            <i class="fa-solid fa-book-open"></i>
+                                        </div>
+                                        <div class="notebook-body" id="preview-notebook-math">
+                                            <!-- Notebook Style calculations filled by JS -->
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Itemized breakdown table -->
+                                    <table class="preview-item-table">
+                                        <thead>
+                                            <tr id="preview-table-hdr">
+                                                <th>Lorry No</th>
+                                                <th>Date</th>
+                                                <th>Location</th>
+                                                <th>Weight / Qty</th>
+                                                <th>Rate (₹)</th>
+                                                <th class="text-right">Line Total (₹)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="preview-items-tbody">
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="3" class="text-right font-bold">Total Quantity:</td>
+                                                <td id="preview-total-weight" class="font-bold">0.00</td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="5" class="text-right font-bold">Subtotal Amount:</td>
+                                                <td id="preview-subtotal" class="text-right font-bold">₹0.00</td>
+                                            </tr>
+                                            <!-- Splitting CGST / SGST for Premium Invoicing -->
+                                            <tr id="cgst-row" style="display:none;">
+                                                <td colspan="5" class="text-right" id="cgst-label">CGST (2.5%):</td>
+                                                <td id="preview-cgst-amount" class="text-right">₹0.00</td>
+                                            </tr>
+                                            <tr id="sgst-row" style="display:none;">
+                                                <td colspan="5" class="text-right" id="sgst-label">SGST (2.5%):</td>
+                                                <td id="preview-sgst-amount" class="text-right">₹0.00</td>
+                                            </tr>
+                                            <tr id="igst-row" style="display:none;">
+                                                <td colspan="5" class="text-right" id="igst-label">IGST (5%):</td>
+                                                <td id="preview-igst-amount" class="text-right">₹0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="5" class="text-right">Freight Adjustments:</td>
+                                                <td id="preview-adjustments" class="text-right">₹0.00</td>
+                                            </tr>
+                                            <tr class="grand-total-row">
+                                                <td colspan="5" class="text-right font-bold">Grand Payable Total:</td>
+                                                <td id="preview-grand-total" class="text-right font-bold">₹0.00</td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="6" class="text-xs text-muted pt-2" style="border-top:1px dashed #cbd5e1;">
+                                                    <strong>Amount in Words:</strong> <span id="preview-words-amount" class="font-bold">-</span>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    
+                                    <div class="invoice-footer">
+                                        <p class="terms" id="preview-footer-terms">This calculation statement acts as an official internal voucher for lorry weighment reconciliation before payout disbursement.</p>
+                                        <div class="signature-block">
+                                            <div class="sig">
+                                                <div class="sig-line"></div>
+                                                <p>Verified By (Admin)</p>
+                                            </div>
+                                            <div class="sig">
+                                                <div class="sig-line"></div>
+                                                <p>Authorized Payout Signee</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="preview-actions mt-3 no-print" id="preview-actions-bar" style="display:none;">
+                                <button class="btn btn-secondary" onclick="printSection('invoice-ledger-content')">
+                                    <i class="fa-solid fa-print"></i> Print / Save PDF
+                                </button>
+                                <button class="btn btn-success" id="save-invoice-log-btn">
+                                    <i class="fa-solid fa-circle-check"></i> Record Payment/Payout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 7B. DATA ANALYTICS VIEW -->
+                <section id="analytics" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>📊 Mill Performance & Profitability Analytics</h2>
+                        <p>Analyze revenue, purchase costs, margins, product sales breakdown, and crushing efficiency trends.</p>
+                    </div>
+                    
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid mb-3" style="grid-template-columns: repeat(4, 1fr); margin-top: 10px;">
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-percent"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Gross Profit Margin</span>
+                                <h3 class="kpi-value" id="analytics-kpi-margin">0.0%</h3>
+                                <span class="kpi-meta" id="analytics-kpi-margin-text">Revenue vs Purchase cost</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-industry"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Average Recovery Yield</span>
+                                <h3 class="kpi-value" id="analytics-kpi-yield">0.0%</h3>
+                                <span class="kpi-meta" id="analytics-kpi-yield-runs">0 runs analyzed</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Average Weight Shortage</span>
+                                <h3 class="kpi-value" id="analytics-kpi-shortage">0.00%</h3>
+                                <span class="kpi-meta" id="analytics-kpi-shortage-qtl">0.00 Qtl total</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-gas-pump"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Fleet Fuel Expenses</span>
+                                <h3 class="kpi-value" id="analytics-kpi-fuel">₹0</h3>
+                                <span class="kpi-meta" id="analytics-kpi-fuel-litres">0.0 L consumed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts row 1: Revenue vs Cost (Line), Product Mix (Doughnut) -->
+                    <div class="form-row mb-3" style="gap:1.5rem; flex-wrap:wrap; display:flex;">
+                        <div class="card p-3 col-8" style="min-height:380px; flex:2; min-width:320px;">
+                            <h3 class="text-sm font-bold mb-3">📈 Revenue vs Purchase Cost Trends (Monthly)</h3>
+                            <div style="position:relative; height:300px; width:100%;">
+                                <canvas id="analyticsMarginChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card p-3 col-4" style="min-height:380px; flex:1; min-width:280px;">
+                            <h3 class="text-sm font-bold mb-3">🍩 Product Sales Volume Mix</h3>
+                            <div style="position:relative; height:300px; width:100%;">
+                                <canvas id="analyticsProductMixChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts row 2: Yield Trend (Line) -->
+                    <div class="card p-3 mb-3" style="min-height:380px;">
+                        <h3 class="text-sm font-bold mb-3">📉 Expeller Crushing Recovery Yield Over Time (%)</h3>
+                        <div style="position:relative; height:300px; width:100%;">
+                            <canvas id="analyticsYieldTrendChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 8. DATABASE / SETTINGS VIEW -->
+                <section id="data-mgmt" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>Database & System Backups</h2>
+                        <p>Export logs to local files, upload previous backups, seed standard data, or wipe system state.</p>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="card">
+                            <h3><i class="fa-solid fa-file-export text-info"></i> Backup Database</h3>
+                            <p class="mb-3 text-muted">Export all unloads, sales, stock ledgers, spare parts listings, and repair histories into a single JSON file. Ideal for offline storage.</p>
+                            <button class="btn btn-primary" id="export-db-btn">
+                                <i class="fa-solid fa-download"></i> Export Data Backup
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <h3><i class="fa-solid fa-file-import text-success"></i> Restore Database</h3>
+                            <p class="mb-3 text-muted">Load database records back into the browser. Selecting a JSON backup file will overwrite the current local state.</p>
+                            <div class="file-upload-wrapper">
+                                <input type="file" id="import-db-file" accept=".json" style="display: none;">
+                                <button class="btn btn-secondary w-100" onclick="document.getElementById('import-db-file').click()">
+                                    <i class="fa-solid fa-upload"></i> Upload Backup File
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3><i class="fa-solid fa-toolbox text-warning"></i> Reset System</h3>
+                            <p class="mb-3 text-muted">Seed the system with sample values to test out all functionalities, or clear out the current database cache completely.</p>
+                            <div class="button-group">
+                                <button class="btn btn-accent" id="seed-mock-btn-2" style="display: none;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Populate Demo Data
+                                </button>
+                                <button class="btn btn-danger" id="clear-db-btn" style="display: none;">
+                                    <i class="fa-solid fa-trash-can"></i> Clear All Storage
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fa-solid fa-user-lock text-primary"></i> Roles &amp; Access (RBAC)</h3>
+                            <p class="mb-3 text-muted">Assign staff a role and a PIN. Each role sees only its own tabs; only the Admin can delete records. This is a workflow control, not encryption — anyone with the database file can still read it.</p>
+                            <label style="display:flex; align-items:center; gap:10px; margin-bottom:14px; cursor:pointer;">
+                                <input type="checkbox" id="sec-enabled" onchange="toggleSecurityEnabled(this.checked)">
+                                <span class="font-bold">Require role login on this device</span>
+                            </label>
+                            <div id="sec-pins-wrap">
+                                <div class="form-row">
+                                    <div class="form-group mb-2 col-6">
+                                        <label class="text-xs">🛡️ Administrator (Owner) PIN</label>
+                                        <input type="text" id="sec-pin-admin" maxlength="8" class="form-control text-xs" placeholder="e.g. 4321">
+                                    </div>
+                                    <div class="form-group mb-2 col-6">
+                                        <label class="text-xs">⚖️ Weighbridge Operator PIN</label>
+                                        <input type="text" id="sec-pin-weighbridge" maxlength="8" class="form-control text-xs" placeholder="Unloads + Sales">
+                                    </div>
+                                    <div class="form-group mb-2 col-6">
+                                        <label class="text-xs">🏭 Plant Supervisor PIN</label>
+                                        <input type="text" id="sec-pin-supervisor" maxlength="8" class="form-control text-xs" placeholder="Production, Refining, Spares, Maintenance">
+                                    </div>
+                                    <div class="form-group mb-2 col-6">
+                                        <label class="text-xs">📒 Accountant PIN</label>
+                                        <input type="text" id="sec-pin-accountant" maxlength="8" class="form-control text-xs" placeholder="Ledger + Invoices">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary btn-sm mt-2" onclick="saveSecurityConfig()">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Access Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Automatic Server Backups -->
+                    <div class="card mt-3" id="auto-backup-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div>
+                                <h3 style="margin:0;"><i class="fa-solid fa-clock-rotate-left text-success"></i> Automatic Backups</h3>
+                                <p class="text-muted mb-0" id="auto-backup-status">Checking backup status…</p>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="renderBackupsList()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <p class="text-xs text-muted mt-2 mb-2">The host server automatically snapshots the database on every save (last 20) and once per day (last 30 days). Restore any point below — your current data is snapshotted first, so a restore is always reversible.</p>
+                        <div class="table-container" style="max-height:300px; overflow:auto;">
+                            <table class="data-table text-xs">
+                                <thead>
+                                    <tr><th>Type</th><th>Snapshot</th><th class="text-end">Size</th><th class="text-center">Restore</th></tr>
+                                </thead>
+                                <tbody id="backups-tbody">
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Loading…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3B. PRODUCTION / CRUSHING VIEW -->
+                <section id="production" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>⚙️ Production &amp; Crushing Logs</h2>
+                            <p>Monitor raw seed crushing runs, expeller yields, and daily production efficiency metrics.</p>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button class="btn btn-secondary" onclick="seedProductionMockData()" title="Load test data">
+                                <i class="fa-solid fa-flask"></i> Load Test Data
+                            </button>
+                            <button class="btn btn-secondary" onclick="openModal('active-crushing-modal')" title="Mark a lot as loaded into an expeller">
+                                <i class="fa-solid fa-arrow-right-to-bracket"></i> Load Lot to Expeller
+                            </button>
+                            <button class="btn btn-primary" onclick="openModal('production-modal')">
+                                <i class="fa-solid fa-industry"></i> Log Crushing Run
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Currently in the Expellers (live floor status) -->
+                    <div class="card p-3 mb-3" id="active-crushing-card" style="display:none; border-left:3px solid #f59e0b;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span class="text-sm font-bold">🏭 Currently in the Expellers</span>
+                            <span class="text-xs text-muted" id="active-crushing-count"></span>
+                        </div>
+                        <div id="active-crushing-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+                    </div>
+
+                    <!-- Production KPI Strip -->
+                    <div class="kpi-grid mb-3" id="production-kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-seedling"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total Crushed</span>
+                                <h3 class="kpi-value" id="prod-kpi-crushed">0 Qtl</h3>
+                                <span class="kpi-meta" id="prod-kpi-runs">0 runs</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon"><i class="fa-solid fa-droplet"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Crude Oil Yield</span>
+                                <h3 class="kpi-value" id="prod-kpi-oil">0 Qtl</h3>
+                                <span class="kpi-meta" id="prod-kpi-oil-pct">0% recovery</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Cake / Khal</span>
+                                <h3 class="kpi-value" id="prod-kpi-cake">0 Qtl</h3>
+                                <span class="kpi-meta" id="prod-kpi-cake-pct">0% recovery</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-wind"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Hulls / Sludge</span>
+                                <h3 class="kpi-value" id="prod-kpi-hulls">0 Qtl</h3>
+                                <span class="kpi-meta" id="prod-kpi-hulls-pct">0% recovery</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Process Loss</span>
+                                <h3 class="kpi-value" id="prod-kpi-loss">0 Qtl</h3>
+                                <span class="kpi-meta" id="prod-kpi-loss-pct">0% loss</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yield Composition Bar -->
+                    <div class="card p-3 mb-3" id="prod-yield-bar-card" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span class="text-sm font-bold">📊 Average Yield Composition (All Runs)</span>
+                            <span class="text-xs text-muted" id="prod-bar-label">Oil · Cake · Hulls · Loss</span>
+                        </div>
+                        <div style="display:flex; height:18px; border-radius:9px; overflow:hidden; gap:2px;">
+                            <div id="prod-bar-oil" style="background:linear-gradient(90deg,#3b82f6,#60a5fa); transition:width 0.5s; height:100%; border-radius:9px 0 0 9px;"></div>
+                            <div id="prod-bar-cake" style="background:linear-gradient(90deg,#10b981,#34d399); transition:width 0.5s; height:100%;"></div>
+                            <div id="prod-bar-hulls" style="background:linear-gradient(90deg,#f59e0b,#fbbf24); transition:width 0.5s; height:100%;"></div>
+                            <div id="prod-bar-loss" style="background:linear-gradient(90deg,#ef4444,#f87171); transition:width 0.5s; height:100%; border-radius:0 9px 9px 0; flex:1;"></div>
+                        </div>
+                        <div style="display:flex; gap:18px; margin-top:6px; font-size:0.75rem;">
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:2px;margin-right:4px;"></span>Oil <span id="prod-bar-oil-lbl">0%</span></span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#10b981;border-radius:2px;margin-right:4px;"></span>Cake <span id="prod-bar-cake-lbl">0%</span></span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border-radius:2px;margin-right:4px;"></span>Hulls <span id="prod-bar-hulls-lbl">0%</span></span>
+                            <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px;"></span>Loss <span id="prod-bar-loss-lbl">0%</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Yield Traceability -->
+                    <div class="card p-3 mb-3" id="prod-supplier-yield-card" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span class="text-sm font-bold">🌾 Yield by Supplier (Quality Control)</span>
+                            <span class="text-xs text-muted">Oil recovery traced to each raw-lot supplier · best first</span>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th class="text-center">Runs</th>
+                                        <th class="text-end">Crushed (Qtl)</th>
+                                        <th class="text-end">Oil (Qtl)</th>
+                                        <th class="text-end">Oil Recovery %</th>
+                                        <th class="text-end">Total Recovery %</th>
+                                        <th class="text-center">Quality</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prod-supplier-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card p-3 mb-3">
+                        <div class="form-row align-items-end" style="gap:12px; flex-wrap:wrap;">
+                            <div class="form-group col-3" style="min-width:160px;">
+                                <label class="text-xs">Filter by Seed Type</label>
+                                <select id="prod-filter-seed" class="form-control text-xs" onchange="renderProductionTable()">
+                                    <option value="">All Types</option>
+                                    <option value="cs-oms">Cotton Seed (OMS)</option>
+                                    <option value="cs-ms">Cotton Seed (MS)</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-3" style="min-width:140px;">
+                                <label class="text-xs">Filter by Month</label>
+                                <input type="month" id="prod-filter-month" class="form-control text-xs" onchange="renderProductionTable()">
+                            </div>
+                            <div class="form-group col-3" style="min-width:140px;">
+                                <label class="text-xs">Min Yield %</label>
+                                <input type="number" id="prod-filter-min-yield" class="form-control text-xs" placeholder="e.g. 80" min="0" max="100" onchange="renderProductionTable()">
+                            </div>
+                            <div style="margin-bottom:4px;">
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('prod-filter-seed').value='';document.getElementById('prod-filter-month').value='';document.getElementById('prod-filter-min-yield').value='';renderProductionTable();">
+                                    <i class="fa-solid fa-xmark"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Production Table -->
+                    <div class="card p-3">
+                        <div class="table-container">
+                            <table class="data-table" id="production-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Lorry Lot / GR No.</th>
+                                        <th>Seed Type</th>
+                                        <th class="text-end">Crushed (Qtl)</th>
+                                        <th class="text-end">🔵 Oil (Qtl)</th>
+                                        <th class="text-end">🟢 Cake (Qtl)</th>
+                                        <th class="text-end">🟡 Hulls (Qtl)</th>
+                                        <th class="text-center">Yield Bar</th>
+                                        <th class="text-center">Yield % / Loss</th>
+                                        <th>Remarks</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="production-tbody">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="production-empty-state" style="display:none; text-align:center; padding:48px 20px; color:var(--text-secondary);">
+                            <i class="fa-solid fa-industry" style="font-size:3rem; opacity:0.2; margin-bottom:16px; display:block;"></i>
+                            <h3 style="margin-bottom:8px; opacity:0.5;">No Crushing Runs Logged Yet</h3>
+                            <p class="text-sm">Click <strong>Log Crushing Run</strong> to record a production batch, or <strong>Load Test Data</strong> to see a demo.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3B2. OIL REFINING VIEW -->
+                <section id="refining" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>🧪 Oil Refining Batches</h2>
+                            <p>Refine crude oil into Wash Oil &amp; Gaad. Each batch consumes crude oil stock and credits the finished oil products.</p>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button class="btn btn-primary" onclick="openModal('refining-modal')">
+                                <i class="fa-solid fa-flask-vial"></i> Log Refining Batch
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Refining KPI Strip -->
+                    <div class="kpi-grid mb-3" id="refining-kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-oil-well"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Crude Refined</span>
+                                <h3 class="kpi-value" id="ref-kpi-crude">0 Qtl</h3>
+                                <span class="kpi-meta" id="ref-kpi-batches">0 batches</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon"><i class="fa-solid fa-droplet"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Wash Oil Produced</span>
+                                <h3 class="kpi-value" id="ref-kpi-wash">0 Qtl</h3>
+                                <span class="kpi-meta" id="ref-kpi-wash-pct">0% of crude</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-soap"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Gaad Produced</span>
+                                <h3 class="kpi-value" id="ref-kpi-gaad">0 Qtl</h3>
+                                <span class="kpi-meta" id="ref-kpi-gaad-pct">0% of crude</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Refining Loss</span>
+                                <h3 class="kpi-value" id="ref-kpi-loss">0 Qtl</h3>
+                                <span class="kpi-meta" id="ref-kpi-loss-pct">0% loss</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card p-3 mb-3">
+                        <div class="form-row align-items-end" style="gap:12px; flex-wrap:wrap;">
+                            <div class="form-group col-3" style="min-width:140px;">
+                                <label class="text-xs">Filter by Month</label>
+                                <input type="month" id="ref-filter-month" class="form-control text-xs" onchange="renderRefiningTable()">
+                            </div>
+                            <div style="margin-bottom:4px;">
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ref-filter-month').value='';renderRefiningTable();">
+                                    <i class="fa-solid fa-xmark"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Refining Table -->
+                    <div class="card p-3">
+                        <div class="table-container">
+                            <table class="data-table" id="refining-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-end">🟠 Crude In (Qtl)</th>
+                                        <th class="text-end">🔵 Wash Oil (Qtl)</th>
+                                        <th class="text-end">🟣 Gaad (Qtl)</th>
+                                        <th class="text-center">Recovery / Loss</th>
+                                        <th>Remarks</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="refining-tbody">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="refining-empty-state" style="display:none; text-align:center; padding:48px 20px; color:var(--text-secondary);">
+                            <i class="fa-solid fa-flask-vial" style="font-size:3rem; opacity:0.2; margin-bottom:16px; display:block;"></i>
+                            <h3 style="margin-bottom:8px; opacity:0.5;">No Refining Batches Logged Yet</h3>
+                            <p class="text-sm">Click <strong>Log Refining Batch</strong> to convert crude oil into wash oil &amp; gaad.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3C. PARTY ACCOUNTS LEDGER VIEW -->
+                <section id="party-accounts" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>📒 Party Ledger Accounts</h2>
+                            <p>View chronological account statements, outstanding balances, and post bank/cash payments for any supplier or customer.</p>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <button class="btn btn-secondary" onclick="openModal('supplier-modal')">
+                                <i class="fa-solid fa-user-plus text-primary"></i> Register Supplier
+                            </button>
+                            <button class="btn btn-secondary" onclick="openModal('customer-modal')">
+                                <i class="fa-solid fa-user-plus text-success"></i> Register Customer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Global Ledger KPI Strip (Shown by default when no party is selected) -->
+                    <div class="kpi-grid mb-3" id="global-ledger-kpis" style="grid-template-columns:repeat(4,1fr); margin-top: 10px;">
+                        <div class="kpi-card danger">
+                            <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total Payables (Suppliers)</span>
+                                <h3 class="kpi-value" id="global-kpi-payables">₹0</h3>
+                                <span class="kpi-meta" id="global-kpi-payables-count">0 suppliers</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total Receivables (Customers)</span>
+                                <h3 class="kpi-value" id="global-kpi-receivables">₹0</h3>
+                                <span class="kpi-meta" id="global-kpi-receivables-count">0 customers</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Registered Suppliers</span>
+                                <h3 class="kpi-value" id="global-kpi-suppliers-count">0</h3>
+                                <span class="kpi-meta">Active partners</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon"><i class="fa-solid fa-people-carry-box"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Registered Customers</span>
+                                <h3 class="kpi-value" id="global-kpi-customers-count">0</h3>
+                                <span class="kpi-meta">Active clients</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Party Search Card -->
+                    <div class="card p-3 mb-3">
+                        <div class="form-row align-items-end" style="gap:1rem; flex-wrap:wrap;">
+                            <div class="form-group" style="flex:1; min-width:280px; position:relative;">
+                                <label><i class="fa-solid fa-magnifying-glass text-xs text-muted"></i> Search &amp; Select Party</label>
+                                <div class="searchable-select-container" id="ledger-party-container" style="position:relative;">
+                                    <input type="text" id="ledger-party-input" class="form-control" placeholder="🔍 Type supplier or customer name..." onclick="toggleLedgerDropdown()" oninput="filterLedgerDropdown()" autocomplete="off" style="cursor:pointer;padding-right:30px;">
+                                    <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-secondary);"><i class="fa-solid fa-chevron-down text-xs"></i></span>
+                                    <input type="hidden" id="ledger-party-select">
+                                    <div class="searchable-options" id="ledger-party-options" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);max-height:250px;overflow-y:auto;z-index:1050;margin-top:4px;">
+                                        <!-- Filled dynamically by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="ledger-party-type-badge" style="display:none; align-self:flex-end; padding-bottom:4px;">
+                                <span id="ledger-role-badge" style="padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Party Profile Banner (shown when party is selected) -->
+                    <div id="ledger-party-profile" class="card p-3 mb-3" style="display:none; background:linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.05)); border-left:3px solid var(--accent-primary);">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <div id="ledger-party-avatar" style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;"></div>
+                                    <div>
+                                        <h3 id="ledger-party-name-display" style="margin:0;font-size:1.1rem;"></h3>
+                                        <p id="ledger-party-detail" class="text-xs text-muted" style="margin:2px 0 0 0;"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-secondary btn-sm" onclick="printLedgerStatement()" title="Print / Save PDF">
+                                    <i class="fa-solid fa-print"></i> Print Statement
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Running balance visual bar -->
+                        <div id="ledger-balance-bar-wrap" style="margin-top:14px;">
+                            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-secondary);margin-bottom:4px;">
+                                <span>Payment Progress</span>
+                                <span id="ledger-bar-pct-label">0% settled</span>
+                            </div>
+                            <div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;">
+                                <div id="ledger-balance-bar" style="height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:4px;transition:width 0.6s;width:0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI Strip -->
+                    <div class="kpi-grid mb-3" id="ledger-kpis" style="display:none; grid-template-columns:repeat(4,1fr);">
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title" id="ledger-kpi-balance-title">Outstanding Balance</span>
+                                <h3 class="kpi-value" id="ledger-kpi-balance">₹0</h3>
+                                <span class="kpi-meta" id="ledger-kpi-balance-meta">Reconciled</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title" id="ledger-kpi-billed-title">Total Billed</span>
+                                <h3 class="kpi-value" id="ledger-kpi-billed">₹0</h3>
+                                <span class="kpi-meta" id="ledger-kpi-weight">0.00 Qtl Total</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title" id="ledger-kpi-paid-title">Payments Posted</span>
+                                <h3 class="kpi-value" id="ledger-kpi-paid">₹0</h3>
+                                <span class="kpi-meta" id="ledger-kpi-transactions">0 logs</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Total Transactions</span>
+                                <h3 class="kpi-value" id="ledger-kpi-txn-count">0</h3>
+                                <span class="kpi-meta" id="ledger-kpi-txn-meta">entries</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Body: Payment Form + Statement -->
+                    <div class="form-row mb-3" id="ledger-body-row" style="display:none; gap:1.5rem; align-items:flex-start;">
+                        <!-- Left: Post Payment -->
+                        <div class="card p-3 col-4" style="align-self:flex-start; min-width:260px;">
+                            <h3 class="mb-3 text-lg font-bold"><i class="fa-solid fa-wallet text-primary"></i> Post Payment / Payout</h3>
+                            <form id="ledger-payment-form">
+                                <div class="form-group mb-3">
+                                    <label for="pay-date">Transaction Date *</label>
+                                    <input type="date" id="pay-date" required class="form-control">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="pay-type">Transaction Type *</label>
+                                    <select id="pay-type" required class="form-control">
+                                        <option value="Paid">Outward Payout (Paid to Supplier)</option>
+                                        <option value="Received">Inward Receipt (Received from Client)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="pay-amount">Amount (₹) *</label>
+                                    <input type="number" step="0.01" id="pay-amount" required placeholder="e.g. 50000" class="form-control">
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="pay-method">Payment Mode *</label>
+                                    <select id="pay-method" required class="form-control">
+                                        <option value="Bank" selected>Bank Transfer (RTGS / NEFT / IMPS)</option>
+                                        <option value="Cheque">Cheque Payment</option>
+                                        <option value="Cash">Cash Ledger</option>
+                                        <option value="UPI">UPI / Online</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="pay-remark">Remarks / Instrument No.</label>
+                                    <input type="text" id="pay-remark" placeholder="e.g. Chq No 145896 / UTR" class="form-control">
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-paper-plane"></i> Post Transaction</button>
+                            </form>
+                        </div>
+
+                        <!-- Right: Statement -->
+                        <div class="card p-3 col-8" id="ledger-print-area" style="min-width:0; flex:1;">
+                            <!-- Print-only letterhead (hidden on screen) -->
+                            <div class="print-only" id="ledger-print-header" style="text-align:center;margin-bottom:14px;"></div>
+                            <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                                <h3 class="text-lg font-bold" style="margin:0;"><i class="fa-solid fa-list-check text-success"></i> Transaction Statement</h3>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <input type="month" id="ledger-filter-month" class="form-control text-xs" style="width:160px;" onchange="renderPartyAccounts()" placeholder="Filter month">
+                                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ledger-filter-month').value='';renderPartyAccounts();">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table text-xs" id="ledger-statement-table">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Ref / Lorry / Invoice</th>
+                                            <th class="text-end">Qty (Qtl)</th>
+                                            <th class="text-end">Debit (Dr)</th>
+                                            <th class="text-end">Credit (Cr)</th>
+                                            <th class="text-end">Running Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ledger-tbody">
+                                        <!-- Filled by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="ledger-empty-state" style="display:none;text-align:center;padding:40px 20px;color:var(--text-secondary);">
+                                <i class="fa-solid fa-book-open" style="font-size:2.5rem;opacity:0.2;margin-bottom:12px;display:block;"></i>
+                                <p>No transactions recorded for this party yet.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty state (no party selected) -->
+                    <div id="ledger-no-party-state" style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+                        <i class="fa-solid fa-users" style="font-size:3.5rem;opacity:0.15;margin-bottom:16px;display:block;"></i>
+                        <h3 style="opacity:0.4;margin-bottom:8px;">No Party Selected</h3>
+                        <p class="text-sm">Search for a registered supplier or customer above to view their account statement.</p>
+                    </div>
+                </section>
+
+                <!-- 9. TRANSPORT VIEW -->
+                <section id="transport" class="tab-pane">
+                    <div class="pane-header-actions">
+                        <div>
+                            <h2>🚚 Transport Fleet &amp; Logistics</h2>
+                            <p>Monitor diesel refuels, routine repairs, maintenance expenses, and mileage metrics for JCBs and Trucks.</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openModal('transport-modal')">
+                            <i class="fa-solid fa-truck-moving"></i> Log Vehicle Entry
+                        </button>
+                    </div>
+
+                    <!-- Transport KPI Strip -->
+                    <div class="kpi-grid mb-3" id="transport-kpis" style="grid-template-columns: repeat(4, 1fr); margin-top: 10px;">
+                        <div class="kpi-card info">
+                            <div class="kpi-icon"><i class="fa-solid fa-gas-pump"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Diesel Expenses (YTD)</span>
+                                <h3 class="kpi-value" id="trans-kpi-diesel-cost">₹0</h3>
+                                <span class="kpi-meta" id="trans-kpi-diesel-litres">0.0 Litres</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card success">
+                            <div class="kpi-icon"><i class="fa-solid fa-truck-moving"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Active Fleet Status</span>
+                                <h3 class="kpi-value" id="trans-kpi-active-fleet">4 Vehicles</h3>
+                                <span class="kpi-meta">2 Trucks · 2 JCBs</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card warning">
+                            <div class="kpi-icon"><i class="fa-solid fa-toolbox"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Fleet Maintenance Cost</span>
+                                <h3 class="kpi-value" id="trans-kpi-maintenance-cost">₹0</h3>
+                                <span class="kpi-meta">Servicing & spares</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card primary">
+                            <div class="kpi-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Average Mileage</span>
+                                <h3 class="kpi-value" id="trans-kpi-avg-mileage">0.0 km/L</h3>
+                                <span class="kpi-meta" id="trans-kpi-avg-mileage-meta">JCB: 0.0 L/Hr</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Filter Vehicle</label>
+                            <select id="filter-transport-vehicle" class="filter-select">
+                                <option value="">All Vehicles</option>
+                                <option value="Truck #1">Truck #1 (MH-16-AE-4860)</option>
+                                <option value="Truck #2">Truck #2 (MH-16-CC-9750)</option>
+                                <option value="JCB #1">JCB #1 (Yellow Crawler)</option>
+                                <option value="JCB #2">JCB #2 (Backhoe Loader)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Filter Type</label>
+                            <select id="filter-transport-type" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="Diesel">Diesel Refuel</option>
+                                <option value="Maintenance">Maintenance & Repair</option>
+                                <option value="Usage">Odometer / Hours Reading</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Month Filter</label>
+                            <input type="month" id="filter-transport-month" class="filter-select">
+                        </div>
+                    </div>
+
+                    <!-- Transport Data Table -->
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Vehicle</th>
+                                    <th>Type</th>
+                                    <th>Odometer / Hours</th>
+                                    <th>Diesel (Ltr)</th>
+                                    <th>Total Cost (₹)</th>
+                                    <th>Calculated Mileage</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transport-tbody">
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">No transport logs entered yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    
+    <!-- ============================================== -->
+    <!-- MODALS SECTION -->
+    <!-- ============================================== -->
+    
+    <!-- 1. ADD/EDIT RAW UNLOAD MODAL -->
+    <div id="unload-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="unload-modal-title">Log Raw Material Load</h3>
+                <button class="close-btn" onclick="closeModal('unload-modal')">&times;</button>
+            </div>
+            <form id="unload-form">
+                <input type="hidden" id="unload-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-date">Unloading Date *</label>
+                        <input type="date" id="unload-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-supplier">Supplier Name *</label>
+                        <input type="text" id="unload-supplier" required placeholder="Type or select supplier..." class="form-control" list="suppliers-datalist">
+                        <datalist id="suppliers-datalist"></datalist>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-place">Supplier Location (Place) *</label>
+                        <input type="text" id="unload-place" required placeholder="e.g. Goegeoi" class="form-control" list="places-datalist">
+                        <datalist id="places-datalist"></datalist>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-lorry">Lorry Number *</label>
+                        <input type="text" id="unload-lorry" required placeholder="e.g. MH-16CC-9758" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-invoice-weight">Invoice Weight (Qtl) *</label>
+                        <input type="number" step="0.01" id="unload-invoice-weight" required placeholder="e.g. 105.00" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-weight">Received Weight (Qtl) *</label>
+                        <input type="number" step="0.01" id="unload-weight" required placeholder="e.g. 102.85" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-location">Dumping Silo/Location</label>
+                        <input type="text" id="unload-location" placeholder="e.g. Silo-A" class="form-control" list="silos-datalist">
+                        <datalist id="silos-datalist"></datalist>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-rate">Base Rate (₹/Qtl) *</label>
+                        <input type="number" step="1" id="unload-rate" required placeholder="e.g. 4591" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-freight">Freight Charges (₹/Qtl) *</label>
+                        <input type="number" step="0.01" id="unload-freight" required placeholder="e.g. 100" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-for">FOR Rate (₹/Qtl)</label>
+                        <input type="number" step="1" id="unload-for" placeholder="Rate+Freight" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-discount">Discount (₹/Qtl)</label>
+                        <input type="number" step="0.01" id="unload-discount" value="0" placeholder="e.g. 50" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-gst-rate">GST Rate (%) *</label>
+                        <select id="unload-gst-rate" required class="form-control">
+                            <option value="0">0% (Nil)</option>
+                            <option value="5" selected>5% (Cotton Seed)</option>
+                            <option value="12">12%</option>
+                            <option value="18">18%</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-seed-type">Seed Type *</label>
+                        <select id="unload-seed-type" required class="form-control">
+                            <option value="OMS" selected>OMS (Out of State)</option>
+                            <option value="MS">MS (Maharashtra)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-status">Load Status *</label>
+                        <select id="unload-status" required class="form-control">
+                            <option value="Standard" selected>Standard / Accepted</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Returned">Returned</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-quality">Quality Remark / Moisture / Grade</label>
+                        <input type="text" id="unload-quality" placeholder="e.g. 8% Moisture, Grade-A" class="form-control">
+                    </div>
+                </div>
+                <div class="card mb-3 py-2 bg-dark-subtle">
+                    <h4 class="mb-1 text-sm font-bold">Inbound Gunnies / Packaging (Bardan)</h4>
+                    <p class="text-xs text-muted mb-2">If seeds are received in bags, select bag type to increase PP bag stock ledger.</p>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-4">
+                            <label for="unload-bag-select" class="text-xs">Select PP Bag Size</label>
+                            <select id="unload-bag-select" class="form-control text-xs">
+                                <option value="">-- No Bag (Bulk Delivery) --</option>
+                                <option value="gm-pp-50">50kg PP Bag</option>
+                                <option value="gm-pp-60">60kg PP Bag</option>
+                                <option value="gm-pp-70">70kg PP Bag</option>
+                                <option value="gm-pp-km">KM PP</option>
+                                <option value="gm-pp-mm">MM PP</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="unload-bag-qty" class="text-xs">Bags Count (Qty)</label>
+                            <input type="number" id="unload-bag-qty" placeholder="e.g. 740" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="unload-bag-rate" class="text-xs">Rate per Bag (₹)</label>
+                            <input type="number" step="0.01" id="unload-bag-rate" placeholder="e.g. 16.00" class="form-control text-xs">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="unload-remark">Remarks</label>
+                    <textarea id="unload-remark" rows="2" placeholder="Any quality notes, packing details etc." class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('unload-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Log Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1B. ADD/EDIT SALES ENTRY MODAL -->
+    <div id="sales-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="sales-modal-title">Record Outbound Sales dispatch</h3>
+                <button class="close-btn" onclick="closeModal('sales-modal')">&times;</button>
+            </div>
+            <form id="sales-form">
+                <input type="hidden" id="sales-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-date">Dispatch Date *</label>
+                        <input type="date" id="sales-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-customer">Select Customer *</label>
+                        <input type="text" id="sales-customer" required placeholder="Type or select customer..." class="form-control" list="customers-datalist">
+                        <datalist id="customers-datalist"></datalist>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-product">Select Manufactured Product *</label>
+                        <select id="sales-product" required class="form-control">
+                            <!-- Filled by JS (Oils, Cakes, Hulls) -->
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-lorry">Lorry / Tanker Number *</label>
+                        <input type="text" id="sales-lorry" required placeholder="e.g. MH-23-T-4589" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-weight">Quantity (Quintals / Bags) *</label>
+                        <input type="number" step="0.01" id="sales-weight" required placeholder="e.g. 150.00" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-rate">Sales Rate (₹ per unit) *</label>
+                        <input type="number" step="0.01" id="sales-rate" required placeholder="e.g. 9500 (Oil) or 2800 (Cake)" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="sales-destination">Destination / Delivery Place *</label>
+                        <input type="text" id="sales-destination" required placeholder="e.g. Jalna, Hyderabad" class="form-control" list="destinations-datalist">
+                        <datalist id="destinations-datalist"></datalist>
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="sales-status-select">Payment Status *</label>
+                        <select id="sales-status-select" required class="form-control">
+                            <option value="Pending" selected>Pending / Credit</option>
+                            <option value="Paid">Paid / Cleared</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="sales-dispatch-status">Dispatch Status *</label>
+                        <select id="sales-dispatch-status" required class="form-control">
+                            <option value="Standard" selected>Standard</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Returned">Returned</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-quality-grade">Quality Grade *</label>
+                        <select id="sales-quality-grade" class="form-control" required>
+                            <option value="Grade A">Grade A (Best Quality)</option>
+                            <option value="Grade B">Grade B (Standard)</option>
+                            <option value="Grade C">Grade C (Below Standard)</option>
+                            <option value="Mixed">Mixed Quality</option>
+                            <option value="Premium">Premium / Export</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="sales-quality-remark">Quality / Test Parameters</label>
+                        <input type="text" id="sales-quality-remark" placeholder="e.g. FFA 1.2%, Moisture 0.5%, Oil% 38" class="form-control">
+                    </div>
+                </div>
+                <div class="card mb-3 py-2 bg-dark-subtle">
+                    <h4 class="mb-1 text-sm font-bold">📦 Packaging Material Deductions</h4>
+                    <p class="text-xs text-muted mb-2">Select bag type(s) used for dispatching product. Stock will be auto-deducted from the packaging ledger.</p>
+                    <div class="form-row mb-2">
+                        <div class="form-group mb-1 col-6">
+                            <label class="text-xs font-bold">PP Bags (Plastic)</label>
+                        </div>
+                        <div class="form-group mb-1 col-6">
+                            <label class="text-xs font-bold" style="color: var(--accent-warm);">🌿 Jute Bags</label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-3">
+                            <label for="sales-bag-select" class="text-xs">PP Bag Size</label>
+                            <select id="sales-bag-select" class="form-control text-xs">
+                                <option value="">-- None --</option>
+                                <option value="gm-pp-50">50kg PP Bag</option>
+                                <option value="gm-pp-60">60kg PP Bag</option>
+                                <option value="gm-pp-70">70kg PP Bag</option>
+                                <option value="gm-pp-km">KM PP</option>
+                                <option value="gm-pp-mm">MM PP</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2 col-3">
+                            <label for="sales-bag-qty" class="text-xs">PP Bag Count</label>
+                            <input type="number" id="sales-bag-qty" placeholder="e.g. 200" class="form-control text-xs" min="0">
+                        </div>
+                        <div class="form-group mb-2 col-3">
+                            <label for="sales-jute-bag-weight" class="text-xs">Jute Bag Capacity (kg)</label>
+                            <select id="sales-jute-bag-weight" class="form-control text-xs">
+                                <option value="">-- None --</option>
+                                <option value="45">45 kg Jute Bag</option>
+                                <option value="50">50 kg Jute Bag</option>
+                                <option value="60">60 kg Jute Bag</option>
+                                <option value="75">75 kg Jute Bag</option>
+                                <option value="90">90 kg Jute Bag</option>
+                                <option value="100">100 kg Jute Bag</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2 col-3">
+                            <label for="sales-jute-bag-qty" class="text-xs">Jute Bag Count</label>
+                            <input type="number" id="sales-jute-bag-qty" placeholder="e.g. 120" class="form-control text-xs" min="0">
+                        </div>
+                    </div>
+                    <div id="sales-bag-total-info" class="text-xs text-muted mt-1" style="display:none;">
+                        <span id="sales-bag-total-weight-text"></span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="sales-remark">Remarks</label>
+                    <textarea id="sales-remark" rows="2" placeholder="Quality parameters, test results, invoice comments..." class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('sales-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Sales Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1C. CUSTOMER DIRECTORY REGISTRY MODAL -->
+    <div id="customer-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="customer-modal-title">Register Client Details</h3>
+                <button class="close-btn" onclick="closeModal('customer-modal')">&times;</button>
+            </div>
+            <form id="customer-form">
+                <input type="hidden" id="cust-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="cust-name">Company / Business Name *</label>
+                        <input type="text" id="cust-name" required placeholder="e.g. Vardhaman Refinery Ltd" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="cust-gstin">GSTIN Number (Tax Registration) *</label>
+                        <input type="text" id="cust-gstin" required placeholder="e.g. 27AAAAA1111A1Z1" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="cust-contact">Contact Person</label>
+                        <input type="text" id="cust-contact" placeholder="e.g. Mr. Shah" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="cust-phone">Phone Number *</label>
+                        <input type="text" id="cust-phone" required placeholder="e.g. +91 9876543210" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="cust-address">Registered Billing Address *</label>
+                    <textarea id="cust-address" required rows="2" placeholder="Full street address, state, pincode for Tax Invoice creation..." class="form-control"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="cust-terms">Default Payout Credit Terms</label>
+                        <input type="text" id="cust-terms" placeholder="e.g. 21 Days Credit" class="form-control" value="21 Days Credit">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('customer-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 2. QUICK DAY STOCK EDIT MODAL -->
+    <div id="quick-stock-modal" class="modal">
+        <div class="modal-content-sm">
+            <div class="modal-header">
+                <h3>Edit Stock Ledger Day Value</h3>
+                <button class="close-btn" onclick="closeModal('quick-stock-modal')">&times;</button>
+            </div>
+            <form id="quick-stock-form">
+                <div class="form-group mb-3">
+                    <label for="qs-product">Select Product *</label>
+                    <select id="qs-product" required class="form-control">
+                        <!-- Filled by JS -->
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="qs-day">Select Day of Month *</label>
+                    <input type="number" id="qs-day" min="1" max="31" required class="form-control">
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="qs-receipt">Day Receipt Qty</label>
+                        <input type="number" step="0.01" id="qs-receipt" value="0" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="qs-issue">Day Issue Qty</label>
+                        <input type="number" step="0.01" id="qs-issue" value="0" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="revertDayStockToAuto()">Reset to Auto</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('quick-stock-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Update Grid</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 3. ADD/EDIT SPARE PART MODAL -->
+    <div id="spare-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="spare-modal-title">Register Spare Part</h3>
+                <button class="close-btn" onclick="closeModal('spare-modal')">&times;</button>
+            </div>
+            <form id="spare-form">
+                <input type="hidden" id="spare-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="spare-code">Part Code/Number *</label>
+                        <input type="text" id="spare-code" required placeholder="e.g. SHA-EX-102" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="spare-name">Part Name *</label>
+                        <input type="text" id="spare-name" required placeholder="e.g. Expander Main Shaft" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="spare-machine">Equipment / Section Category *</label>
+                        <select id="spare-machine" required class="form-control">
+                            <option value="Expander">Expander Section</option>
+                            <option value="Filter Press">Filter Press Section</option>
+                            <option value="Boiler">Boiler House</option>
+                            <option value="Decanter">Decanter & Centrifuge</option>
+                            <option value="Electrical">Motors & Electricals</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="spare-unit">Unit of Measure *</label>
+                        <input type="text" id="spare-unit" required placeholder="e.g. Pcs, Meters, Sets" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="spare-stock">Initial Stock Quantity *</label>
+                        <input type="number" id="spare-stock" required value="0" min="0" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="spare-min">Minimum Reorder Stock *</label>
+                        <input type="number" id="spare-min" required value="1" min="0" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="spare-cost">Unit Cost (₹) *</label>
+                        <input type="number" id="spare-cost" required value="0" min="0" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('spare-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Spare Part</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 4. LOG REPAIR / MAINTENANCE MODAL -->
+    <div id="repair-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="repair-modal-title">Record Machinery Repair Job</h3>
+                <button class="close-btn" onclick="closeModal('repair-modal')">&times;</button>
+            </div>
+            <form id="repair-form">
+                <input type="hidden" id="repair-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-date">Maintenance Date *</label>
+                        <input type="date" id="repair-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-machine">Machine Name / Code *</label>
+                        <input type="text" id="repair-machine" required placeholder="e.g. Expander #1, Boiler Feed Pump" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-type">Maintenance Category *</label>
+                        <select id="repair-type" required class="form-control">
+                            <option value="Breakdown">Breakdown Repair (Sudden Failure)</option>
+                            <option value="Preventive">Preventive Maintenance (Scheduled)</option>
+                            <option value="Routine">Routine Service (Lubrication, cleaning)</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-status">Job Status *</label>
+                        <select id="repair-status" required class="form-control">
+                            <option value="Completed">Completed & Operational</option>
+                            <option value="In-progress">In-Progress</option>
+                            <option value="Pending">Pending Parts / Standby</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card mb-3 py-2 bg-dark-subtle">
+                    <h4 class="mb-2 text-sm font-bold">Spare Parts Consumed</h4>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-6">
+                            <label for="repair-spare-select" class="text-xs">Select Part</label>
+                            <select id="repair-spare-select" class="form-control text-xs">
+                                <option value="">-- No Spare Part Used --</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="repair-spare-qty" class="text-xs">Quantity Used</label>
+                            <input type="number" id="repair-spare-qty" min="1" value="1" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-secondary btn-sm w-100" id="add-consumed-spare-btn" style="height:32px; padding: 0;">Add</button>
+                        </div>
+                    </div>
+                    
+                    <div class="consumed-parts-list mt-2" id="consumed-parts-list-display">
+                        <!-- List of selected spares -->
+                        <span class="text-muted text-xs">No spare parts added to this repair.</span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-engineer">Contractor / Technician *</label>
+                        <input type="text" id="repair-engineer" required placeholder="e.g. Ramesh Engineering Works" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="repair-service-cost">Service/Labor Cost (₹) *</label>
+                        <input type="number" id="repair-service-cost" required value="0" min="0" class="form-control">
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="repair-desc">Maintenance Details / Description of Work *</label>
+                    <textarea id="repair-desc" rows="2" required placeholder="Explain failure reason, repairs conducted, parts replaced..." class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('repair-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Log Repair Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5B. REGISTER / EDIT MACHINE (RUN-HOURS) MODAL -->
+    <div id="machine-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="machine-modal-title">Register Machine</h3>
+                <button class="close-btn" onclick="closeModal('machine-modal')">&times;</button>
+            </div>
+            <form id="machine-form">
+                <input type="hidden" id="machine-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="machine-name">Machine Name *</label>
+                        <input type="text" id="machine-name" required placeholder="e.g. Expeller #1" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="machine-category">Category *</label>
+                        <select id="machine-category" required class="form-control">
+                            <option value="Expeller">Expeller</option>
+                            <option value="Decorticator">Decorticator</option>
+                            <option value="Boiler">Boiler</option>
+                            <option value="Filter Press">Filter Press</option>
+                            <option value="Pump / Motor">Pump / Motor</option>
+                            <option value="Generator">Generator</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-4">
+                        <label for="machine-current-hours">Current Run Hours *</label>
+                        <input type="number" step="0.1" id="machine-current-hours" required placeholder="e.g. 1200" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="machine-interval" title="Run hours between routine services">Service Interval (hrs) *</label>
+                        <input type="number" step="1" id="machine-interval" required value="500" placeholder="e.g. 500" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="machine-last-service" title="Run-hour reading at the last service. Leave blank to use current hours.">Hours at Last Service</label>
+                        <input type="number" step="0.1" id="machine-last-service" placeholder="Defaults to current" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="machine-remark">Notes (make / model / location)</label>
+                    <input type="text" id="machine-remark" placeholder="e.g. Rajkot 15-bolt, Shed A" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('machine-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Machine</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+                
+
+                
+
+    <!-- 1D. ADD/EDIT SUPPLIER DETAILS MODAL -->
+    <div id="supplier-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="supplier-modal-title">Register Supplier Details</h3>
+                <button class="close-btn" onclick="closeModal('supplier-modal')">&times;</button>
+            </div>
+            <form id="supplier-form">
+                <input type="hidden" id="supp-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="supp-name">Company / Supplier Name *</label>
+                        <input type="text" id="supp-name" required placeholder="e.g. Satyan Agco" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="supp-gstin">GSTIN Number (Tax Registration)</label>
+                        <input type="text" id="supp-gstin" placeholder="e.g. 27AAAAA1111A1Z1" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="supp-contact">Contact Person</label>
+                        <input type="text" id="supp-contact" placeholder="e.g. Rajesh Kumar" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="supp-phone">Phone Number *</label>
+                        <input type="text" id="supp-phone" required placeholder="e.g. +91 9999999999" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="supp-address">Billing Address *</label>
+                    <textarea id="supp-address" required rows="2" placeholder="Full street address, state, pincode..." class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('supplier-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1E. LOG CRUSHING ISSUE MODAL -->
+    <div id="production-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="production-modal-title">Log Seed Crushing / Issue to Production</h3>
+                <button class="close-btn" onclick="closeModal('production-modal')">&times;</button>
+            </div>
+            <form id="production-form">
+                <input type="hidden" id="prod-log-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="prod-date">Date of Crushing *</label>
+                        <input type="date" id="prod-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="prod-lorry-select">Select Received GR Lot (Lorry) *</label>
+                        <select id="prod-lorry-select" required class="form-control" onchange="handleProductionLotChange()">
+                            <!-- Populated dynamically by JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="prod-seed-type">Seed Category (OMS/MS) *</label>
+                        <select id="prod-seed-type" required class="form-control" disabled>
+                            <option value="cs-oms">Cotton Seed (OMS)</option>
+                            <option value="cs-ms">Cotton Seed (MS)</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="prod-weight">Weight Issued to Crushing (Quintals) *</label>
+                        <input type="number" step="0.01" id="prod-weight" required placeholder="e.g. 85.50" class="form-control" oninput="validateProductionWeightLimit()">
+                        <span id="prod-avail-weight-display" class="text-xs text-muted mt-1" style="display: block; font-weight: 500;">No lot selected yet</span>
+                    </div>
+                </div>
+                
+                <div class="card mb-3 py-2 bg-dark-subtle">
+                    <h4 class="mb-1 text-sm font-bold">Finished Goods Yield (Production Outputs)</h4>
+                    <p class="text-xs text-muted mb-2">Record the output weights of crude oil, cake, and hulls produced from this batch. Crude oil is later refined into wash oil &amp; gaad in the Oil Refining tab.</p>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-4">
+                            <label for="prod-yield-oil" class="text-xs">Crude Oil (Qtl)</label>
+                            <input type="number" step="0.01" id="prod-yield-oil" placeholder="e.g. 12.50" class="form-control text-xs" value="0">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="prod-yield-cake" class="text-xs">Khal / Cake (Qtl)</label>
+                            <input type="number" step="0.01" id="prod-yield-cake" placeholder="e.g. 82.00" class="form-control text-xs" value="0">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="prod-yield-hulls" class="text-xs">Hulls / Sludge (Qtl)</label>
+                            <input type="number" step="0.01" id="prod-yield-hulls" placeholder="e.g. 5.50" class="form-control text-xs" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="prod-remark">Shift / Expeller / Remarks</label>
+                    <textarea id="prod-remark" rows="2" placeholder="e.g. Shift A, Operator Shyam, Expeller #3" class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('production-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Crushing Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1E2. LOAD LOT TO EXPELLER MODAL -->
+    <div id="active-crushing-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load Raw Lot into Expeller</h3>
+                <button class="close-btn" onclick="closeModal('active-crushing-modal')">&times;</button>
+            </div>
+            <form id="active-crushing-form">
+                <p class="text-xs text-muted mb-3">Mark which raw material lot is going onto an expeller now. It appears on the live floor board so yields trace back to the lot's supplier.</p>
+                <div class="form-group mb-3">
+                    <label for="ac-lot-select">Raw Material Lot (GR / Lorry) *</label>
+                    <select id="ac-lot-select" required class="form-control"></select>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="ac-expeller">Expeller / Machine *</label>
+                    <input type="text" id="ac-expeller" required list="ac-expeller-list" placeholder="e.g. Expeller #1" class="form-control">
+                    <datalist id="ac-expeller-list">
+                        <option value="Expeller #1"></option>
+                        <option value="Expeller #2"></option>
+                        <option value="Expeller #3"></option>
+                        <option value="Expeller #4"></option>
+                    </datalist>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('active-crushing-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-play"></i> Start Crushing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 1F. LOG OIL REFINING BATCH MODAL -->
+    <div id="refining-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="refining-modal-title">Log Oil Refining Batch</h3>
+                <button class="close-btn" onclick="closeModal('refining-modal')">&times;</button>
+            </div>
+            <form id="refining-form">
+                <input type="hidden" id="refining-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="refining-date">Date of Refining *</label>
+                        <input type="date" id="refining-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="ref-crude-input">Crude Oil Consumed (Qtl) *</label>
+                        <input type="number" step="0.01" id="ref-crude-input" required placeholder="e.g. 50.00" class="form-control">
+                    </div>
+                </div>
+
+                <div class="card mb-3 py-2 bg-dark-subtle">
+                    <h4 class="mb-1 text-sm font-bold">Refined Outputs</h4>
+                    <p class="text-xs text-muted mb-2">Record the wash oil and gaad (soapstock) produced from the crude oil refined in this batch.</p>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-6">
+                            <label for="ref-wash-yield" class="text-xs">Wash Oil (Qtl)</label>
+                            <input type="number" step="0.01" id="ref-wash-yield" placeholder="e.g. 45.00" class="form-control text-xs" value="0">
+                        </div>
+                        <div class="form-group mb-2 col-6">
+                            <label for="ref-gaad-yield" class="text-xs">Gaad / Soapstock (Qtl)</label>
+                            <input type="number" step="0.01" id="ref-gaad-yield" placeholder="e.g. 4.00" class="form-control text-xs" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="ref-remark">Shift / Operator / Remarks</label>
+                    <textarea id="ref-remark" rows="2" placeholder="e.g. Refinery line 1, Operator Ram" class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('refining-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Refining Batch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 9B. ADD/EDIT TRANSPORT LOG MODAL -->
+    <div id="transport-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="transport-modal-title">Log Vehicle Entry</h3>
+                <button class="close-btn" onclick="closeModal('transport-modal')">&times;</button>
+            </div>
+            <form id="transport-form">
+                <input type="hidden" id="transport-id">
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-date">Transaction Date *</label>
+                        <input type="date" id="trans-date" required class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-vehicle">Select Vehicle *</label>
+                        <select id="trans-vehicle" required class="form-control" onchange="adjustTransportFormFields()">
+                            <option value="Truck #1">Truck #1 (MH-16-AE-4860)</option>
+                            <option value="Truck #2">Truck #2 (MH-16-CC-9750)</option>
+                            <option value="JCB #1">JCB #1 (Yellow Crawler)</option>
+                            <option value="JCB #2">JCB #2 (Backhoe Loader)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-type">Entry Type *</label>
+                        <select id="trans-type" required class="form-control" onchange="adjustTransportFormFields()">
+                            <option value="Diesel">Diesel Refuel</option>
+                            <option value="Maintenance">Maintenance & Repair</option>
+                            <option value="Usage">Odometer / Hours Log only</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-usage" id="trans-usage-label">Current Odometer (KM) *</label>
+                        <input type="number" step="0.1" id="trans-usage" required placeholder="e.g. 45012.5" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row" id="trans-diesel-cost-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-litres">Litres Filled</label>
+                        <input type="number" step="0.01" id="trans-litres" placeholder="e.g. 85.5" class="form-control" value="0">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="trans-cost">Total Cost (₹)</label>
+                        <input type="number" step="0.01" id="trans-cost" placeholder="e.g. 8000" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="trans-remark">Remarks / Description</label>
+                    <textarea id="trans-remark" rows="2" placeholder="e.g. Full tank refuel at HP Petrol pump, filter replacement..." class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transport-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Fleet Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js?v=2.8"></script>
+</body>
+</html>

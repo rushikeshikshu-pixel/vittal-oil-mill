@@ -1,0 +1,23 @@
+# Exclude private database credentials
+firebase-service-key.json
+firebase-service-key.json.json
+
+# Exclude local configuration URL
+firebase-config.json
+
+# Exclude the live mill database files (never put private data on GitHub)
+database.json
+database.json.tmp
+license.cache
+
+# Exclude all local database backups
+backups/
+backups/recent/
+backups/daily/
+
+# Exclude python local cache files
+__pycache__/
+*.pyc
+
+# Exclude scratch scripts used for development
+scratch/
