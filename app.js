@@ -116,9 +116,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // security — the database file is still plain JSON readable outside the app.
 const ROLE_ACCESS = {
     admin:       { label: 'Anand (Owner)', icon: '🛡️', desc: 'Full access & deletes', tabs: '*', canDelete: true },
-    weighbridge: { label: 'Weighbridge Operator', icon: '⚖️', desc: 'Unloads & Sales', tabs: ['dashboard', 'unloads', 'sales'], canDelete: false },
-    supervisor:  { label: 'Plant Supervisor', icon: '🏭', desc: 'Production, Refining, Spares, Maintenance', tabs: ['dashboard', 'production', 'refining', 'stock', 'spares', 'repairs'], canDelete: false },
-    accountant:  { label: 'Accountant', icon: '📒', desc: 'Ledger & Invoices', tabs: ['dashboard', 'party-accounts', 'invoices', 'analytics'], canDelete: false },
+    weighbridge: { label: 'Weighbridge Operator', icon: '⚖️', desc: 'Unloads & Sales', tabs: ['dashboard', 'unloads', 'sales', 'manual'], canDelete: false },
+    supervisor:  { label: 'Plant Supervisor', icon: '🏭', desc: 'Production, Refining, Spares, Maintenance', tabs: ['dashboard', 'production', 'refining', 'stock', 'spares', 'repairs', 'manual'], canDelete: false },
+    accountant:  { label: 'Accountant', icon: '📒', desc: 'Ledger & Invoices', tabs: ['dashboard', 'party-accounts', 'invoices', 'analytics', 'manual'], canDelete: false },
 };
 const DEFAULT_PINS = { admin: '4321', weighbridge: '1111', supervisor: '2222', accountant: '3333' };
 let currentRole = 'admin';
@@ -622,6 +622,26 @@ function setupEventListeners() {
         html.setAttribute('data-theme', newTheme);
         themeToggleBtn.querySelector('span').textContent = newTheme === 'light' ? 'Light Mode' : 'Dark Mode';
         themeToggleBtn.querySelector('i').className = newTheme === 'light' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    });
+
+    // User Manual inner anchors smooth scroll
+    document.querySelectorAll('.m-nav-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                document.querySelectorAll('.m-nav-link').forEach(l => {
+                    l.classList.remove('active');
+                    l.style.background = 'none';
+                    l.style.color = 'var(--text-secondary)';
+                });
+                link.classList.add('active');
+                link.style.background = 'var(--bg-card-hover)';
+                link.style.color = 'var(--text-primary)';
+            }
+        });
     });
 
     // Mock Data Buttons

@@ -99,6 +99,10 @@
                     <i class="fa-solid fa-truck-moving"></i>
                     <span>Transport</span>
                 </button>
+                <button class="nav-item" data-tab="manual">
+                    <i class="fa-solid fa-book"></i>
+                    <span>User Manual</span>
+                </button>
                 <button class="nav-item" data-tab="analytics">
                     <i class="fa-solid fa-chart-pie"></i>
                     <span>Data Analytics</span>
@@ -1116,6 +1120,201 @@
                         <h3 class="text-sm font-bold mb-3">📉 Expeller Crushing Recovery Yield Over Time (%)</h3>
                         <div style="position:relative; height:300px; width:100%;">
                             <canvas id="analyticsYieldTrendChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 11. USER MANUAL VIEW -->
+                <section id="manual" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>User &amp; Operations Manual</h2>
+                        <p>Complete step-by-step instructions for running the Vitthal Oil Mill ERP.</p>
+                    </div>
+                    
+                    <div class="manual-layout" style="display: flex; gap: 24px; align-items: flex-start;">
+                        <!-- Left Navigation Sidebar -->
+                        <div class="manual-nav" style="width: 240px; flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px; position: sticky; top: 24px; display: flex; flex-direction: column; gap: 8px;">
+                            <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; margin-bottom: 8px;">Operations Guide</h4>
+                            <a href="#m-intro" class="m-nav-link active" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition); background: var(--bg-card-hover);">
+                                <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> Introduction
+                            </a>
+                            <a href="#m-unloads" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-box" style="color: var(--accent);"></i> Seed Unloads
+                            </a>
+                            <a href="#m-sales" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-cart-shopping" style="color: var(--success);"></i> Sales Dispatches
+                            </a>
+                            <a href="#m-production" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-industry" style="color: var(--warning);"></i> Crushing logs
+                            </a>
+                            <a href="#m-refining" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-filter" style="color: var(--info);"></i> Oil Refining
+                            </a>
+                            <a href="#m-party" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-wallet" style="color: var(--primary);"></i> Party Ledgers
+                            </a>
+                            <a href="#m-stock" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-chart-line" style="color: var(--accent);"></i> Stock Statement
+                            </a>
+                            <a href="#m-maintenance" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-screwdriver-wrench" style="color: var(--danger);"></i> Spares &amp; Maintenance
+                            </a>
+                            <a href="#m-fleet" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-truck-moving" style="color: var(--info);"></i> Transport Fleet
+                            </a>
+                            <a href="#m-invoices" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-file-invoice-dollar" style="color: var(--success);"></i> Invoice Builder
+                            </a>
+                            <a href="#m-security" class="m-nav-link" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 0.88rem; font-weight: 500; text-decoration: none; transition: var(--transition);">
+                                <i class="fa-solid fa-shield-halved" style="color: var(--warning);"></i> Security &amp; Roles
+                            </a>
+                        </div>
+                        
+                        <!-- Right Detail Cards Scroll Container -->
+                        <div class="manual-content" style="flex: 1; display: flex; flex-direction: column; gap: 24px; max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                            <!-- Intro Card -->
+                            <div id="m-intro" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-circle-info text-primary"></i> Introduction &amp; Quick Start
+                                </h3>
+                                <p class="mb-3">This ERP system manages the daily weighing, production logs, maintenance schedules, and party ledgers for Vitthal Oil Mill. It is designed to run offline on your local network while maintaining real-time backup synchronisation with the Google Firebase Cloud database.</p>
+                                <div style="background: var(--bg-card-hover); padding: 12px; border-radius: var(--radius-sm); border-left: 4px solid var(--primary); font-size: 0.88rem;">
+                                    <strong>🚀 Quick Navigation Tip:</strong> Click any section on the left sidebar to jump directly to its instructions, or scroll through this page to read the complete guide.
+                                </div>
+                            </div>
+                            
+                            <!-- Unloads Card -->
+                            <div id="m-unloads" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-box text-accent"></i> Cotton Seed Unloads
+                                </h3>
+                                <p class="mb-3">Use this section to record raw cotton seed deliveries arriving at the mill's weighbridge.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Click <strong>"Record Lorry Entry"</strong> at the top right of the Unloads tab.</li>
+                                    <li>Enter the <strong>Invoice Weight</strong> (sent by the supplier) and the actual <strong>Net Received Weight</strong> weighed at your scale.</li>
+                                    <li>The system automatically computes any weight <strong>Shortage</strong> and displays a warning if it exceeds limits.</li>
+                                    <li>Specify the quantity and type of packing bags (plastic or jute). The system automatically tracks your bag inventory.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Sales Card -->
+                            <div id="m-sales" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-cart-shopping text-success"></i> Finished Product Dispatches
+                                </h3>
+                                <p class="mb-3">Log deliveries of oil tanks or cake/hulls trucks dispatched to customers.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Click <strong>"Record Dispatch Entry"</strong>.</li>
+                                    <li>Select the target customer and product type (e.g. Wash Oil, Crude Oil, Cake/Khal, Hulls).</li>
+                                    <li>Enter weight, sale rate, and transport lorry number.</li>
+                                    <li>Saving a dispatch automatically deducts the volume from your physical product stocks.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Crushing Card -->
+                            <div id="m-production" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-industry text-warning"></i> Expeller Crushing Logs
+                                </h3>
+                                <p class="mb-3">Log daily crushing runs to measure mechanical yield and oil recovery rates.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Click <strong>"Log Crushing Run"</strong>.</li>
+                                    <li>Select the active Seed Lorry lot being crushed and enter total weight fed into the expeller.</li>
+                                    <li>Input finished output weights: Crude Oil, Cake/Khal, and Cotton Hulls.</li>
+                                    <li>The system calculates the recovery yield percentage automatically. Standard runs should achieve <strong>98%+</strong> yield recovery.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Refining Card -->
+                            <div id="m-refining" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-filter text-info"></i> Oil Refining Logs
+                                </h3>
+                                <p class="mb-3">Tracks chemical processing runs where raw Crude Oil is processed into Refined Wash Oil.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Click <strong>"Log Refining Batch"</strong>.</li>
+                                    <li>Input the weight of Crude Oil consumed, and the finished outputs (Wash Oil, Soap Stock, and Acid Oil).</li>
+                                    <li>The system calculates the refining process weight loss and loss percentage dynamically.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Party Ledgers Card -->
+                            <div id="m-party" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-wallet text-primary"></i> Party Ledger Accounts
+                                </h3>
+                                <p class="mb-3">Provides full financial details for each supplier (whom you buy seeds from) and customer (whom you sell oil/cake to).</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Select a supplier or customer name to load their live transactions list.</li>
+                                    <li>Unloads add to supplier balances, while sales add to customer balances.</li>
+                                    <li>To log payments (bank RTGS, cash, or cheques), click <strong>"Record Payment/Payout"</strong> at the top right of the Party Accounts tab.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Stock Card -->
+                            <div id="m-stock" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-chart-line text-accent"></i> Stock Statement Ledger
+                                </h3>
+                                <p class="mb-3">Displays active physical inventories of raw seed, oils, cake, and hulls.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Stocks are computed automatically in real-time from your logged purchases, crushing yields, and sales.</li>
+                                    <li>If you perform a physical audit and find discrepancy, click on any stock cell directly to enter a <strong>Manual Override</strong>.</li>
+                                    <li>Click "Reset to Auto" on the overrides grid to restore database-driven automatic calculations.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Spares & Maintenance Card -->
+                            <div id="m-maintenance" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-screwdriver-wrench text-danger"></i> Spare Parts &amp; Maintenance Logs
+                                </h3>
+                                <p class="mb-3">Track machinery upkeep, breakdown repairs, and parts stock levels.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>The **Spare Parts** catalog lists all expeller blades, cones, and gaskets. Low stock items show red alerts.</li>
+                                    <li>When logging a repair job, specify which spare parts were consumed. Saving the repair automatically deducts those parts from the inventory catalog.</li>
+                                    <li>Click **"Register Spare Part"** or **"Record Repair Job"** to add entries.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Transport Card -->
+                            <div id="m-fleet" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-truck-moving text-info"></i> Transport Fleet Tracking
+                                </h3>
+                                <p class="mb-3">Tracks diesel fuel expenses and operation hours for JCB excavators and delivery trucks.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Tracks fuel efficiency metrics: **km/L** for transport trucks and **Litres/Hour** for heavy excavators.</li>
+                                    <li>Click **"Log Vehicle Entry"** to record refuels or routine maintenance details.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Invoices Card -->
+                            <div id="m-invoices" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-file-invoice-dollar text-success"></i> Bill Builder &amp; Invoice Generator
+                                </h3>
+                                <p class="mb-3">Generate GST tax invoices for completed dispatches.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Select a Customer and click **"Create Invoice"**.</li>
+                                    <li>Select the dispatches you want to bill from the checkboxes list.</li>
+                                    <li>Choose GST rate ($5\%$ or $18\%$), add custom discount or freight additions, and click **"Generate Invoice"**.</li>
+                                    <li>You can instantly print or export the generated invoice as a clean PDF document.</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Security Card -->
+                            <div id="m-security" class="card" style="padding: 24px;">
+                                <h3 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                                    <i class="fa-solid fa-shield-halved text-warning"></i> Role Access &amp; Security
+                                </h3>
+                                <p class="mb-3">Enforce access controls for your staff to secure the dashboard views.</p>
+                                <ul style="padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; list-style-type: disc;">
+                                    <li>Turn on security by ticking **"Require role login on this device"** under the **Database** tab.</li>
+                                    <li>Staff will be prompted with a secure login keypad to enter their PIN.</li>
+                                    <li>The system hides sensitive tabs (like Invoices, Ledgers, Database, and Analytics) for lower roles (Weighbridge and Supervisor). Only Anand (Owner) can view all tabs and delete entries.</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </section>
