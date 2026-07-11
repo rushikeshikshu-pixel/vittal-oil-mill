@@ -9,7 +9,7 @@ echo.
 
 :: Configure your update URL here. 
 :: You can host these files on GitHub (Raw), your own website, or a free host.
-set UPDATE_URL=https://raw.githubusercontent.com/YOUR-GITHUB-USERNAME/vittal-oil-mill/main
+set UPDATE_URL=https://raw.githubusercontent.com/rushikeshikshu-pixel/vittal-oil-mill/main
 
 :: Verify curl is installed (Standard on Windows 10/11)
 curl --version >nul 2>&1
