@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // UI-level gating only: it organises which staff see/do what. It is NOT data
 // security — the database file is still plain JSON readable outside the app.
 const ROLE_ACCESS = {
-    admin:       { label: 'Administrator (Owner)', icon: '🛡️', desc: 'Full access & deletes', tabs: '*', canDelete: true },
+    admin:       { label: 'Anand (Owner)', icon: '🛡️', desc: 'Full access & deletes', tabs: '*', canDelete: true },
     weighbridge: { label: 'Weighbridge Operator', icon: '⚖️', desc: 'Unloads & Sales', tabs: ['dashboard', 'unloads', 'sales'], canDelete: false },
     supervisor:  { label: 'Plant Supervisor', icon: '🏭', desc: 'Production, Refining, Spares, Maintenance', tabs: ['dashboard', 'production', 'refining', 'stock', 'spares', 'repairs'], canDelete: false },
     accountant:  { label: 'Accountant', icon: '📒', desc: 'Ledger & Invoices', tabs: ['dashboard', 'party-accounts', 'invoices', 'analytics'], canDelete: false },
@@ -275,7 +275,7 @@ function saveSecurityConfig() {
         pins[r] = v || DEFAULT_PINS[r];
     });
     if (enabled && !pins.admin) {
-        alert('The Administrator PIN cannot be empty when access control is enabled.');
+        alert('The Anand (Owner) PIN cannot be empty when access control is enabled.');
         return;
     }
     state.security = { enabled, pins };
