@@ -34,26 +34,26 @@ const PRODUCTS = [
 
 // Initial Opening Stocks for June 2026 (matching Excel sheet starting values)
 const INITIAL_OPENING_STOCKS = {
-    'cs-ms': 825.75,
-    'cs-oms': 494.50,
-    'ch-ms': 965.10,
-    'ch-oms': 1026.02,
-    'kandi': 1000.20,
+    'cs-ms': 0.00,
+    'cs-oms': 0.00,
+    'ch-ms': 0.00,
+    'ch-oms': 0.00,
+    'kandi': 0.00,
     'khal-mm': 0.00,
     'khal-km': 0.00,
-    'oil-crude': 33.12,
-    'oil-wash': 525.75,
-    'oil-gaad': 35.68,
+    'oil-crude': 0.00,
+    'oil-wash': 0.00,
+    'oil-gaad': 0.00,
     'sarki-bardan': 0.00,
-    'gm-pp-hdr': 3709.00,
+    'gm-pp-hdr': 0.00,
     'gm-pp-50': 0.00,
     'gm-pp-60': 0.00,
-    'gm-pp-70': 2624.00,
-    'gm-pp-km': 16097.00,
-    'gm-pp-mm': 10067.00,
-    'gm-pp-gm': 9242.00,
-    'gm-pp-kg': 2013.00,
-    'gm-pp-murgi': 15067.00
+    'gm-pp-70': 0.00,
+    'gm-pp-km': 0.00,
+    'gm-pp-mm': 0.00,
+    'gm-pp-gm': 0.00,
+    'gm-pp-kg': 0.00,
+    'gm-pp-murgi': 0.00
 };
 
 // --- SYSTEM STATE ---
