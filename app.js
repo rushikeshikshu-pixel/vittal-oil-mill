@@ -2,6 +2,12 @@
    VITTHAL OIL MILL MANAGEMENT OS - APPLICATION LOGIC
    ========================================================================== */
 
+// Auto-clear old local storage cache to ensure clean state
+if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('vitthal_mill_state');
+}
+
+
 // --- STATIC CONFIGURATIONS ---
 const PRODUCTS = [
     { id: 'cs-ms', name: 'Cotton Seed (MS)', category: 'Seed' },
