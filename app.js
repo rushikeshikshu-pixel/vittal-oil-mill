@@ -432,6 +432,34 @@ function sanitizeStateArrays() {
         state.security = { enabled: false, pins: { admin: '4321', weighbridge: '1111', supervisor: '2222', accountant: '3333' } };
     }
     if (!Array.isArray(state.activeCrushing)) state.activeCrushing = [];
+
+    // Self-clean old empty stock overrides to unfreeze ledger
+    if (state.stockDaily && typeof state.stockDaily === 'object') {
+        let cleaned = false;
+        for (const m in state.stockDaily) {
+            if (!state.stockDaily[m] || typeof state.stockDaily[m] !== 'object') continue;
+            for (const p in state.stockDaily[m]) {
+                if (!state.stockDaily[m][p] || typeof state.stockDaily[m][p] !== 'object') continue;
+                for (const d in state.stockDaily[m][p]) {
+                    const val = state.stockDaily[m][p][d];
+                    if (val && parseFloat(val.receipt) === 0 && parseFloat(val.issue) === 0) {
+                        delete state.stockDaily[m][p][d];
+                        cleaned = true;
+                    }
+                }
+                if (Object.keys(state.stockDaily[m][p]).length === 0) {
+                    delete state.stockDaily[m][p];
+                }
+            }
+            if (Object.keys(state.stockDaily[m]).length === 0) {
+                delete state.stockDaily[m];
+            }
+        }
+        if (cleaned) {
+            console.log("Self-cleaned empty stock overrides");
+            setTimeout(() => { saveState(); }, 500);
+        }
+    }
 }
 
 function loadStateFromLocal() {
