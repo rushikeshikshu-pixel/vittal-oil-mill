@@ -1678,9 +1678,13 @@ function getDayLog(prodId, monthKey, day) {
     const dayStr = day < 10 ? '0' + day : '' + day;
     const dateStr = `${monthKey}-${dayStr}`;
 
-    // 1. Raw Cotton Seed unloads (Receipts)
-    if (prodId === 'cs-oms' || prodId === 'cs-ms') {
-        const targetType = prodId === 'cs-ms' ? 'MS' : 'OMS';
+    // 1. Raw Cotton Seed / Kandi unloads (Receipts)
+    if (prodId === 'cs-oms' || prodId === 'cs-ms' || prodId === 'kandi') {
+        let targetType;
+        if (prodId === 'cs-ms') targetType = 'MS';
+        else if (prodId === 'cs-oms') targetType = 'OMS';
+        else targetType = 'Kandi';
+
         state.unloads.forEach(u => {
             if (u.date === dateStr && u.status !== 'Rejected' && u.status !== 'Returned') {
                 const uType = u.seedType || 'OMS';
@@ -1694,11 +1698,15 @@ function getDayLog(prodId, monthKey, day) {
     // 2. Production issues & finished goods receipts
     state.productionLogs.forEach(p => {
         if (p.date === dateStr) {
-            // Issues: raw cotton seed issued to crushing
-            if (prodId === 'cs-oms' || prodId === 'cs-ms') {
+            // Issues: raw cotton seed / Kandi issued to crushing
+            if (prodId === 'cs-oms' || prodId === 'cs-ms' || prodId === 'kandi') {
                 const parentUnload = state.unloads.find(u => u.id === p.unloadId);
                 const uType = parentUnload ? (parentUnload.seedType || 'OMS') : 'OMS';
-                const targetType = prodId === 'cs-ms' ? 'MS' : 'OMS';
+                let targetType;
+                if (prodId === 'cs-ms') targetType = 'MS';
+                else if (prodId === 'cs-oms') targetType = 'OMS';
+                else targetType = 'Kandi';
+
                 if (uType === targetType) {
                     issue += parseFloat(p.weight) || 0;
                 }
@@ -4395,7 +4403,9 @@ function handleProductionLotChange() {
     const load = state.unloads.find(u => u.id === unloadId);
     if (load) {
         if (seedTypeSelect) {
-            seedTypeSelect.value = load.seedType === 'MS' ? 'cs-ms' : 'cs-oms';
+            if (load.seedType === 'MS') seedTypeSelect.value = 'cs-ms';
+            else if (load.seedType === 'Kandi') seedTypeSelect.value = 'kandi';
+            else seedTypeSelect.value = 'cs-oms';
         }
         
         const avail = getLotAvailableWeight(unloadId, logId);
@@ -4900,7 +4910,7 @@ function handleProductionSubmit(e) {
     const load = state.unloads.find(u => u.id === unloadId);
     if (!load) return;
     
-    const seedType = load.seedType === 'MS' ? 'cs-ms' : 'cs-oms';
+    const seedType = load.seedType === 'MS' ? 'cs-ms' : (load.seedType === 'Kandi' ? 'kandi' : 'cs-oms');
     const weight = parseFloat(document.getElementById('prod-weight').value);
     
     const oilYield = parseFloat(document.getElementById('prod-yield-oil').value) || 0;
