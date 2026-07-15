@@ -1662,7 +1662,7 @@
                     </div>
 
                     <!-- Refining KPI Strip -->
-                    <div class="kpi-grid mb-3" id="refining-kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+                    <div class="kpi-grid mb-3" id="refining-kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
                         <div class="kpi-card warning">
                             <div class="kpi-icon"><i class="fa-solid fa-oil-well"></i></div>
                             <div class="kpi-data">
@@ -1677,6 +1677,14 @@
                                 <span class="kpi-title">Wash Oil Produced</span>
                                 <h3 class="kpi-value" id="ref-kpi-wash">0 Qtl</h3>
                                 <span class="kpi-meta" id="ref-kpi-wash-pct">0% of crude</span>
+                            </div>
+                        </div>
+                        <div class="kpi-card info" style="background-color: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.2);">
+                            <div class="kpi-icon" style="color: #6366f1;"><i class="fa-solid fa-droplet-slash"></i></div>
+                            <div class="kpi-data">
+                                <span class="kpi-title">Acid Oil Produced</span>
+                                <h3 class="kpi-value" id="ref-kpi-acid">0 Qtl</h3>
+                                <span class="kpi-meta" id="ref-kpi-acid-pct">0% of crude</span>
                             </div>
                         </div>
                         <div class="kpi-card info">
@@ -1722,7 +1730,8 @@
                                         <th>Tanker</th>
                                         <th class="text-end">🟠 Crude In (Qtl)</th>
                                         <th class="text-end">🔵 Wash Oil (Qtl)</th>
-                                        <th class="text-end">🟣 Gaad (Qtl)</th>
+                                        <th class="text-end" style="color: #6366f1;">🟣 Acid Oil (Qtl)</th>
+                                        <th class="text-end" style="color: #a855f7;">🟤 Gaad (Qtl)</th>
                                         <th class="text-center">Recovery / Loss</th>
                                         <th>Remarks</th>
                                         <th>Actions</th>
@@ -2776,6 +2785,7 @@
                                 <th style="width: 150px;">Batch Date *</th>
                                 <th>Crude In (Qtl) *</th>
                                 <th>Wash Yield (Qtl) *</th>
+                                <th>Acid Oil (Qtl) *</th>
                                 <th>Gaad Yield (Qtl) *</th>
                                 <th style="width: 50px;">Action</th>
                             </tr>
@@ -2787,7 +2797,7 @@
                 </div>
 
                 <!-- Live Summary Cards -->
-                <div class="kpi-grid mb-3" style="grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; background: var(--bg-card-hover); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div class="kpi-grid mb-3" style="grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 10px; background: var(--bg-card-hover); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
                     <div style="text-align: center;">
                         <span class="text-muted text-xs" style="display: block;">Total Crude In</span>
                         <strong id="ref-summary-crude" style="font-size: 0.95rem; color: #f59e0b;">0.00 Qtl</strong>
@@ -2795,6 +2805,10 @@
                     <div style="text-align: center;">
                         <span class="text-muted text-xs" style="display: block;">Total Wash Out</span>
                         <strong id="ref-summary-wash" style="font-size: 0.95rem; color: #3b82f6;">0.00 Qtl</strong>
+                    </div>
+                    <div style="text-align: center;">
+                        <span class="text-muted text-xs" style="display: block;">Total Acid Out</span>
+                        <strong id="ref-summary-acid" style="font-size: 0.95rem; color: #6366f1;">0.00 Qtl</strong>
                     </div>
                     <div style="text-align: center;">
                         <span class="text-muted text-xs" style="display: block;">Total Gaad Out</span>

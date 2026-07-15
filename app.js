@@ -20,6 +20,7 @@ const PRODUCTS = [
     { id: 'oil-crude', name: 'Crud Oil', category: 'Oil' },
     { id: 'oil-wash', name: 'Wash Oil', category: 'Oil' },
     { id: 'oil-gaad', name: 'Gaad', category: 'Oil' },
+    { id: 'oil-acid', name: 'Acid Oil', category: 'Oil' },
     { id: 'sarki-bardan', name: 'Sarki Bardan', category: 'Bardan' },
     { id: 'gm-pp-hdr', name: 'Gauri Malai PP', category: 'Bardan' }, // Header/Direct row in screenshot
     { id: 'gm-pp-50', name: '50kg PP Bag', category: 'Bardan' },
@@ -45,6 +46,7 @@ const INITIAL_OPENING_STOCKS = {
     'oil-crude': 0.00,
     'oil-wash': 0.00,
     'oil-gaad': 0.00,
+    'oil-acid': 0.00,
     'sarki-bardan': 0.00,
     'gm-pp-hdr': 0.00,
     'gm-pp-50': 0.00,
@@ -1725,7 +1727,7 @@ function getDayLog(prodId, monthKey, day) {
         }
     });
 
-    // 2B. Refining runs: crude oil is CONSUMED (issue) and refined into wash oil + gaad (receipts)
+    // 2B. Refining runs: crude oil is CONSUMED (issue) and refined into wash oil + acid oil + gaad (receipts)
     state.refiningLogs.forEach(r => {
         if (r.batches && Array.isArray(r.batches)) {
             r.batches.forEach(b => {
@@ -1733,6 +1735,7 @@ function getDayLog(prodId, monthKey, day) {
                     if (prodId === 'oil-crude') issue += parseFloat(b.crudeInput) || 0;
                     if (prodId === 'oil-wash') receipt += parseFloat(b.washYield) || 0;
                     if (prodId === 'oil-gaad') receipt += parseFloat(b.gaadYield) || 0;
+                    if (prodId === 'oil-acid') receipt += parseFloat(b.acidYield) || 0;
                 }
             });
         } else {
@@ -1741,6 +1744,7 @@ function getDayLog(prodId, monthKey, day) {
                 if (prodId === 'oil-crude') issue += parseFloat(r.crudeInput) || 0;
                 if (prodId === 'oil-wash') receipt += parseFloat(r.washYield) || 0;
                 if (prodId === 'oil-gaad') receipt += parseFloat(r.gaadYield) || 0;
+                if (prodId === 'oil-acid') receipt += parseFloat(r.acidYield) || 0;
             }
         }
     });
@@ -5005,7 +5009,7 @@ function renderRefiningTable() {
     });
 
     // --- KPI AGGREGATION ---
-    let totalCrude = 0, totalWash = 0, totalGaad = 0;
+    let totalCrude = 0, totalWash = 0, totalAcid = 0, totalGaad = 0;
     let batchCount = 0;
     
     state.refiningLogs.forEach(item => {
@@ -5013,17 +5017,19 @@ function renderRefiningTable() {
             item.batches.forEach(b => {
                 totalCrude += parseFloat(b.crudeInput) || 0;
                 totalWash += parseFloat(b.washYield) || 0;
+                totalAcid += parseFloat(b.acidYield) || 0;
                 totalGaad += parseFloat(b.gaadYield) || 0;
                 batchCount++;
             });
         } else {
             totalCrude += parseFloat(item.crudeInput) || 0;
             totalWash += parseFloat(item.washYield) || 0;
+            totalAcid += parseFloat(item.acidYield) || 0; // Legacy has no acid
             totalGaad += parseFloat(item.gaadYield) || 0;
             batchCount++;
         }
     });
-    const totalLoss = Math.max(0, totalCrude - totalWash - totalGaad);
+    const totalLoss = Math.max(0, totalCrude - totalWash - totalAcid - totalGaad);
 
     const setEl = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
     const setPct = (id, val, total) => {
@@ -5034,6 +5040,8 @@ function renderRefiningTable() {
     setEl('ref-kpi-batches', `${batchCount} batch${batchCount !== 1 ? 'es' : ''}`);
     setEl('ref-kpi-wash', `${totalWash.toFixed(2)} Qtl`);
     setPct('ref-kpi-wash-pct', totalWash, totalCrude);
+    setEl('ref-kpi-acid', `${totalAcid.toFixed(2)} Qtl`);
+    setPct('ref-kpi-acid-pct', totalAcid, totalCrude);
     setEl('ref-kpi-gaad', `${totalGaad.toFixed(2)} Qtl`);
     setPct('ref-kpi-gaad-pct', totalGaad, totalCrude);
     setEl('ref-kpi-loss', `${totalLoss.toFixed(2)} Qtl`);
@@ -5052,25 +5060,27 @@ function renderRefiningTable() {
     if (tableEl) tableEl.style.display = '';
 
     filtered.forEach(item => {
-        let crude = 0, wash = 0, gaad = 0;
+        let crude = 0, wash = 0, acid = 0, gaad = 0;
         let detailsText = '';
 
         if (item.batches && Array.isArray(item.batches)) {
             item.batches.forEach(b => {
                 crude += parseFloat(b.crudeInput) || 0;
                 wash += parseFloat(b.washYield) || 0;
+                acid += parseFloat(b.acidYield) || 0;
                 gaad += parseFloat(b.gaadYield) || 0;
             });
             detailsText = `<span style="font-size:0.75rem;color:var(--text-muted);">${item.batches.length} batch${item.batches.length !== 1 ? 'es' : ''} in tanker</span>`;
         } else {
             crude = parseFloat(item.crudeInput) || 0;
             wash = parseFloat(item.washYield) || 0;
+            acid = parseFloat(item.acidYield) || 0;
             gaad = parseFloat(item.gaadYield) || 0;
             detailsText = '<span style="font-size:0.75rem;color:var(--text-muted);">1 batch (legacy)</span>';
         }
 
-        const loss = Math.max(0, crude - wash - gaad);
-        const recovery = crude > 0 ? ((wash / crude) * 100).toFixed(1) : 0;
+        const loss = Math.max(0, crude - wash - acid - gaad);
+        const recovery = crude > 0 ? (((wash + acid) / crude) * 100).toFixed(1) : 0;
         const recColor = recovery >= 90 ? '#10b981' : recovery >= 80 ? '#f59e0b' : '#ef4444';
 
         const tr = document.createElement('tr');
@@ -5082,6 +5092,7 @@ function renderRefiningTable() {
             </td>
             <td class="text-end" style="font-family:monospace;font-weight:700;color:#f59e0b;">${crude.toFixed(2)}</td>
             <td class="text-end" style="font-family:monospace;color:#3b82f6;">${wash > 0 ? wash.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
+            <td class="text-end" style="font-family:monospace;color:#6366f1;">${acid > 0 ? acid.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
             <td class="text-end" style="font-family:monospace;color:#a855f7;">${gaad > 0 ? gaad.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
             <td class="text-center"><span style="font-weight:700;color:${recColor};">${recovery}%</span><br><small style="color:#ef4444;">-${loss.toFixed(2)} Qtl</small></td>
             <td><small class="text-muted">${escapeHtml(item.remark || '—')}</small></td>
@@ -5111,10 +5122,11 @@ function handleRefiningSubmit(e) {
             const bDate = tr.querySelector('.ref-batch-date').value;
             const crude = parseFloat(tr.querySelector('.ref-batch-crude').value) || 0;
             const wash = parseFloat(tr.querySelector('.ref-batch-wash').value) || 0;
+            const acid = parseFloat(tr.querySelector('.ref-batch-acid').value) || 0;
             const gaad = parseFloat(tr.querySelector('.ref-batch-gaad').value) || 0;
 
             if (bDate && crude > 0) {
-                batches.push({ date: bDate, crudeInput: crude, washYield: wash, gaadYield: gaad });
+                batches.push({ date: bDate, crudeInput: crude, washYield: wash, acidYield: acid, gaadYield: gaad });
             }
         });
     }
@@ -5156,11 +5168,11 @@ function editRefining(id) {
     
     if (item.batches && Array.isArray(item.batches)) {
         item.batches.forEach(b => {
-            addRefiningBatchRow(b.date, b.crudeInput, b.washYield, b.gaadYield);
+            addRefiningBatchRow(b.date, b.crudeInput, b.washYield, b.acidYield || 0, b.gaadYield);
         });
     } else {
         // Import legacy flat record as a single batch row
-        addRefiningBatchRow(item.date, item.crudeInput, item.washYield, item.gaadYield);
+        addRefiningBatchRow(item.date, item.crudeInput, item.washYield, item.acidYield || 0, item.gaadYield);
     }
 
     recalculateRefiningSummary();
@@ -6777,7 +6789,7 @@ function getSalesProductOptionsHtml(selectedId = '') {
 // --- DYNAMIC REFINING BATCH CONTROLLERS ---
 let refBatchRowCounter = 0;
 
-function addRefiningBatchRow(date = '', crude = '', wash = '', gaad = '') {
+function addRefiningBatchRow(date = '', crude = '', wash = '', acid = '', gaad = '') {
     refBatchRowCounter++;
     const tbody = document.getElementById('refining-batches-tbody');
     if (!tbody) return;
@@ -6796,6 +6808,9 @@ function addRefiningBatchRow(date = '', crude = '', wash = '', gaad = '') {
         </td>
         <td>
             <input type="number" step="0.01" class="form-control text-xs ref-batch-wash" required placeholder="Wash yield" value="${wash}" oninput="recalculateRefiningSummary()">
+        </td>
+        <td>
+            <input type="number" step="0.01" class="form-control text-xs ref-batch-acid" required placeholder="Acid oil" value="${acid}" oninput="recalculateRefiningSummary()">
         </td>
         <td>
             <input type="number" step="0.01" class="form-control text-xs ref-batch-gaad" required placeholder="Gaad yield" value="${gaad}" oninput="recalculateRefiningSummary()">
@@ -6828,28 +6843,33 @@ function recalculateRefiningSummary() {
 
     let totalCrude = 0;
     let totalWash = 0;
+    let totalAcid = 0;
     let totalGaad = 0;
 
     Array.from(tbody.children).forEach(tr => {
         const crude = parseFloat(tr.querySelector('.ref-batch-crude').value) || 0;
         const wash = parseFloat(tr.querySelector('.ref-batch-wash').value) || 0;
+        const acid = parseFloat(tr.querySelector('.ref-batch-acid').value) || 0;
         const gaad = parseFloat(tr.querySelector('.ref-batch-gaad').value) || 0;
 
         totalCrude += crude;
         totalWash += wash;
+        totalAcid += acid;
         totalGaad += gaad;
     });
 
-    const loss = Math.max(0, totalCrude - totalWash - totalGaad);
+    const loss = Math.max(0, totalCrude - totalWash - totalAcid - totalGaad);
     const lossPct = totalCrude > 0 ? ((loss / totalCrude) * 100).toFixed(1) : '0.0';
 
     const crudeEl = document.getElementById('ref-summary-crude');
     const washEl = document.getElementById('ref-summary-wash');
+    const acidEl = document.getElementById('ref-summary-acid');
     const gaadEl = document.getElementById('ref-summary-gaad');
     const lossEl = document.getElementById('ref-summary-loss');
 
     if (crudeEl) crudeEl.textContent = `${totalCrude.toFixed(2)} Qtl`;
     if (washEl) washEl.textContent = `${totalWash.toFixed(2)} Qtl`;
+    if (acidEl) acidEl.textContent = `${totalAcid.toFixed(2)} Qtl`;
     if (gaadEl) gaadEl.textContent = `${totalGaad.toFixed(2)} Qtl`;
     if (lossEl) lossEl.textContent = `${loss.toFixed(2)} Qtl (${lossPct}%)`;
 }
