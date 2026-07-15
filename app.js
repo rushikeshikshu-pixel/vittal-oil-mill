@@ -107,6 +107,7 @@ let repairChartInstance = null;
 document.addEventListener('DOMContentLoaded', async () => {
     initClock();
     setupEventListeners();
+    initStockMonthSelector();
 
     // Wait for the state to load (async from the host DB) before gating access,
     // otherwise the async load overwrites the security config we just applied.
@@ -622,6 +623,37 @@ function initClock() {
     };
     updateTime();
     setInterval(updateTime, 60000);
+}
+
+function initStockMonthSelector() {
+    const stockMonthSel = document.getElementById('stock-month-selector');
+    if (!stockMonthSel) return;
+    
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const currentMonthKey = `${year}-${month}`;
+    
+    // Check if current month option already exists
+    let exists = false;
+    for (let i = 0; i < stockMonthSel.options.length; i++) {
+        if (stockMonthSel.options[i].value === currentMonthKey) {
+            exists = true;
+            break;
+        }
+    }
+    
+    // Dynamically add option if missing
+    if (!exists) {
+        const opt = document.createElement('option');
+        opt.value = currentMonthKey;
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        opt.textContent = `${monthNames[now.getMonth()]} ${year}`;
+        stockMonthSel.appendChild(opt);
+    }
+    
+    // Auto-select current month
+    stockMonthSel.value = currentMonthKey;
 }
 
 // --- EVENT LISTENERS setup ---
@@ -1685,8 +1717,13 @@ function getDayLog(prodId, monthKey, day) {
             if (prodId === 'oil-crude') {
                 receipt += parseFloat(p.oilYield) || 0;
             }
-            if (prodId === 'khal-mm') {
-                receipt += parseFloat(p.cakeYield) || 0;
+            if (prodId === 'khal-mm' || prodId === 'khal-km') {
+                const parentUnload = state.unloads.find(u => u.id === p.unloadId);
+                const uType = parentUnload ? (parentUnload.seedType || 'OMS') : 'OMS';
+                const targetType = prodId === 'khal-mm' ? 'MS' : 'OMS';
+                if (uType === targetType) {
+                    receipt += parseFloat(p.cakeYield) || 0;
+                }
             }
             if (prodId === 'ch-oms' || prodId === 'ch-ms') {
                 const parentUnload = state.unloads.find(u => u.id === p.unloadId);
