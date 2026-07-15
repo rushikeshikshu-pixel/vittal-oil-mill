@@ -989,26 +989,10 @@ function openModal(modalId) {
         document.getElementById('sales-id').value = "";
         document.getElementById('sales-modal-title').textContent = "Record Outbound Sales dispatch";
         populateSalesCustomersDropdown();
-        populateSalesProductsDropdown();
-        // Attach live jute bag total weight computation
-        const recalcJuteBagTotal = () => {
-            const jbw = parseInt(document.getElementById('sales-jute-bag-weight')?.value) || 0;
-            const jbq = parseInt(document.getElementById('sales-jute-bag-qty')?.value) || 0;
-            const infoDiv = document.getElementById('sales-bag-total-info');
-            const textEl = document.getElementById('sales-bag-total-weight-text');
-            if (infoDiv && textEl) {
-                if (jbw > 0 && jbq > 0) {
-                    const totalKg = jbw * jbq;
-                    const totalQtl = (totalKg / 100).toFixed(2);
-                    textEl.textContent = `🌿 Jute Bag Total: ${jbq} bags × ${jbw} kg = ${totalKg} kg (${totalQtl} Qtl)`;
-                    infoDiv.style.display = 'block';
-                } else {
-                    infoDiv.style.display = 'none';
-                }
-            }
-        };
-        document.getElementById('sales-jute-bag-weight')?.addEventListener('change', recalcJuteBagTotal);
-        document.getElementById('sales-jute-bag-qty')?.addEventListener('input', recalcJuteBagTotal);
+        document.getElementById('sales-items-tbody').innerHTML = '';
+        addSalesItemRow();
+        const addBtn = document.getElementById('sales-add-row-btn');
+        if (addBtn) addBtn.style.display = 'inline-block';
     } else if (modalId === 'customer-modal' && !document.getElementById('cust-id').value) {
         document.getElementById('customer-form').reset();
         document.getElementById('cust-id').value = "";
@@ -3506,44 +3490,101 @@ function handleSalesSubmit(e) {
         const id = document.getElementById('sales-id').value;
         const date = document.getElementById('sales-date').value;
         const customer = document.getElementById('sales-customer').value;
-        const product = document.getElementById('sales-product').value;
         const lorryNo = document.getElementById('sales-lorry').value;
-        const weight = parseFloat(document.getElementById('sales-weight').value);
-        const rate = parseFloat(document.getElementById('sales-rate').value);
         const destination = document.getElementById('sales-destination').value;
         const status = document.getElementById('sales-status-select').value;
         const dispatchStatus = document.getElementById('sales-dispatch-status').value;
         const remark = document.getElementById('sales-remark').value;
-        const bagType = document.getElementById('sales-bag-select').value;
-        const bagQty = parseInt(document.getElementById('sales-bag-qty').value) || 0;
         const qualityGrade = document.getElementById('sales-quality-grade') ? document.getElementById('sales-quality-grade').value : 'Grade A';
         const qualityRemark = document.getElementById('sales-quality-remark') ? document.getElementById('sales-quality-remark').value : '';
-        const juteBagWeight = parseInt(document.getElementById('sales-jute-bag-weight') ? document.getElementById('sales-jute-bag-weight').value : '') || 0;
-        const juteBagQty = parseInt(document.getElementById('sales-jute-bag-qty') ? document.getElementById('sales-jute-bag-qty').value : '') || 0;
 
-        if (!customer || !product) {
-            alert("Customer and Product are required fields!");
+        if (!customer) {
+            alert("Customer is a required field!");
             return;
         }
 
-        const data = { date, customer, product, lorryNo, weight, rate, destination, status, dispatchStatus, remark, bagType, bagQty, qualityGrade, qualityRemark, juteBagWeight, juteBagQty };
-        
+        // Collect all items from the table
+        const items = [];
+        const tbody = document.getElementById('sales-items-tbody');
+        if (tbody) {
+            Array.from(tbody.children).forEach(tr => {
+                const product = tr.querySelector('.sales-item-product').value;
+                const weight = parseFloat(tr.querySelector('.sales-item-weight').value) || 0;
+                const rate = parseFloat(tr.querySelector('.sales-item-rate').value) || 0;
+                const bagType = tr.querySelector('.sales-item-bag-select').value;
+                const bagQty = parseInt(tr.querySelector('.sales-item-bag-qty').value) || 0;
+                const juteBagWeight = parseInt(tr.querySelector('.sales-item-jute-select').value) || 0;
+                const juteBagQty = parseInt(tr.querySelector('.sales-item-jute-qty').value) || 0;
+
+                if (product && weight > 0 && rate > 0) {
+                    items.push({ product, weight, rate, bagType, bagQty, juteBagWeight, juteBagQty });
+                }
+            });
+        }
+
+        if (items.length === 0) {
+            alert("Please enter at least one product with weight and rate!");
+            return;
+        }
+
         if (!Array.isArray(state.sales)) state.sales = [];
 
         if (id) {
+            // Edit Mode - Should only have 1 product row since add row button is disabled/hidden
             const index = state.sales.findIndex(s => s.id === id);
             if (index !== -1) {
                 removeSalesFromStockLedger(state.sales[index]);
-                state.sales[index] = { ...state.sales[index], ...data };
+                const itemData = items[0];
+                state.sales[index] = {
+                    ...state.sales[index],
+                    date,
+                    customer,
+                    product: itemData.product,
+                    lorryNo,
+                    weight: itemData.weight,
+                    rate: itemData.rate,
+                    destination,
+                    status,
+                    dispatchStatus,
+                    remark,
+                    bagType: itemData.bagType,
+                    bagQty: itemData.bagQty,
+                    qualityGrade,
+                    qualityRemark,
+                    juteBagWeight: itemData.juteBagWeight,
+                    juteBagQty: itemData.juteBagQty
+                };
                 addSalesToStockLedger(state.sales[index]);
             }
         } else {
-            data.id = 'sal-' + Date.now();
-            data.invoiceNo = 'INV-' + Date.now().toString().slice(-5);
-            data.billed = false;
-            state.sales.push(data);
-            addSalesToStockLedger(data);
+            // New Mode - Multiple items saved as separate sales records in state.sales
+            items.forEach((itemData, idx) => {
+                const data = {
+                    id: 'sal-' + Date.now() + '-' + idx,
+                    invoiceNo: 'INV-' + Date.now().toString().slice(-5) + '-' + idx,
+                    billed: false,
+                    date,
+                    customer,
+                    product: itemData.product,
+                    lorryNo,
+                    weight: itemData.weight,
+                    rate: itemData.rate,
+                    destination,
+                    status,
+                    dispatchStatus,
+                    remark: idx === 0 ? remark : (remark ? remark + ` (Part of dispatch Lorry ${lorryNo})` : `Part of dispatch Lorry ${lorryNo}`),
+                    bagType: itemData.bagType,
+                    bagQty: itemData.bagQty,
+                    qualityGrade,
+                    qualityRemark,
+                    juteBagWeight: itemData.juteBagWeight,
+                    juteBagQty: itemData.juteBagQty
+                };
+                state.sales.push(data);
+                addSalesToStockLedger(data);
+            });
         }
+
         saveState();
         closeModal('sales-modal');
         // Clear filters to ensure visibility
@@ -3554,7 +3595,7 @@ function handleSalesSubmit(e) {
         const fSalesStat = document.getElementById('filter-sales-status');
         if (fSalesStat) fSalesStat.value = "";
         renderAllViews();
-        alert("Sales entry logged!");
+        alert("Sales dispatches logged!");
     } catch(err) {
         alert("Error saving sale: " + err.message);
     }
@@ -3630,26 +3671,29 @@ function editSale(id) {
     const item = state.sales.find(s => s.id === id);
     if (!item) return;
     populateSalesCustomersDropdown();
-    populateSalesProductsDropdown();
     
     document.getElementById('sales-id').value = item.id;
     document.getElementById('sales-date').value = item.date;
     document.getElementById('sales-customer').value = item.customer;
-    document.getElementById('sales-product').value = item.product;
     document.getElementById('sales-lorry').value = item.lorryNo;
-    document.getElementById('sales-weight').value = item.weight;
-    document.getElementById('sales-rate').value = item.rate;
     document.getElementById('sales-destination').value = item.destination;
     document.getElementById('sales-status-select').value = item.status;
     document.getElementById('sales-dispatch-status').value = item.dispatchStatus || 'Standard';
     document.getElementById('sales-remark').value = item.remark || '';
-    document.getElementById('sales-bag-select').value = item.bagType || '';
-    document.getElementById('sales-bag-qty').value = item.bagQty || '';
     if (document.getElementById('sales-quality-grade')) document.getElementById('sales-quality-grade').value = item.qualityGrade || 'Grade A';
     if (document.getElementById('sales-quality-remark')) document.getElementById('sales-quality-remark').value = item.qualityRemark || '';
-    if (document.getElementById('sales-jute-bag-weight')) document.getElementById('sales-jute-bag-weight').value = item.juteBagWeight || '';
-    if (document.getElementById('sales-jute-bag-qty')) document.getElementById('sales-jute-bag-qty').value = item.juteBagQty || '';
+
+    // Clear and populate exactly one row representing this sale record's product details
+    const tbody = document.getElementById('sales-items-tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        addSalesItemRow(item.product, item.weight, item.rate, item.bagType, item.bagQty, item.juteBagWeight, item.juteBagQty);
+    }
     
+    // Hide the add product row button in edit mode because editing a single sale record should remain restricted to 1 product
+    const addBtn = document.getElementById('sales-add-row-btn');
+    if (addBtn) addBtn.style.display = 'none';
+
     document.getElementById('sales-modal-title').textContent = "Edit Outward Sales Entry";
     openModal('sales-modal');
 }
@@ -6580,4 +6624,91 @@ function printGatePass(id) {
         printWindow.document.write(printContent);
         printWindow.document.close();
     }
+}
+
+// --- DYNAMIC SALES MULTI-PRODUCT ITEM CONTROLLERS ---
+let salesItemRowCounter = 0;
+
+function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bagQty = '', juteBagWeight = '', juteBagQty = '') {
+    salesItemRowCounter++;
+    const tbody = document.getElementById('sales-items-tbody');
+    if (!tbody) return;
+
+    const tr = document.createElement('tr');
+    tr.id = `sales-item-row-${salesItemRowCounter}`;
+
+    const productOptions = getSalesProductOptionsHtml(product);
+
+    const ppOptions = `
+        <option value="" ${!bagType ? 'selected' : ''}>-- None --</option>
+        <option value="gm-pp-50" ${bagType === 'gm-pp-50' ? 'selected' : ''}>50kg PP</option>
+        <option value="gm-pp-60" ${bagType === 'gm-pp-60' ? 'selected' : ''}>60kg PP</option>
+        <option value="gm-pp-70" ${bagType === 'gm-pp-70' ? 'selected' : ''}>70kg PP</option>
+        <option value="gm-pp-km" ${bagType === 'gm-pp-km' ? 'selected' : ''}>KM PP</option>
+        <option value="gm-pp-mm" ${bagType === 'gm-pp-mm' ? 'selected' : ''}>MM PP</option>
+    `;
+
+    const juteOptions = `
+        <option value="" ${!juteBagWeight ? 'selected' : ''}>-- None --</option>
+        <option value="45" ${juteBagWeight === 45 ? 'selected' : ''}>45 kg Jute</option>
+        <option value="50" ${juteBagWeight === 50 ? 'selected' : ''}>50 kg Jute</option>
+        <option value="60" ${juteBagWeight === 60 ? 'selected' : ''}>60 kg Jute</option>
+        <option value="75" ${juteBagWeight === 75 ? 'selected' : ''}>75 kg Jute</option>
+        <option value="90" ${juteBagWeight === 90 ? 'selected' : ''}>90 kg Jute</option>
+        <option value="100" ${juteBagWeight === 100 ? 'selected' : ''}>100 kg Jute</option>
+    `;
+
+    tr.innerHTML = `
+        <td>
+            <select class="form-control text-xs sales-item-product" required>
+                ${productOptions}
+            </select>
+        </td>
+        <td>
+            <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Weight" value="${weight}">
+        </td>
+        <td>
+            <input type="number" step="0.01" class="form-control text-xs sales-item-rate" required placeholder="Rate" value="${rate}">
+        </td>
+        <td>
+            <select class="form-control text-xs sales-item-bag-select" style="margin-bottom: 4px; padding: 2px;">
+                ${ppOptions}
+            </select>
+            <input type="number" class="form-control text-xs sales-item-bag-qty" placeholder="PP Count" min="0" value="${bagQty || ''}">
+        </td>
+        <td>
+            <select class="form-control text-xs sales-item-jute-select" style="margin-bottom: 4px; padding: 2px;">
+                ${juteOptions}
+            </select>
+            <input type="number" class="form-control text-xs sales-item-jute-qty" placeholder="Jute Count" min="0" value="${juteBagQty || ''}">
+        </td>
+        <td style="text-align: center; vertical-align: middle;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 4px 8px;">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function removeSalesItemRow(rowId) {
+    const tbody = document.getElementById('sales-items-tbody');
+    if (!tbody) return;
+    if (tbody.children.length <= 1) {
+        alert("A sales dispatch must contain at least one product row!");
+        return;
+    }
+    const row = document.getElementById(rowId);
+    if (row) row.remove();
+}
+
+function getSalesProductOptionsHtml(selectedId = '') {
+    let html = '<option value="">-- Select Product --</option>';
+    PRODUCTS.forEach(p => {
+        if (p.category !== 'Seed' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr') {
+            const selected = p.id === selectedId ? 'selected' : '';
+            html += `<option value="${p.id}" ${selected}>${p.name}</option>`;
+        }
+    });
+    return html;
 }

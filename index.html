@@ -2209,10 +2209,10 @@
 
     <!-- 1B. ADD/EDIT SALES ENTRY MODAL -->
     <div id="sales-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 850px;">
             <div class="modal-header">
                 <h3 id="sales-modal-title">Record Outbound Sales dispatch</h3>
-                <button class="close-btn" onclick="closeModal('sales-modal')">&times;</button>
+                <button class="close-btn" type="button" onclick="closeModal('sales-modal')">&times;</button>
             </div>
             <form id="sales-form">
                 <input type="hidden" id="sales-id">
@@ -2229,40 +2229,25 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group mb-3 col-6">
-                        <label for="sales-product">Select Manufactured Product *</label>
-                        <select id="sales-product" required class="form-control">
-                            <!-- Filled by JS (Oils, Cakes, Hulls) -->
-                        </select>
-                    </div>
-                    <div class="form-group mb-3 col-6">
                         <label for="sales-lorry">Lorry / Tanker Number *</label>
                         <input type="text" id="sales-lorry" required placeholder="e.g. MH-23-T-4589" class="form-control">
                     </div>
-                </div>
-                <div class="form-row">
                     <div class="form-group mb-3 col-6">
-                        <label for="sales-weight">Quantity (Quintals / Bags) *</label>
-                        <input type="number" step="0.01" id="sales-weight" required placeholder="e.g. 150.00" class="form-control">
-                    </div>
-                    <div class="form-group mb-3 col-6">
-                        <label for="sales-rate">Sales Rate (₹ per unit) *</label>
-                        <input type="number" step="0.01" id="sales-rate" required placeholder="e.g. 9500 (Oil) or 2800 (Cake)" class="form-control">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group mb-3 col-4">
                         <label for="sales-destination">Destination / Delivery Place *</label>
                         <input type="text" id="sales-destination" required placeholder="e.g. Jalna, Hyderabad" class="form-control" list="destinations-datalist">
                         <datalist id="destinations-datalist"></datalist>
                     </div>
-                    <div class="form-group mb-3 col-4">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
                         <label for="sales-status-select">Payment Status *</label>
                         <select id="sales-status-select" required class="form-control">
                             <option value="Pending" selected>Pending / Credit</option>
                             <option value="Paid">Paid / Cleared</option>
                         </select>
                     </div>
-                    <div class="form-group mb-3 col-4">
+                    <div class="form-group mb-3 col-6">
                         <label for="sales-dispatch-status">Dispatch Status *</label>
                         <select id="sales-dispatch-status" required class="form-control">
                             <option value="Standard" selected>Standard</option>
@@ -2271,6 +2256,7 @@
                         </select>
                     </div>
                 </div>
+                
                 <div class="form-row">
                     <div class="form-group mb-3 col-6">
                         <label for="sales-quality-grade">Quality Grade *</label>
@@ -2287,53 +2273,30 @@
                         <input type="text" id="sales-quality-remark" placeholder="e.g. FFA 1.2%, Moisture 0.5%, Oil% 38" class="form-control">
                     </div>
                 </div>
-                <div class="card mb-3 py-2 bg-dark-subtle">
-                    <h4 class="mb-1 text-sm font-bold">📦 Packaging Material Deductions</h4>
-                    <p class="text-xs text-muted mb-2">Select bag type(s) used for dispatching product. Stock will be auto-deducted from the packaging ledger.</p>
-                    <div class="form-row mb-2">
-                        <div class="form-group mb-1 col-6">
-                            <label class="text-xs font-bold">PP Bags (Plastic)</label>
-                        </div>
-                        <div class="form-group mb-1 col-6">
-                            <label class="text-xs font-bold" style="color: var(--accent-warm);">🌿 Jute Bags</label>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group mb-2 col-3">
-                            <label for="sales-bag-select" class="text-xs">PP Bag Size</label>
-                            <select id="sales-bag-select" class="form-control text-xs">
-                                <option value="">-- None --</option>
-                                <option value="gm-pp-50">50kg PP Bag</option>
-                                <option value="gm-pp-60">60kg PP Bag</option>
-                                <option value="gm-pp-70">70kg PP Bag</option>
-                                <option value="gm-pp-km">KM PP</option>
-                                <option value="gm-pp-mm">MM PP</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-2 col-3">
-                            <label for="sales-bag-qty" class="text-xs">PP Bag Count</label>
-                            <input type="number" id="sales-bag-qty" placeholder="e.g. 200" class="form-control text-xs" min="0">
-                        </div>
-                        <div class="form-group mb-2 col-3">
-                            <label for="sales-jute-bag-weight" class="text-xs">Jute Bag Capacity (kg)</label>
-                            <select id="sales-jute-bag-weight" class="form-control text-xs">
-                                <option value="">-- None --</option>
-                                <option value="45">45 kg Jute Bag</option>
-                                <option value="50">50 kg Jute Bag</option>
-                                <option value="60">60 kg Jute Bag</option>
-                                <option value="75">75 kg Jute Bag</option>
-                                <option value="90">90 kg Jute Bag</option>
-                                <option value="100">100 kg Jute Bag</option>
-                            </select>
-                        </div>
-                        <div class="form-group mb-2 col-3">
-                            <label for="sales-jute-bag-qty" class="text-xs">Jute Bag Count</label>
-                            <input type="number" id="sales-jute-bag-qty" placeholder="e.g. 120" class="form-control text-xs" min="0">
-                        </div>
-                    </div>
-                    <div id="sales-bag-total-info" class="text-xs text-muted mt-1" style="display:none;">
-                        <span id="sales-bag-total-weight-text"></span>
-                    </div>
+
+                <div style="margin-top: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 1rem; color: var(--accent-primary);">Products Dispatched in Lorry</h4>
+                    <button class="btn btn-secondary btn-sm" type="button" id="sales-add-row-btn" onclick="addSalesItemRow()">
+                        <i class="fa-solid fa-plus"></i> Add Product
+                    </button>
+                </div>
+
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 15px;">
+                    <table class="data-table" style="margin-bottom: 0;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; font-size: 0.8rem;">
+                            <tr>
+                                <th>Product *</th>
+                                <th style="width: 100px;">Qty (Qtl) *</th>
+                                <th style="width: 100px;">Rate (₹/Qtl) *</th>
+                                <th style="width: 140px;">PP Bag Size & Qty</th>
+                                <th style="width: 140px;">Jute Bag Size & Qty</th>
+                                <th style="width: 50px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sales-items-tbody">
+                            <!-- Rows added dynamically -->
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="form-group mb-3">
