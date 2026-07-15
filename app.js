@@ -1253,7 +1253,7 @@ function renderUnloadTable(searchQuery = '') {
         return;
     }
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((item, index) => {
         const tr = document.createElement('tr');
         tr.className = item.billed ? 'bg-billed-subtle text-muted' : '';
         
@@ -1274,6 +1274,7 @@ function renderUnloadTable(searchQuery = '') {
             <td>
                 <input type="checkbox" class="unload-row-checkbox" data-id="${item.id}" onchange="updateSelectedLorriesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
+            <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
             <td>${formatDateString(item.date)}</td>
             <td><strong>${item.supplier}</strong>${statusBadge}</td>
             <td>${item.place}</td>
@@ -1942,7 +1943,7 @@ function renderSparesTable(searchQuery = '') {
         return;
     }
 
-    filtered.forEach(part => {
+    filtered.forEach((part, index) => {
         const isLow = part.stock <= part.minLevel;
         const statusBadge = isLow 
             ? `<span class="badge badge-danger">Reorder Alert</span>` 
@@ -1950,6 +1951,7 @@ function renderSparesTable(searchQuery = '') {
             
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td><code>${part.code}</code></td>
             <td><strong>${part.name}</strong></td>
             <td>${part.machine}</td>
@@ -2041,7 +2043,7 @@ function renderRepairsTable() {
         return;
     }
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((log, index) => {
         let statusClass = 'badge-success';
         if (log.status === 'In-progress') statusClass = 'badge-warning';
         if (log.status === 'Pending') statusClass = 'badge-danger';
@@ -2054,6 +2056,7 @@ function renderRepairsTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td>${formatDateString(log.date)}</td>
             <td><strong>${log.machine}</strong></td>
             <td><span class="badge badge-info">${log.type}</span></td>
@@ -2332,7 +2335,7 @@ function renderTransportTable() {
         }
     });
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((log, index) => {
         const mileage = mileageMap[log.id] || '—';
         const costText = log.cost > 0 ? `₹${parseFloat(log.cost).toLocaleString('en-IN')}` : '—';
         const litresText = log.litres > 0 ? `${parseFloat(log.litres).toFixed(1)} L` : '—';
@@ -2344,6 +2347,7 @@ function renderTransportTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td>${formatDateString(log.date)}</td>
             <td><strong>${log.vehicle}</strong></td>
             <td><span class="badge ${typeBadge}">${log.type}</span></td>
@@ -3404,7 +3408,7 @@ function renderSalesTable(searchQuery = '') {
         return;
     }
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(item => {
+    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((item, index) => {
         const tr = document.createElement('tr');
         tr.className = item.billed ? 'bg-billed-subtle text-muted' : '';
         const prodObj = PRODUCTS.find(p => p.id === item.product);
@@ -3428,6 +3432,7 @@ function renderSalesTable(searchQuery = '') {
             <td>
                 <input type="checkbox" class="sales-row-checkbox" data-id="${item.id}" onchange="updateSelectedSalesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
+            <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
             <td>${formatDateString(item.date)}</td>
             <td><code>${item.invoiceNo || '-'}</code></td>
             <td><strong>${item.customer}</strong></td>
@@ -4641,7 +4646,7 @@ function renderProductionTable() {
     if (emptyState) emptyState.style.display = 'none';
     if (tableEl) tableEl.style.display = '';
 
-    filtered.forEach(item => {
+    filtered.forEach((item, index) => {
         const seedLabel = item.seedType === 'cs-ms' ? 'Cotton Seed (MS)' : 'Cotton Seed (OMS)';
         const seedBadge = item.seedType === 'cs-ms'
             ? 'background:rgba(59,130,246,0.2);color:#60a5fa;'
@@ -4680,6 +4685,7 @@ function renderProductionTable() {
         const tr = document.createElement('tr');
         if (isHighLoss) tr.style.background = 'rgba(239,68,68,0.05)';
         tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td style="white-space:nowrap;">${escapeHtml(item.date)}</td>
             <td>${lotLabel}</td>
             <td><span style="padding:3px 9px;border-radius:12px;font-size:0.75rem;font-weight:600;${seedBadge}">${seedLabel}</span></td>
@@ -5069,7 +5075,7 @@ function renderRefiningTable() {
     if (emptyState) emptyState.style.display = 'none';
     if (tableEl) tableEl.style.display = '';
 
-    filtered.forEach(item => {
+    filtered.forEach((item, index) => {
         let crude = 0, wash = 0, acid = 0, gaad = 0;
         let detailsText = '';
 
@@ -5095,6 +5101,7 @@ function renderRefiningTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td style="white-space:nowrap;">${escapeHtml(item.date)}</td>
             <td>
                 <strong>${escapeHtml(item.tanker || '—')}</strong><br>
