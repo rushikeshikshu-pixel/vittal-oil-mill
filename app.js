@@ -5044,6 +5044,7 @@ function renderRefiningTable() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="white-space:nowrap;">${escapeHtml(item.date)}</td>
+            <td><span class="badge badge-secondary" style="background-color: var(--bg-card-hover); border: 1px solid var(--border-color); color: var(--text-secondary);">${escapeHtml(item.tanker || '—')}</span></td>
             <td class="text-end" style="font-family:monospace;font-weight:700;color:#f59e0b;">${crude.toFixed(2)}</td>
             <td class="text-end" style="font-family:monospace;color:#3b82f6;">${wash > 0 ? wash.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
             <td class="text-end" style="font-family:monospace;color:#a855f7;">${gaad > 0 ? gaad.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
@@ -5064,6 +5065,7 @@ function handleRefiningSubmit(e) {
     e.preventDefault();
     const id = document.getElementById('refining-id').value;
     const date = document.getElementById('refining-date').value;
+    const tanker = document.getElementById('ref-tanker').value;
     const crudeInput = parseFloat(document.getElementById('ref-crude-input').value) || 0;
     const washYield = parseFloat(document.getElementById('ref-wash-yield').value) || 0;
     const gaadYield = parseFloat(document.getElementById('ref-gaad-yield').value) || 0;
@@ -5073,13 +5075,17 @@ function handleRefiningSubmit(e) {
         alert("Please specify a valid date and a positive crude oil input weight!");
         return;
     }
+    if (!tanker) {
+        alert("Please select a refining tanker!");
+        return;
+    }
     if (washYield + gaadYield > crudeInput) {
         if (!confirm(`Warning: Wash + Gaad output (${(washYield + gaadYield).toFixed(2)} Qtl) exceeds the crude oil input (${crudeInput.toFixed(2)} Qtl). Log anyway?`)) {
             return;
         }
     }
 
-    const data = { date, crudeInput, washYield, gaadYield, remark };
+    const data = { date, tanker, crudeInput, washYield, gaadYield, remark };
     if (id) {
         const idx = state.refiningLogs.findIndex(r => r.id === id);
         if (idx !== -1) state.refiningLogs[idx] = { ...state.refiningLogs[idx], ...data };
@@ -5099,6 +5105,7 @@ function editRefining(id) {
     if (!item) return;
     document.getElementById('refining-id').value = item.id;
     document.getElementById('refining-date').value = item.date;
+    document.getElementById('ref-tanker').value = item.tanker || '';
     document.getElementById('ref-crude-input').value = item.crudeInput || 0;
     document.getElementById('ref-wash-yield').value = item.washYield || 0;
     document.getElementById('ref-gaad-yield').value = item.gaadYield || 0;
