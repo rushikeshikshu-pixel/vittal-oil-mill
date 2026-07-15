@@ -125,9 +125,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // security — the database file is still plain JSON readable outside the app.
 const ROLE_ACCESS = {
     admin:       { label: 'Anand (Owner)', icon: '🛡️', desc: 'Full access & deletes', tabs: '*', canDelete: true },
-    weighbridge: { label: 'Weighbridge Operator', icon: '⚖️', desc: 'Unloads & Sales', tabs: ['dashboard', 'unloads', 'sales', 'manual'], canDelete: false },
-    supervisor:  { label: 'Plant Supervisor', icon: '🏭', desc: 'Production, Refining, Spares, Maintenance', tabs: ['dashboard', 'production', 'refining', 'stock', 'spares', 'repairs', 'manual'], canDelete: false },
-    accountant:  { label: 'Accountant', icon: '📒', desc: 'Ledger & Invoices', tabs: ['dashboard', 'party-accounts', 'invoices', 'analytics', 'manual'], canDelete: false },
+    weighbridge: { label: 'Weighbridge Operator', icon: '⚖️', desc: 'Unloads & Sales', tabs: ['dashboard', 'unloads', 'sales', 'gate-passes', 'manual'], canDelete: false },
+    supervisor:  { label: 'Plant Supervisor', icon: '🏭', desc: 'Production, Refining, Spares, Maintenance', tabs: ['dashboard', 'production', 'refining', 'stock', 'spares', 'repairs', 'gate-passes', 'manual'], canDelete: false },
+    accountant:  { label: 'Accountant', icon: '📒', desc: 'Ledger & Invoices', tabs: ['dashboard', 'party-accounts', 'invoices', 'analytics', 'gate-passes', 'manual'], canDelete: false },
 };
 const DEFAULT_PINS = { admin: '4321', weighbridge: '1111', supervisor: '2222', accountant: '3333' };
 let currentRole = 'admin';
@@ -428,6 +428,7 @@ function sanitizeStateArrays() {
     if (!Array.isArray(state.activeCrushing)) state.activeCrushing = [];
     if (!Array.isArray(state.payments)) state.payments = [];
     if (!Array.isArray(state.transportLogs)) state.transportLogs = [];
+    if (!Array.isArray(state.gatePasses)) state.gatePasses = [];
     if (!state.stockDaily || typeof state.stockDaily !== 'object') state.stockDaily = {};
     if (!state.security || typeof state.security !== 'object') {
         state.security = { enabled: false, pins: { admin: '4321', weighbridge: '1111', supervisor: '2222', accountant: '3333' } };
@@ -603,7 +604,8 @@ function resetStateToDefault() {
         },
         spareParts: [],
         maintenanceLogs: [],
-        transportLogs: []
+        transportLogs: [],
+        gatePasses: []
     };
     saveState();
 }
@@ -964,6 +966,8 @@ function switchTab(tabId) {
         renderAnalyticsTab();
     } else if (tabId === 'data-mgmt') {
         renderBackupsList();
+    } else if (tabId === 'gate-passes') {
+        renderGatePassTable();
     }
 }
 
@@ -5723,6 +5727,22 @@ function populateAutocompleteDatalists() {
             destsDl.appendChild(opt);
         });
     }
+
+    // 4. Gate Pass Parties (from customers, suppliers, and historical gate pass parties)
+    const gpPartiesDl = document.getElementById('gp-party-datalist');
+    if (gpPartiesDl) {
+        const uniqueGPParties = [...new Set([
+            ...state.customers.map(c => c.name),
+            ...state.suppliers.map(s => s.name),
+            ...state.gatePasses.map(g => g.partyName)
+        ].filter(Boolean))].sort();
+        gpPartiesDl.innerHTML = '';
+        uniqueGPParties.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            gpPartiesDl.appendChild(opt);
+        });
+    }
 }
 
 
@@ -6025,5 +6045,539 @@ function renderAnalyticsTab() {
                 }
             });
         }
+    }
+}
+
+// ==========================================================================
+// 12. GATE PASS CONTROLLER & OPERATIONS (मे. विठ्ठल ऑईल मिल)
+// ==========================================================================
+
+let gpItemRowCounter = 0;
+
+function renderGatePassTable() {
+    const searchVal = document.getElementById('filter-gp-search')?.value.toLowerCase() || '';
+    const dateVal = document.getElementById('filter-gp-date')?.value || '';
+    const tbody = document.getElementById('gp-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    
+    // Sort gate passes descending by date and serial number
+    const sortedGP = [...state.gatePasses].sort((a, b) => {
+        const dDiff = new Date(b.date) - new Date(a.date);
+        if (dDiff !== 0) return dDiff;
+        return parseInt(b.gatePassNo) - parseInt(a.gatePassNo);
+    });
+
+    sortedGP.forEach(gp => {
+        // Apply search filter (Party name, lorry, station, Dalal, Pass No)
+        const matchSearch = !searchVal || 
+            gp.gatePassNo.toString().toLowerCase().includes(searchVal) ||
+            gp.partyName.toLowerCase().includes(searchVal) ||
+            gp.station.toLowerCase().includes(searchVal) ||
+            (gp.broker && gp.broker.toLowerCase().includes(searchVal)) ||
+            gp.lorryNo.toLowerCase().includes(searchVal);
+            
+        // Apply date filter
+        const matchDate = !dateVal || gp.date === dateVal;
+
+        if (matchSearch && matchDate) {
+            const tr = document.createElement('tr');
+            
+            const bagsCount = gp.items.reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
+            
+            tr.innerHTML = `
+                <td><strong>${gp.gatePassNo}</strong></td>
+                <td>${gp.date}</td>
+                <td><strong>${gp.partyName}</strong></td>
+                <td>${gp.station}</td>
+                <td>${gp.broker || '-'}</td>
+                <td>${gp.lorryNo}</td>
+                <td><span class="badge badge-info">${bagsCount} Bags</span></td>
+                <td style="text-align: center;">
+                    <div style="display: flex; gap: 4px; justify-content: center;">
+                        <button class="btn btn-secondary btn-sm" onclick="printGatePass('${gp.id}')" title="Print Gate Pass" style="background-color: #2563eb; color: white; border-color: #2563eb;">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="editGatePass('${gp.id}')" title="Edit">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteGatePass('${gp.id}')" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
+
+    if (tbody.children.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No gate passes found matching filters.</td></tr>`;
+    }
+}
+
+function getNextGatePassNo() {
+    if (!state.gatePasses || state.gatePasses.length === 0) return 1523;
+    const maxNo = state.gatePasses.reduce((max, gp) => {
+        const val = parseInt(gp.gatePassNo);
+        return isNaN(val) ? max : Math.max(max, val);
+    }, 0);
+    return maxNo > 0 ? maxNo + 1 : 1523;
+}
+
+function openGatePassModal(id = null) {
+    populateAutocompleteDatalists();
+    document.getElementById('gp-form').reset();
+    document.getElementById('gp-items-tbody').innerHTML = '';
+    gpItemRowCounter = 0;
+
+    const modal = document.getElementById('gate-pass-modal');
+    
+    if (id) {
+        // Edit mode
+        const gp = state.gatePasses.find(g => g.id === id);
+        if (!gp) return;
+        
+        document.getElementById('gp-id').value = gp.id;
+        document.getElementById('gp-no').value = gp.gatePassNo;
+        document.getElementById('gp-date').value = gp.date;
+        document.getElementById('gp-party').value = gp.partyName;
+        document.getElementById('gp-station').value = gp.station;
+        document.getElementById('gp-broker').value = gp.broker || '';
+        document.getElementById('gp-lorry').value = gp.lorryNo;
+        document.getElementById('gp-driver-mobile').value = gp.driverMobile || '';
+        document.getElementById('gp-transport').value = gp.transport || '';
+        document.getElementById('gp-freight').value = gp.freight || '';
+
+        // Populate items
+        if (gp.items && gp.items.length > 0) {
+            gp.items.forEach(item => {
+                addGatePassItemRow(item.productName, item.bhartee, item.bags, item.marka, item.thappi);
+            });
+        } else {
+            addGatePassItemRow();
+        }
+        
+        document.getElementById('gp-modal-title').textContent = "Edit Gate Pass (गेट पास)";
+    } else {
+        // New Mode
+        document.getElementById('gp-id').value = '';
+        document.getElementById('gp-no').value = getNextGatePassNo();
+        document.getElementById('gp-date').value = new Date().toISOString().split('T')[0];
+        
+        // Default Prefilled
+        prepopulateDefaultGPMalaiItems();
+        
+        document.getElementById('gp-modal-title').textContent = "Create Gate Pass (गेट पास)";
+    }
+
+    modal.classList.add('active');
+}
+
+function addGatePassItemRow(productName = '', bhartee = '50', bags = '', marka = '', thappi = '') {
+    gpItemRowCounter++;
+    const tbody = document.getElementById('gp-items-tbody');
+    if (!tbody) return;
+
+    const tr = document.createElement('tr');
+    tr.id = `gp-item-row-${gpItemRowCounter}`;
+
+    // Get list of standard products to show as quick autocomplete helper
+    const productOptions = PRODUCTS.map(p => `<option value="${p.name}"></option>`).join('');
+
+    tr.innerHTML = `
+        <td class="text-center font-bold" style="vertical-align: middle;">${tbody.children.length + 1}</td>
+        <td>
+            <input type="text" class="form-control gp-item-product" required value="${productName}" placeholder="e.g. Wash Oil, Hulls" list="gp-products-list-${gpItemRowCounter}">
+            <datalist id="gp-products-list-${gpItemRowCounter}">
+                ${productOptions}
+                <option value="Keshar Malai (केशर मलाई)"></option>
+                <option value="Gokul Malai (गोकुळ मलाई)"></option>
+                <option value="Mastavan Malai (मस्तवन मलाई)"></option>
+            </datalist>
+        </td>
+        <td>
+            <input type="number" class="form-control gp-item-bhartee" required value="${bhartee}" placeholder="50">
+        </td>
+        <td>
+            <input type="number" class="form-control gp-item-bags" required value="${bags}" placeholder="Bags qty">
+        </td>
+        <td>
+            <input type="text" class="form-control gp-item-marka" value="${marka}" placeholder="e.g. Gokul">
+        </td>
+        <td>
+            <input type="text" class="form-control gp-item-thappi" value="${thappi}" placeholder="Stack No">
+        </td>
+        <td style="text-align: center; vertical-align: middle;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeGatePassItemRow('${tr.id}')" title="Delete Row" style="padding: 4px 8px;">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    recalculateGatePassSrs();
+}
+
+function removeGatePassItemRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+        recalculateGatePassSrs();
+    }
+}
+
+function recalculateGatePassSrs() {
+    const tbody = document.getElementById('gp-items-tbody');
+    if (!tbody) return;
+    Array.from(tbody.children).forEach((tr, idx) => {
+        tr.children[0].textContent = idx + 1;
+    });
+}
+
+function prepopulateDefaultGPMalaiItems() {
+    const tbody = document.getElementById('gp-items-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    addGatePassItemRow('Keshar Malai (केशर मलाई)', '50', '');
+    addGatePassItemRow('Gokul Malai (गोकुळ मलाई)', '50', '');
+    addGatePassItemRow('Mastavan Malai (मस्तवन मलाई)', '50', '');
+}
+
+function handleGatePassSubmit(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('gp-id').value;
+    const gatePassNo = document.getElementById('gp-no').value.trim();
+    const date = document.getElementById('gp-date').value;
+    const partyName = document.getElementById('gp-party').value.trim();
+    const station = document.getElementById('gp-station').value.trim();
+    const broker = document.getElementById('gp-broker').value.trim();
+    const lorryNo = document.getElementById('gp-lorry').value.trim();
+    const driverMobile = document.getElementById('gp-driver-mobile').value.trim();
+    const transport = document.getElementById('gp-transport').value.trim();
+    const freight = parseFloat(document.getElementById('gp-freight').value) || 0;
+
+    // Collect dynamic table rows
+    const items = [];
+    const tbody = document.getElementById('gp-items-tbody');
+    if (tbody) {
+        Array.from(tbody.children).forEach(tr => {
+            const prod = tr.querySelector('.gp-item-product').value.trim();
+            const bhartee = tr.querySelector('.gp-item-bhartee').value.trim();
+            const bags = parseInt(tr.querySelector('.gp-item-bags').value) || 0;
+            const marka = tr.querySelector('.gp-item-marka').value.trim();
+            const thappi = tr.querySelector('.gp-item-thappi').value.trim();
+
+            if (prod && bags > 0) {
+                items.push({ productName: prod, bhartee, bags, marka, thappi });
+            }
+        });
+    }
+
+    if (items.length === 0) {
+        alert("Please enter at least one dispatch product with a positive bag quantity!");
+        return;
+    }
+
+    const data = {
+        id: id || 'gp-' + Date.now(),
+        gatePassNo,
+        date,
+        partyName,
+        station,
+        broker,
+        items,
+        lorryNo,
+        driverMobile,
+        transport,
+        freight
+    };
+
+    if (id) {
+        // Edit mode
+        const index = state.gatePasses.findIndex(g => g.id === id);
+        if (index !== -1) {
+            state.gatePasses[index] = data;
+        }
+    } else {
+        // New mode
+        state.gatePasses.push(data);
+    }
+
+    saveState();
+    closeModal('gate-pass-modal');
+    renderGatePassTable();
+    alert("Gate Pass saved successfully!");
+    
+    // Automatically trigger printing slip
+    printGatePass(data.id);
+}
+
+function editGatePass(id) {
+    openGatePassModal(id);
+}
+
+function deleteGatePass(id) {
+    if (confirm("Are you sure you want to delete this Gate Pass? This cannot be undone.")) {
+        state.gatePasses = state.gatePasses.filter(g => g.id !== id);
+        saveState();
+        renderGatePassTable();
+    }
+}
+
+function clearGatePassFilters() {
+    const search = document.getElementById('filter-gp-search');
+    const date = document.getElementById('filter-gp-date');
+    if (search) search.value = '';
+    if (date) date.value = '';
+    renderGatePassTable();
+}
+
+function printGatePass(id) {
+    const gp = state.gatePasses.find(g => g.id === id);
+    if (!gp) return;
+
+    // Build the items table rows
+    let itemRowsHtml = '';
+    gp.items.forEach((item, idx) => {
+        itemRowsHtml += `
+            <tr style="height: 38px;">
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; font-weight: bold;">${idx + 1}</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; font-weight: bold;">${item.productName}</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; font-weight: bold;">${item.bhartee}</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; font-weight: bold;">${item.bags}</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; font-weight: bold;">${item.marka || '-'}</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; font-weight: bold;">${item.thappi || '-'}</td>
+            </tr>
+        `;
+    });
+
+    // Pad with empty rows to make it look exactly like the physical pad
+    const emptyRowsCount = Math.max(0, 5 - gp.items.length);
+    for (let i = 0; i < emptyRowsCount; i++) {
+        itemRowsHtml += `
+            <tr style="height: 38px;">
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; text-align: center; color: transparent;">-</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; color: transparent;">-</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; color: transparent;">-</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; color: transparent;">-</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; color: transparent;">-</td>
+                <td style="border: 1px solid #c2410c; padding: 4px 8px; color: transparent;">-</td>
+            </tr>
+        `;
+    }
+
+    const totalBags = gp.items.reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
+
+    const formattedDateObj = new Date(gp.date);
+    const day = String(formattedDateObj.getDate()).padStart(2, '0');
+    const month = String(formattedDateObj.getMonth() + 1).padStart(2, '0');
+    const year = formattedDateObj.getFullYear();
+    const formattedDate = `${day} / ${month} / ${year}`;
+
+    // HTML printable window markup matching the physical print colors (red/orange)
+    const printContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Gate Pass No. ${gp.gatePassNo}</title>
+        <style>
+            @media print {
+                body {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #ffffff;
+                }
+                .print-container {
+                    border: 3px double #c2410c !important;
+                }
+                .no-print {
+                    display: none;
+                }
+            }
+            body {
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background-color: #f3f4f6;
+                margin: 0;
+                padding: 20px;
+                color: #374151;
+            }
+            .print-container {
+                max-width: 580px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border: 3px double #c2410c;
+                padding: 15px;
+                box-sizing: border-box;
+                border-radius: 4px;
+            }
+            .header-text {
+                text-align: center;
+                color: #c2410c;
+            }
+            .header-text h1 {
+                margin: 2px 0;
+                font-size: 24px;
+                font-weight: 800;
+            }
+            .header-text p {
+                margin: 1px 0;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            .gp-badge {
+                border: 2px solid #c2410c;
+                padding: 3px 15px;
+                font-size: 18px;
+                font-weight: 800;
+                border-radius: 4px;
+                display: inline-block;
+                color: #c2410c;
+            }
+            .info-table {
+                width: 100%;
+                margin-top: 10px;
+                border-collapse: collapse;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            .info-table td {
+                padding: 5px 0;
+                color: #c2410c;
+            }
+            .info-underline {
+                border-bottom: 1px solid #c2410c;
+                padding-left: 5px;
+                color: #000000;
+                font-weight: bold;
+            }
+            .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 12px;
+                font-size: 13px;
+            }
+            .items-table th {
+                border: 1px solid #c2410c;
+                background-color: rgba(194, 65, 12, 0.08);
+                color: #c2410c;
+                padding: 6px;
+                font-weight: bold;
+            }
+            .items-table td {
+                color: #000000;
+            }
+            .footer-grid {
+                margin-top: 15px;
+                width: 100%;
+                font-size: 13px;
+                font-weight: bold;
+                color: #c2410c;
+            }
+            .footer-grid td {
+                padding: 4px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="no-print" style="max-width: 580px; margin: 0 auto 15px auto; display: flex; justify-content: space-between;">
+            <button onclick="window.print()" style="padding: 10px 20px; font-weight: bold; background: #c2410c; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Print Gate Pass
+            </button>
+            <button onclick="window.close()" style="padding: 10px 20px; font-weight: bold; background: #374151; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Close Window
+            </button>
+        </div>
+        
+        <div class="print-container">
+            <div class="header-text">
+                <p style="font-size: 13px; margin-bottom: 2px;">॥ श्री ॥</p>
+                <h1>मे. विठ्ठल ऑईल मिल</h1>
+                <p>गट नं. १४२३, त्रिमुर्ती पब्लिक स्कूल समोर, नेवासा रोड, शेवगांव, जि. अ.नगर</p>
+                <p>ऑफीस : मे. रा. वि. धूत, Market Yard, Shevgaon - 414502 Dist. Ahmednagar (MS)</p>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-bottom: 2px solid #c2410c; padding-bottom: 8px;">
+                <div style="font-size: 15px; font-weight: bold; color: #c2410c;">
+                    नं. <span style="color: #000000; font-size: 18px; font-weight: 800; border-bottom: 1px solid #c2410c; padding: 0 5px;">${gp.gatePassNo}</span>
+                </div>
+                <div class="gp-badge">गेट पास</div>
+                <div style="font-size: 14px; font-weight: bold; color: #c2410c;">
+                    दिनांक: <span style="color: #000000; border-bottom: 1px solid #c2410c; padding-bottom: 1px;">${formattedDate}</span>
+                </div>
+            </div>
+
+            <table class="info-table">
+                <tr>
+                    <td style="width: 85px;">पार्टीचे नांव :</td>
+                    <td class="info-underline">${gp.partyName}</td>
+                </tr>
+                <tr>
+                    <td>स्टेशन :</td>
+                    <td class="info-underline">
+                        <table style="width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+                            <tr>
+                                <td style="padding: 0; color: #000000; font-weight: bold;">${gp.station}</td>
+                                <td style="width: 50px; padding: 0; text-align: right; color: #c2410c;">दलाल:</td>
+                                <td style="width: 150px; padding: 0 0 0 5px; color: #000000; font-weight: bold;" class="info-underline">${gp.broker || '-'}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">अ.नं.</th>
+                        <th>माल प्रकार</th>
+                        <th style="width: 70px;">भरती</th>
+                        <th style="width: 70px;">पोते</th>
+                        <th style="width: 80px;">मार्का</th>
+                        <th style="width: 80px;">थप्पी</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemRowsHtml}
+                    <tr style="height: 38px;">
+                        <td colspan="3" style="border: 1px solid #c2410c; text-align: right; padding: 6px 12px; font-weight: 800; color: #c2410c;">एकूण पोते:</td>
+                        <td style="border: 1px solid #c2410c; text-align: center; font-weight: 800; font-size: 15px; background-color: rgba(194, 65, 12, 0.08);">${totalBags}</td>
+                        <td colspan="2" style="border: 1px solid #c2410c; background-color: rgba(194, 65, 12, 0.08);"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <table class="footer-grid">
+                <tr>
+                    <td style="width: 60px;">गाडी नं.:</td>
+                    <td class="info-underline" style="width: 190px;">${gp.lorryNo}</td>
+                    <td style="width: 90px; text-align: right; padding-right: 8px;">ड्रायव्हर मो.नं.:</td>
+                    <td class="info-underline">${gp.driverMobile || '-'}</td>
+                </tr>
+                <tr>
+                    <td>ट्रान्सपोर्ट:</td>
+                    <td class="info-underline">${gp.transport || '-'}</td>
+                    <td style="text-align: right; padding-right: 8px;">गाडी भाडे:</td>
+                    <td class="info-underline">${gp.freight > 0 ? '₹ ' + gp.freight.toFixed(2) : '-'}</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 55px; display: flex; justify-content: flex-end;">
+                <div style="text-align: center; width: 150px; border-top: 1px dashed #c2410c; padding-top: 5px; font-size: 12px; font-weight: bold; color: #c2410c;">
+                    माल देणाराची सही
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=650,height=800');
+    if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(printContent);
+        printWindow.document.close();
     }
 }
