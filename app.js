@@ -1281,6 +1281,10 @@ function renderUnloadTable(searchQuery = '') {
         }
         
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td>
                 <input type="checkbox" class="unload-row-checkbox" data-id="${item.id}" onchange="updateSelectedLorriesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
@@ -1298,10 +1302,6 @@ function renderUnloadTable(searchQuery = '') {
             <td><strong class="text-success">₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong></td>
             <td>${item.location || '-'}</td>
             <td><small class="text-muted" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">${qualityText}${escapeHtml(item.remark || '-')}</small></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -1965,6 +1965,10 @@ function renderSparesTable(searchQuery = '') {
             
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editSpare('${part.id}')" title="Edit Spare"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSpare('${part.id}')" title="Delete Spare"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td><code>${part.code}</code></td>
             <td><strong>${part.name}</strong></td>
@@ -1974,10 +1978,6 @@ function renderSparesTable(searchQuery = '') {
             <td>₹${parseFloat(part.cost).toLocaleString('en-IN')}</td>
             <td>₹${(part.stock * part.cost).toLocaleString('en-IN')}</td>
             <td>${statusBadge}</td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editSpare('${part.id}')" title="Edit Spare"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteSpare('${part.id}')" title="Delete Spare"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -2070,6 +2070,10 @@ function renderRepairsTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editRepair('${log.id}')" title="Edit Log"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteRepair('${log.id}')" title="Delete Log"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td>${formatDateString(log.date)}</td>
             <td><strong>${log.machine}</strong></td>
@@ -2079,10 +2083,6 @@ function renderRepairsTable() {
             <td>${log.engineer}</td>
             <td><strong>₹${parseFloat(log.totalCost).toLocaleString('en-IN')}</strong></td>
             <td><span class="badge ${statusClass}">${log.status}</span></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editRepair('${log.id}')" title="Edit Log"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRepair('${log.id}')" title="Delete Log"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -2361,6 +2361,10 @@ function renderTransportTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editTransport('${log.id}')" title="Edit Log"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTransport('${log.id}')" title="Delete Log"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td>${formatDateString(log.date)}</td>
             <td><strong>${log.vehicle}</strong></td>
@@ -2370,10 +2374,6 @@ function renderTransportTable() {
             <td><strong>${costText}</strong></td>
             <td><span class="text-xs font-semibold text-primary">${mileage}</span></td>
             <td><small>${log.remark || '—'}</small></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editTransport('${log.id}')" title="Edit Log"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteTransport('${log.id}')" title="Delete Log"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3443,6 +3443,10 @@ function renderSalesTable(searchQuery = '') {
             ? `<br><span class="text-xs text-muted">📦 ${item.bagQty} PP Bag(s)</span>` 
             : '';
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editSale('${item.id}')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSale('${item.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td>
                 <input type="checkbox" class="sales-row-checkbox" data-id="${item.id}" onchange="updateSelectedSalesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
@@ -3458,10 +3462,6 @@ function renderSalesTable(searchQuery = '') {
             <td><code>${item.lorryNo}</code></td>
             <td>${item.destination}</td>
             <td><span class="badge ${item.status === 'Paid' ? 'badge-success' : 'badge-warning'}">${item.status}</span></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editSale('${item.id}')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteSale('${item.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3782,16 +3782,16 @@ function renderCustomersTable() {
     state.customers.forEach(c => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editCustomer('${c.id}')"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td><strong>${c.name}</strong></td>
             <td>${c.contact || '-'}</td>
             <td><code>${c.phone}</code></td>
             <td><code class="text-success">${c.gstin}</code></td>
             <td><small>${c.address}</small></td>
             <td><span class="badge badge-info">${c.terms}</span></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="editCustomer('${c.id}')"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3877,6 +3877,10 @@ function renderInvoicesArchive() {
     state.salesInvoices.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(inv => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="reprintArchivedInvoice('${inv.id}')" title="Print/View"><i class="fa-solid fa-print"></i> View</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteArchivedInvoice('${inv.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
             <td>${formatDateString(inv.date)}</td>
             <td><code>${inv.invoiceNo}</code></td>
             <td><strong>${inv.partyName}</strong></td>
@@ -3885,10 +3889,6 @@ function renderInvoicesArchive() {
             <td><strong>₹${inv.grandTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}</strong></td>
             <td>₹${inv.taxAmount.toLocaleString('en-IN', {maximumFractionDigits:0})}</td>
             <td><small class="text-muted">${inv.itemCount} items</small></td>
-            <td>
-                <button class="btn btn-secondary btn-sm" onclick="reprintArchivedInvoice('${inv.id}')" title="Print/View"><i class="fa-solid fa-print"></i> View</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteArchivedInvoice('${inv.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -4292,17 +4292,17 @@ function renderSuppliersTable() {
     state.suppliers.forEach(sup => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="font-bold">${escapeHtml(sup.name)}</td>
-            <td>${escapeHtml(sup.contact || '-')}</td>
-            <td>${escapeHtml(sup.phone || '-')}</td>
-            <td><code>${escapeHtml(sup.gstin || '-')}</code></td>
-            <td>${escapeHtml(sup.address || '-')}</td>
-            <td>
+            <td style="white-space:nowrap;">
                 <div class="action-buttons">
                     <button class="btn btn-sm btn-outline-primary" onclick="editSupplier('${sup.id}')"><i class="fa-solid fa-pen"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteSupplier('${sup.id}')"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </td>
+            <td class="font-bold">${escapeHtml(sup.name)}</td>
+            <td>${escapeHtml(sup.contact || '-')}</td>
+            <td>${escapeHtml(sup.phone || '-')}</td>
+            <td><code>${escapeHtml(sup.gstin || '-')}</code></td>
+            <td>${escapeHtml(sup.address || '-')}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -4705,6 +4705,12 @@ function renderProductionTable() {
         const tr = document.createElement('tr');
         if (isHighLoss) tr.style.background = 'rgba(239,68,68,0.05)';
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <div class="action-buttons" style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="editProduction('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteProduction('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </td>
             <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td style="white-space:nowrap;">${escapeHtml(item.date)}</td>
             <td>${lotLabel}</td>
@@ -4719,12 +4725,6 @@ function renderProductionTable() {
                 <small style="color:#ef4444;">-${loss.toFixed(2)} Qtl</small>${lossBadge}
             </td>
             <td><small class="text-muted">${escapeHtml(item.remark || '—')}</small></td>
-            <td>
-                <div class="action-buttons" style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-sm" onclick="editProduction('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProduction('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -5121,6 +5121,12 @@ function renderRefiningTable() {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td style="white-space:nowrap;">
+                <div class="action-buttons" style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="editRefining('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteRefining('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </td>
             <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
             <td style="white-space:nowrap;">${escapeHtml(item.date)}</td>
             <td>
@@ -5133,12 +5139,6 @@ function renderRefiningTable() {
             <td class="text-end" style="font-family:monospace;color:#a855f7;">${gaad > 0 ? gaad.toFixed(2) : '<span style="opacity:0.3">—</span>'}</td>
             <td class="text-center"><span style="font-weight:700;color:${recColor};">${recovery}%</span><br><small style="color:#ef4444;">-${loss.toFixed(2)} Qtl</small></td>
             <td><small class="text-muted">${escapeHtml(item.remark || '—')}</small></td>
-            <td>
-                <div class="action-buttons" style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-sm" onclick="editRefining('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteRefining('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -6241,6 +6241,19 @@ function renderGatePassTable() {
             const bagsCount = gp.items.reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
             
             tr.innerHTML = `
+                <td style="text-align: center; white-space:nowrap;">
+                    <div style="display: flex; gap: 4px; justify-content: center;">
+                        <button class="btn btn-warning btn-sm" onclick="editGatePass('${gp.id}')" title="Edit">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="printGatePass('${gp.id}')" title="Print Gate Pass" style="background-color: #2563eb; color: white; border-color: #2563eb;">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteGatePass('${gp.id}')" title="Delete">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
                 <td><strong>${gp.gatePassNo}</strong></td>
                 <td>${gp.date}</td>
                 <td><strong>${gp.partyName}</strong></td>
@@ -6248,19 +6261,6 @@ function renderGatePassTable() {
                 <td>${gp.broker || '-'}</td>
                 <td>${gp.lorryNo}</td>
                 <td><span class="badge badge-info">${bagsCount} Bags</span></td>
-                <td style="text-align: center;">
-                    <div style="display: flex; gap: 4px; justify-content: center;">
-                        <button class="btn btn-secondary btn-sm" onclick="printGatePass('${gp.id}')" title="Print Gate Pass" style="background-color: #2563eb; color: white; border-color: #2563eb;">
-                            <i class="fa-solid fa-print"></i>
-                        </button>
-                        <button class="btn btn-warning btn-sm" onclick="editGatePass('${gp.id}')" title="Edit">
-                            <i class="fa-solid fa-edit"></i>
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteGatePass('${gp.id}')" title="Delete">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
             `;
             tbody.appendChild(tr);
         }
