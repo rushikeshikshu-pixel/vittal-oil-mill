@@ -23,16 +23,16 @@ echo Downloading latest software components...
 echo.
 
 :: Download each code file to a temporary file first to prevent corruption
-curl -s -f -o "%~dp0app.js.new" "%UPDATE_URL%/app.js"
+curl -k -f -o "%~dp0app.js.new" "%UPDATE_URL%/app.js"
 if %ERRORLEVEL% NEQ 0 goto ERROR_DOWNLOAD
 
-curl -s -f -o "%~dp0index.html.new" "%UPDATE_URL%/index.html"
+curl -k -f -o "%~dp0index.html.new" "%UPDATE_URL%/index.html"
 if %ERRORLEVEL% NEQ 0 goto ERROR_DOWNLOAD
 
-curl -s -f -o "%~dp0style.css.new" "%UPDATE_URL%/style.css"
+curl -k -f -o "%~dp0style.css.new" "%UPDATE_URL%/style.css"
 if %ERRORLEVEL% NEQ 0 goto ERROR_DOWNLOAD
 
-curl -s -f -o "%~dp0server.py.new" "%UPDATE_URL%/server.py"
+curl -k -f -o "%~dp0server.py.new" "%UPDATE_URL%/server.py"
 if %ERRORLEVEL% NEQ 0 goto ERROR_DOWNLOAD
 
 :: Apply updates
