@@ -986,15 +986,23 @@ function openModal(modalId) {
             document.getElementById('unload-id').value = "";
             document.getElementById('unload-modal-title').textContent = "Log Raw Material Load";
         }
-    } else if (modalId === 'sales-modal' && !document.getElementById('sales-id').value) {
-        document.getElementById('sales-form').reset();
-        document.getElementById('sales-id').value = "";
-        document.getElementById('sales-modal-title').textContent = "Record Outbound Sales dispatch";
+    } else if (modalId === 'sales-modal') {
         populateSalesCustomersDropdown();
-        document.getElementById('sales-items-tbody').innerHTML = '';
-        addSalesItemRow();
-        const addBtn = document.getElementById('sales-add-row-btn');
-        if (addBtn) addBtn.style.display = 'inline-block';
+        populateSalesGatePassDropdown();
+        populateSalesBrokersDropdown();
+        updateSalesCustomerOutstandingDisplay();
+        if (!document.getElementById('sales-id').value) {
+            document.getElementById('sales-form').reset();
+            document.getElementById('sales-id').value = "";
+            document.getElementById('sales-modal-title').textContent = "Record Outbound Sales dispatch";
+            if (document.getElementById('sales-gatepass-select')) document.getElementById('sales-gatepass-select').value = "";
+            if (document.getElementById('sales-broker')) document.getElementById('sales-broker').value = "";
+            document.getElementById('sales-items-tbody').innerHTML = '';
+            addSalesItemRow();
+            const addBtn = document.getElementById('sales-add-row-btn');
+            if (addBtn) addBtn.style.display = 'inline-block';
+            updateSalesCustomerOutstandingDisplay();
+        }
     } else if (modalId === 'customer-modal' && !document.getElementById('cust-id').value) {
         document.getElementById('customer-form').reset();
         document.getElementById('cust-id').value = "";
@@ -3436,6 +3444,7 @@ function renderSalesTable(searchQuery = '') {
             <td>${formatDateString(item.date)}</td>
             <td><code>${item.invoiceNo || '-'}</code></td>
             <td><strong>${item.customer}</strong></td>
+            <td>${item.broker ? `<span class="badge badge-info text-xs"><i class="fa-solid fa-user-tie"></i> ${escapeHtml(item.broker)}</span>` : '<span class="text-muted text-xs">—</span>'}</td>
             <td>${prodName}<br><span class="badge ${qualityBadgeColor} text-xs">${item.qualityGrade || 'Grade A'}</span>${item.qualityRemark ? `<br><span class="text-xs text-muted">${item.qualityRemark}</span>` : ''}</td>
             <td>${parseFloat(item.weight).toFixed(2)} Qtl${ppSummary}${juteSummary}</td>
             <td>₹${parseFloat(item.rate).toLocaleString('en-IN')}</td>
@@ -3491,6 +3500,7 @@ function populateSalesCustomersDropdown() {
         opt.value = c.name;
         dl.appendChild(opt);
     });
+    populateSalesBrokersDropdown();
 }
 
 function populateSalesProductsDropdown() {
@@ -3513,6 +3523,7 @@ function handleSalesSubmit(e) {
         const id = document.getElementById('sales-id').value;
         const date = document.getElementById('sales-date').value;
         const customer = document.getElementById('sales-customer').value;
+        const broker = document.getElementById('sales-broker') ? document.getElementById('sales-broker').value.trim() : '';
         const lorryNo = document.getElementById('sales-lorry').value;
         const destination = document.getElementById('sales-destination').value;
         const status = document.getElementById('sales-status-select').value;
@@ -3588,6 +3599,7 @@ function handleSalesSubmit(e) {
                     billed: false,
                     date,
                     customer,
+                    broker,
                     product: itemData.product,
                     lorryNo,
                     weight: itemData.weight,
@@ -3698,6 +3710,8 @@ function editSale(id) {
     document.getElementById('sales-id').value = item.id;
     document.getElementById('sales-date').value = item.date;
     document.getElementById('sales-customer').value = item.customer;
+    if (document.getElementById('sales-broker')) document.getElementById('sales-broker').value = item.broker || '';
+    updateSalesCustomerOutstandingDisplay();
     document.getElementById('sales-lorry').value = item.lorryNo;
     document.getElementById('sales-destination').value = item.destination;
     document.getElementById('sales-status-select').value = item.status;
@@ -6797,10 +6811,156 @@ function getSalesProductOptionsHtml(selectedId = '') {
     PRODUCTS.forEach(p => {
         if (p.category !== 'Seed' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr') {
             const selected = p.id === selectedId ? 'selected' : '';
-            html += `<option value="${p.id}" ${selected}>${p.name}</option>`;
+            const currentStock = (typeof getProductCurrentStock === 'function') ? getProductCurrentStock(p.id) : 0;
+            const stockLabel = ` (Stock: ${currentStock.toFixed(2)} Qtl)`;
+            html += `<option value="${p.id}" ${selected}>${p.name}${stockLabel}</option>`;
         }
     });
     return html;
+}
+
+// --- LIVE PRODUCT STOCK & OUTSTANDING HELPERS FOR SALES & BILLING ---
+function getProductCurrentStock(prodId) {
+    if (!prodId) return 0;
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const monthKey = `${yyyy}-${mm}`;
+    const opStock = (typeof getProductOpeningStock === 'function') ? getProductOpeningStock(prodId, monthKey) : 0;
+    const daysInMonth = (typeof getDaysInMonth === 'function') ? getDaysInMonth(monthKey) : 31;
+    let totalReceipt = 0;
+    let totalIssue = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+        if (typeof getDayLog === 'function') {
+            const dayLog = getDayLog(prodId, monthKey, d);
+            totalReceipt += dayLog.receipt || 0;
+            totalIssue += dayLog.issue || 0;
+        }
+    }
+    return opStock + totalReceipt - totalIssue;
+}
+
+function getCustomerOutstanding(customerName) {
+    if (!customerName) return 0;
+    let totalBilled = 0;
+    let totalPaid = 0;
+    if (Array.isArray(state.sales)) {
+        state.sales.forEach(s => {
+            if (s.customer === customerName && s.dispatchStatus !== 'Rejected' && s.dispatchStatus !== 'Returned') {
+                totalBilled += (parseFloat(s.weight) || 0) * (parseFloat(s.rate) || 0);
+            }
+        });
+    }
+    if (Array.isArray(state.payments)) {
+        state.payments.forEach(p => {
+            if (p.partyName === customerName && (p.partyRole === 'customer' || !p.partyRole)) {
+                totalPaid += parseFloat(p.amount) || 0;
+            }
+        });
+    }
+    return totalBilled - totalPaid;
+}
+
+function updateSalesCustomerOutstandingDisplay() {
+    const custInput = document.getElementById('sales-customer');
+    const badge = document.getElementById('sales-customer-outstanding-badge');
+    if (!custInput || !badge) return;
+    const custName = custInput.value.trim();
+    if (!custName) {
+        badge.style.display = 'none';
+        return;
+    }
+    const outstanding = getCustomerOutstanding(custName);
+    badge.style.display = 'inline-block';
+    if (outstanding > 0) {
+        badge.className = 'badge badge-warning';
+        badge.innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> Outstanding: <strong>₹${outstanding.toLocaleString('en-IN', {maximumFractionDigits:0})}</strong>`;
+    } else if (outstanding < 0) {
+        badge.className = 'badge badge-info';
+        badge.innerHTML = `<i class="fa-solid fa-arrow-down font-bold"></i> Advance Credit: <strong>₹${Math.abs(outstanding).toLocaleString('en-IN', {maximumFractionDigits:0})}</strong>`;
+    } else {
+        badge.className = 'badge badge-success';
+        badge.innerHTML = `<i class="fa-solid fa-check"></i> Account Clear (₹0 Balance)`;
+    }
+}
+
+function populateSalesGatePassDropdown() {
+    const select = document.getElementById('sales-gatepass-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- Direct Sales Entry (No Gate Pass Linked) --</option>';
+    if (Array.isArray(state.gatePasses) && state.gatePasses.length > 0) {
+        const sortedGP = [...state.gatePasses].sort((a,b) => new Date(b.date) - new Date(a.date));
+        sortedGP.forEach(gp => {
+            const opt = document.createElement('option');
+            opt.value = gp.id;
+            const totalBags = (gp.items || []).reduce((sum, item) => sum + (parseInt(item.bags) || 0), 0);
+            opt.textContent = `${gp.gatePassNo} | ${gp.partyName} | Lorry: ${gp.lorryNo}${gp.broker ? ' | Broker: ' + gp.broker : ''} (${totalBags} Bags)`;
+            select.appendChild(opt);
+        });
+    }
+}
+
+function populateSalesBrokersDropdown() {
+    const dl = document.getElementById('brokers-datalist');
+    if (!dl) return;
+    const brokersList = new Set();
+    if (Array.isArray(state.gatePasses)) {
+        state.gatePasses.forEach(g => { if (g.broker) brokersList.add(g.broker.trim()); });
+    }
+    if (Array.isArray(state.sales)) {
+        state.sales.forEach(s => { if (s.broker) brokersList.add(s.broker.trim()); });
+    }
+    const sorted = [...brokersList].sort();
+    dl.innerHTML = '';
+    sorted.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        dl.appendChild(opt);
+    });
+}
+
+function importGatePassToSales(gatePassId) {
+    if (!gatePassId) return;
+    const gp = (state.gatePasses || []).find(g => g.id === gatePassId);
+    if (!gp) return;
+
+    if (gp.date) document.getElementById('sales-date').value = gp.date;
+    if (gp.partyName) {
+        document.getElementById('sales-customer').value = gp.partyName;
+        updateSalesCustomerOutstandingDisplay();
+    }
+    if (gp.lorryNo) document.getElementById('sales-lorry').value = gp.lorryNo;
+    if (gp.station) document.getElementById('sales-destination').value = gp.station;
+    if (gp.broker) document.getElementById('sales-broker').value = gp.broker;
+
+    // Clear current item rows
+    const tbody = document.getElementById('sales-items-tbody');
+    if (tbody) tbody.innerHTML = '';
+
+    // Map products from Gate Pass items
+    if (Array.isArray(gp.items) && gp.items.length > 0) {
+        gp.items.forEach(gpItem => {
+            const pNameLower = (gpItem.productName || '').toLowerCase();
+            let matchedProdId = 'oil-wash';
+            if (pNameLower.includes('cake') || pNameLower.includes('khal') || pNameLower.includes('keshar') || pNameLower.includes('gokul') || pNameLower.includes('mastavan')) {
+                matchedProdId = pNameLower.includes('mm') ? 'khal-mm' : 'khal-km';
+            } else if (pNameLower.includes('hull') || pNameLower.includes('kandi') || pNameLower.includes('ch-')) {
+                matchedProdId = pNameLower.includes('ms') ? 'ch-ms' : 'ch-oms';
+            } else if (pNameLower.includes('acid')) {
+                matchedProdId = 'oil-acid';
+            } else if (pNameLower.includes('gaad') || pNameLower.includes('soap')) {
+                matchedProdId = 'oil-gaad';
+            }
+
+            const bagCount = parseInt(gpItem.bags) || 0;
+            const bharteeVal = parseFloat(gpItem.bhartee) || 50;
+            const approxWeightQtl = bagCount > 0 ? (bagCount * bharteeVal) / 100 : '';
+
+            addSalesItemRow(matchedProdId, approxWeightQtl, '', 'gm-pp-50', bagCount, '', '');
+        });
+    } else {
+        addSalesItemRow();
+    }
 }
 
 // --- DYNAMIC REFINING BATCH CONTROLLERS ---
