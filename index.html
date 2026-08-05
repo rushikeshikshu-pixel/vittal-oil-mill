@@ -2122,6 +2122,20 @@
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-seed-type">Seed Type *</label>
+                        <select id="unload-seed-type" required class="form-control">
+                            <option value="OMS" selected>OMS (Out of State)</option>
+                            <option value="MS">MS (Maharashtra)</option>
+                            <option value="Kandi">Kandi</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-invoice-no">Invoice / Bill Number *</label>
+                        <input type="text" id="unload-invoice-no" required placeholder="e.g. INV-8492 / B-104" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
                     <div class="form-group mb-3 col-4">
                         <label for="unload-invoice-weight">Invoice Weight (Qtl) *</label>
                         <input type="number" step="0.01" id="unload-invoice-weight" required placeholder="e.g. 105.00" class="form-control">
@@ -2156,7 +2170,7 @@
                         <input type="number" step="0.01" id="unload-discount" value="0" placeholder="e.g. 50" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-gst-rate">GST Rate (%) *</label>
+                        <label for="unload-gst-rate">Seed GST Rate (%) *</label>
                         <select id="unload-gst-rate" required class="form-control">
                             <option value="0">0% (Nil)</option>
                             <option value="5" selected>5% (Cotton Seed)</option>
@@ -2165,16 +2179,6 @@
                         </select>
                     </div>
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-seed-type">Seed Type *</label>
-                        <select id="unload-seed-type" required class="form-control">
-                            <option value="OMS" selected>OMS (Out of State)</option>
-                            <option value="MS">MS (Maharashtra)</option>
-                            <option value="Kandi">Kandi</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group mb-3 col-6">
                         <label for="unload-status">Load Status *</label>
                         <select id="unload-status" required class="form-control">
                             <option value="Standard" selected>Standard / Accepted</option>
@@ -2182,20 +2186,16 @@
                             <option value="Returned">Returned</option>
                         </select>
                     </div>
-                    <div class="form-group mb-3 col-6">
-                        <label for="unload-quality">Quality Remark / Moisture / Grade</label>
-                        <input type="text" id="unload-quality" placeholder="e.g. 8% Moisture, Grade-A" class="form-control">
-                    </div>
                 </div>
                 <div class="card mb-3 py-2 bg-dark-subtle">
-                    <h4 class="mb-1 text-sm font-bold">Inbound Gunnies / Packaging (Bardan)</h4>
-                    <p class="text-xs text-muted mb-2">If seeds are received in bags, select bag type to increase PP bag stock ledger.</p>
+                    <h4 class="mb-1 text-sm font-bold">Inbound Gunnies / Packaging (Bardan) Details</h4>
+                    <p class="text-xs text-muted mb-2">If seeds are received in bags, select bag type, count, rate, and GST %.</p>
                     <div class="form-row">
-                        <div class="form-group mb-2 col-4">
+                        <div class="form-group mb-2 col-3">
                             <label for="unload-bag-select" class="text-xs">Select Bag Type / Size</label>
                             <select id="unload-bag-select" class="form-control text-xs">
-                                <option value="">-- No Bag (Bulk Delivery) --</option>
-                                <option value="jute-bag">Old Gunny Bags (Jute bag)</option>
+                                <option value="">-- No Bag (Bulk) --</option>
+                                <option value="jute-bag">Old Gunny Bags (Jute)</option>
                                 <option value="gm-pp-50">50kg PP Bag</option>
                                 <option value="gm-pp-60">60kg PP Bag</option>
                                 <option value="gm-pp-70">70kg PP Bag</option>
@@ -2203,20 +2203,35 @@
                                 <option value="gm-pp-mm">MM PP</option>
                             </select>
                         </div>
-                        <div class="form-group mb-2 col-4">
+                        <div class="form-group mb-2 col-3">
                             <label for="unload-bag-qty" class="text-xs">Bags Count (Qty)</label>
                             <input type="number" id="unload-bag-qty" placeholder="e.g. 740" class="form-control text-xs">
                         </div>
-                        <div class="form-group mb-2 col-4">
+                        <div class="form-group mb-2 col-3">
                             <label for="unload-bag-rate" class="text-xs">Rate per Bag (₹)</label>
                             <input type="number" step="0.01" id="unload-bag-rate" placeholder="e.g. 16.00" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-3">
+                            <label for="unload-bag-gst" class="text-xs">Bags GST (%)</label>
+                            <select id="unload-bag-gst" class="form-control text-xs">
+                                <option value="0" selected>0% (Nil)</option>
+                                <option value="5">5%</option>
+                                <option value="12">12%</option>
+                                <option value="18">18%</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label for="unload-remark">Remarks</label>
-                    <textarea id="unload-remark" rows="2" placeholder="Any quality notes, packing details etc." class="form-control"></textarea>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-quality">Quality Remark / Moisture / Grade</label>
+                        <input type="text" id="unload-quality" placeholder="e.g. 8% Moisture, Grade-A" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-6">
+                        <label for="unload-remark">General Remarks</label>
+                        <input type="text" id="unload-remark" placeholder="Any quality notes, packing details etc." class="form-control">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('unload-modal')">Cancel</button>

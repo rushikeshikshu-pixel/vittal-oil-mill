@@ -985,6 +985,8 @@ function openModal(modalId) {
             document.getElementById('unload-form').reset();
             document.getElementById('unload-id').value = "";
             document.getElementById('unload-modal-title').textContent = "Log Raw Material Load";
+            if (document.getElementById('unload-invoice-no')) document.getElementById('unload-invoice-no').value = "";
+            if (document.getElementById('unload-bag-gst')) document.getElementById('unload-bag-gst').value = "0";
         }
     } else if (modalId === 'sales-modal') {
         populateSalesCustomersDropdown();
@@ -1284,7 +1286,7 @@ function renderUnloadTable(searchQuery = '') {
             </td>
             <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
             <td>${formatDateString(item.date)}</td>
-            <td><strong>${item.supplier}</strong>${statusBadge}</td>
+            <td><strong>${item.supplier}</strong><br><span class="badge badge-info text-xs" style="font-size:0.7rem; padding: 2px 6px;">${escapeHtml(item.seedType || 'OMS')}</span>${item.invoiceNo ? `<span class="text-xs text-muted" style="margin-left:4px;">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}${statusBadge}</td>
             <td>${item.place}</td>
             <td><code>${item.lorryNo}</code></td>
             <td style="font-size: 0.88rem; font-family: monospace;">${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong></td>
@@ -1342,6 +1344,8 @@ function handleUnloadSubmit(e) {
     const supplier = document.getElementById('unload-supplier').value;
     const place = document.getElementById('unload-place').value;
     const lorryNo = document.getElementById('unload-lorry').value;
+    const seedType = document.getElementById('unload-seed-type').value;
+    const invoiceNo = document.getElementById('unload-invoice-no') ? document.getElementById('unload-invoice-no').value.trim() : '';
     
     const invoiceWeight = parseFloat(document.getElementById('unload-invoice-weight').value) || 0;
     const weight = parseFloat(document.getElementById('unload-weight').value) || 0; // receivedWeight
@@ -1359,7 +1363,6 @@ function handleUnloadSubmit(e) {
     const gstRate = parseFloat(document.getElementById('unload-gst-rate').value) || 0;
     
     const location = document.getElementById('unload-location').value;
-    const seedType = document.getElementById('unload-seed-type').value;
     const status = document.getElementById('unload-status').value;
     const quality = document.getElementById('unload-quality').value.trim();
     const remark = document.getElementById('unload-remark').value;
@@ -1367,13 +1370,14 @@ function handleUnloadSubmit(e) {
     const bagType = document.getElementById('unload-bag-select').value;
     const bagQty = parseInt(document.getElementById('unload-bag-qty').value) || 0;
     const bagRate = parseFloat(document.getElementById('unload-bag-rate').value) || 0;
+    const bagGst = parseFloat(document.getElementById('unload-bag-gst') ? document.getElementById('unload-bag-gst').value : 0) || 0;
 
     const data = { 
-        date, supplier, place, lorryNo, 
+        date, supplier, place, lorryNo, seedType, invoiceNo,
         invoiceWeight, weight, shortage, 
         rate, freight, forRate, discount, gstRate, 
-        location, seedType, status, quality, remark, 
-        bagType, bagQty, bagRate 
+        location, status, quality, remark, 
+        bagType, bagQty, bagRate, bagGst 
     };
 
     if (id) {
@@ -1417,6 +1421,8 @@ function editUnload(id) {
     document.getElementById('unload-supplier').value = item.supplier;
     document.getElementById('unload-place').value = item.place;
     document.getElementById('unload-lorry').value = item.lorryNo;
+    document.getElementById('unload-seed-type').value = item.seedType || 'OMS';
+    if (document.getElementById('unload-invoice-no')) document.getElementById('unload-invoice-no').value = item.invoiceNo || '';
     
     document.getElementById('unload-invoice-weight').value = item.invoiceWeight !== undefined ? item.invoiceWeight : item.weight;
     document.getElementById('unload-weight').value = item.weight;
@@ -1428,13 +1434,13 @@ function editUnload(id) {
     document.getElementById('unload-gst-rate').value = item.gstRate !== undefined ? item.gstRate : 5;
     
     document.getElementById('unload-location').value = item.location || '';
-    document.getElementById('unload-seed-type').value = item.seedType || 'OMS';
     document.getElementById('unload-status').value = item.status || 'Standard';
     document.getElementById('unload-quality').value = item.quality || '';
     
     document.getElementById('unload-bag-select').value = item.bagType || '';
     document.getElementById('unload-bag-qty').value = item.bagQty || '';
     document.getElementById('unload-bag-rate').value = item.bagRate || '';
+    if (document.getElementById('unload-bag-gst')) document.getElementById('unload-bag-gst').value = item.bagGst !== undefined ? item.bagGst : 0;
     document.getElementById('unload-remark').value = item.remark || '';
 
     document.getElementById('unload-modal-title').textContent = "Edit Lorry Load Entry";
