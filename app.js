@@ -1120,6 +1120,25 @@ function openModal(modalId) {
                 dtInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
             }
         }
+        
+        // Keyboard shortcuts for mouse-free operation (Ctrl+Enter to save, Auto-focus first input)
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
+            if (firstInput) firstInput.focus();
+        }, 100);
+
+        if (!modal.dataset.kbListener) {
+            modal.dataset.kbListener = 'true';
+            modal.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    const submitBtn = modal.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        e.preventDefault();
+                        submitBtn.click();
+                    }
+                }
+            });
+        }
     } catch (err) {
         console.error(`[Modal Safeguard] Non-fatal error populating modal '${modalId}':`, err);
     }
@@ -6921,12 +6940,44 @@ function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bag
             <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Total Qtl" value="${weight}" style="padding: 3px 6px; font-weight: bold; color: var(--primary);">
         </td>
         <td style="text-align: center; vertical-align: middle;">
-            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 2px 6px;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 2px 6px;" tabindex="-1">
                 <i class="fa-solid fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(tr);
+
+    // Mouse-free Keyboard Navigation (Tab / Enter auto-creates new product row)
+    const rowInputs = tr.querySelectorAll('select, input');
+    rowInputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (index < rowInputs.length - 1) {
+                    rowInputs[index + 1].focus();
+                } else {
+                    // Last field in row: Add new product row & focus its product dropdown
+                    addSalesItemRow();
+                    const allRows = tbody.querySelectorAll('tr');
+                    const newRow = allRows[allRows.length - 1];
+                    if (newRow) {
+                        const newProdSelect = newRow.querySelector('.sales-item-product');
+                        if (newProdSelect) newProdSelect.focus();
+                    }
+                }
+            } else if (e.key === 'Tab' && !e.shiftKey && index === rowInputs.length - 1) {
+                // Tabbing out of the last input of the row automatically creates a new row
+                e.preventDefault();
+                addSalesItemRow();
+                const allRows = tbody.querySelectorAll('tr');
+                const newRow = allRows[allRows.length - 1];
+                if (newRow) {
+                    const newProdSelect = newRow.querySelector('.sales-item-product');
+                    if (newProdSelect) newProdSelect.focus();
+                }
+            }
+        });
+    });
 }
 
 function autoFillBagWeightAndCalculateTotal(rowIdNum) {
