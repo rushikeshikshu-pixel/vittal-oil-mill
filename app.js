@@ -17,6 +17,9 @@ const PRODUCTS = [
     { id: 'kandi', name: 'Kandi', category: 'Seed' },
     { id: 'khal-mm', name: 'Khal MM', category: 'Khal' },
     { id: 'khal-km', name: 'Khal KM', category: 'Khal' },
+    { id: 'keshar-malai', name: 'Keshar Malai (केशर मलाई)', category: 'Khal' },
+    { id: 'makhan-malai', name: 'Makhan Malai (माखन मलाई)', category: 'Khal' },
+    { id: 'gokul-malai', name: 'Gokul Malai (गोकुल मलाई)', category: 'Khal' },
     { id: 'oil-crude', name: 'Crud Oil', category: 'Oil' },
     { id: 'oil-wash', name: 'Wash Oil', category: 'Oil' },
     { id: 'oil-gaad', name: 'Gaad', category: 'Oil' },
@@ -43,6 +46,9 @@ const INITIAL_OPENING_STOCKS = {
     'kandi': 0.00,
     'khal-mm': 0.00,
     'khal-km': 0.00,
+    'keshar-malai': 0.00,
+    'makhan-malai': 0.00,
+    'gokul-malai': 0.00,
     'oil-crude': 0.00,
     'oil-wash': 0.00,
     'oil-gaad': 0.00,
@@ -416,26 +422,31 @@ function updateSyncStatus(status, message) {
     }
 }
 
+function convertToArray(val) {
+    if (Array.isArray(val)) return val.filter(Boolean);
+    if (val && typeof val === 'object') return Object.values(val).filter(Boolean);
+    return [];
+}
+
 function sanitizeStateArrays() {
-    if (!Array.isArray(state.sales)) state.sales = [];
-    if (!Array.isArray(state.customers)) state.customers = [];
-    if (!Array.isArray(state.salesInvoices)) state.salesInvoices = [];
-    if (!Array.isArray(state.unloads)) state.unloads = [];
-    if (!Array.isArray(state.spareParts)) state.spareParts = [];
-    if (!Array.isArray(state.maintenanceLogs)) state.maintenanceLogs = [];
-    if (!Array.isArray(state.suppliers)) state.suppliers = [];
-    if (!Array.isArray(state.productionLogs)) state.productionLogs = [];
-    if (!Array.isArray(state.refiningLogs)) state.refiningLogs = [];
-    if (!Array.isArray(state.machines)) state.machines = [];
-    if (!Array.isArray(state.activeCrushing)) state.activeCrushing = [];
-    if (!Array.isArray(state.payments)) state.payments = [];
-    if (!Array.isArray(state.transportLogs)) state.transportLogs = [];
-    if (!Array.isArray(state.gatePasses)) state.gatePasses = [];
+    state.sales = convertToArray(state.sales);
+    state.customers = convertToArray(state.customers);
+    state.salesInvoices = convertToArray(state.salesInvoices);
+    state.unloads = convertToArray(state.unloads);
+    state.spareParts = convertToArray(state.spareParts);
+    state.maintenanceLogs = convertToArray(state.maintenanceLogs);
+    state.suppliers = convertToArray(state.suppliers);
+    state.productionLogs = convertToArray(state.productionLogs);
+    state.refiningLogs = convertToArray(state.refiningLogs);
+    state.machines = convertToArray(state.machines);
+    state.activeCrushing = convertToArray(state.activeCrushing);
+    state.payments = convertToArray(state.payments);
+    state.transportLogs = convertToArray(state.transportLogs);
+    state.gatePasses = convertToArray(state.gatePasses);
     if (!state.stockDaily || typeof state.stockDaily !== 'object') state.stockDaily = {};
     if (!state.security || typeof state.security !== 'object') {
         state.security = { enabled: false, pins: { admin: '4321', weighbridge: '1111', supervisor: '2222', accountant: '3333' } };
     }
-    if (!Array.isArray(state.activeCrushing)) state.activeCrushing = [];
 
     // Self-clean old empty stock overrides to unfreeze ledger
     if (state.stockDaily && typeof state.stockDaily === 'object') {
@@ -482,6 +493,8 @@ function loadStateFromLocal() {
     snapshotSynced();
 }
 
+const FIREBASE_REST_URL = 'https://vittal-oil-mill-default-rtdb.asia-southeast1.firebasedatabase.app/vittal_oil_mill.json';
+
 async function checkFirebaseStatus() {
     if (window.location.protocol.startsWith('http')) {
         try {
@@ -489,53 +502,63 @@ async function checkFirebaseStatus() {
             if (res.ok) {
                 const status = await res.json();
                 if (status.firebase_active) {
-                    updateSyncStatus('success', 'Sync Active (Cloud Cloud)');
+                    updateSyncStatus('success', 'Sync Active (Cloud)');
                     return true;
                 } else if (status.firebase_error) {
                     console.warn("Firebase configuration error:", status.firebase_error);
                 }
             }
         } catch (e) {
-            console.warn("Could not fetch Firebase status", e);
+            // Static host or backend server offline
         }
     }
     return false;
 }
 
 async function loadState() {
-    // Try loading from database API if served via http
     if (window.location.protocol.startsWith('http')) {
+        updateSyncStatus('warning', 'Syncing...');
+
+        // 1. Direct Firebase Cloud REST check (Fastest for 100% PC-free Cloud Hosting)
         try {
-            updateSyncStatus('warning', 'Syncing...');
+            const fbRes = await fetch(FIREBASE_REST_URL, { cache: 'no-cache' });
+            if (fbRes.ok) {
+                const cloudData = await fbRes.json();
+                if (cloudData && typeof cloudData === 'object' && (cloudData.unloads || cloudData.suppliers || cloudData._rev)) {
+                    state = cloudData;
+                    sanitizeStateArrays();
+                    currentRev = cloudData._rev || 0;
+                    setStorageItem('vitthal_mill_state', JSON.stringify(state));
+                    snapshotSynced();
+                    updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
+                    renderAllViews();
+                    return;
+                }
+            }
+        } catch (fbErr) {
+            console.warn("Direct Firebase Cloud load failed:", fbErr);
+        }
+
+        // 2. Try local server API (/api/load) if local server is running
+        try {
             const res = await fetch('/api/load');
             if (res.ok) {
                 const data = await res.json();
-                if (data && data.unloads) {
+                if (data && Array.isArray(data.unloads) && data.unloads.length > 0) {
                     state = data;
                     sanitizeStateArrays();
                     currentRev = data._rev || 0;
                     snapshotSynced();
-                    const cloudActive = await checkFirebaseStatus();
-                    if (!cloudActive) {
-                        updateSyncStatus('success', 'Sync Active (Host DB)');
-                    }
-                    renderAllViews();
-                    return;
-                } else {
-                    // Host DB is empty - Bootstrap with defaults
-                    resetStateToDefault();
-                    const cloudActive = await checkFirebaseStatus();
-                    if (!cloudActive) {
-                        updateSyncStatus('success', 'Sync Active (Host DB)');
-                    }
+                    updateSyncStatus('success', 'Sync Active (Host DB)');
                     renderAllViews();
                     return;
                 }
             }
         } catch (err) {
-            console.warn("API load failed, falling back to local storage", err);
+            console.warn("Local API load failed:", err);
         }
     }
+
     loadStateFromLocal();
     updateSyncStatus('warning', 'Local Storage Mode');
     renderAllViews();
@@ -545,7 +568,31 @@ async function saveState() {
     sanitizeStateArrays();
     setStorageItem('vitthal_mill_state', JSON.stringify(state));
     
+    // Safety guard: Never send empty payload to cloud if state is uninitialized
+    if ((!state.unloads || state.unloads.length === 0) && (!state.suppliers || state.suppliers.length === 0) && (!state._rev || state._rev === 0)) {
+        console.warn("Skipping cloud save: state appears empty or uninitialized");
+        return;
+    }
+
     if (window.location.protocol.startsWith('http')) {
+        // 1. Direct Firebase Cloud REST save
+        try {
+            state._rev = (state._rev || 0) + 1;
+            const fbRes = await fetch(FIREBASE_REST_URL, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state)
+            });
+            if (fbRes.ok) {
+                snapshotSynced();
+                updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
+                return;
+            }
+        } catch (fbErr) {
+            console.warn("Direct Firebase Cloud save failed, trying local API...", fbErr);
+        }
+
+        // 2. Local server API fallback (/api/save)
         try {
             const deletes = computeDeletes();
             const res = await fetch('/api/save', {
@@ -556,27 +603,20 @@ async function saveState() {
             if (res.ok) {
                 const result = await res.json();
                 if (result && result.data) {
-                    // Adopt the server's authoritative merged state so any records another
-                    // user saved concurrently are pulled in rather than lost.
                     const prevSig = syncSignature(state);
                     state = result.data;
                     currentRev = result.rev || currentRev;
                     sanitizeStateArrays();
                     snapshotSynced();
-                    // Only repaint if the merge actually changed our data and the user
-                    // isn't mid-edit in a modal (avoids disrupting an open form).
                     if (syncSignature(state) !== prevSig && !document.querySelector('.modal.active')) {
                         renderAllViews();
                     }
                 }
-                const cloudActive = await checkFirebaseStatus();
-                if (!cloudActive) {
-                    updateSyncStatus('success', 'Sync Active (Host DB)');
-                }
+                updateSyncStatus('success', 'Sync Active (Host DB)');
                 return;
             }
         } catch (err) {
-            console.error("API save failed", err);
+            console.error("Save state failed:", err);
             updateSyncStatus('danger', 'Sync Offline!');
         }
     }
@@ -711,27 +751,33 @@ function setupEventListeners() {
         }
     });
 
-    // Global Search Bar
-    document.getElementById('global-search').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        if (!query) {
-            renderUnloadTable();
-            renderSparesTable();
-            return;
-        }
-        // Filter unloads by supplier, place, lorryNo
-        renderUnloadTable(query);
-        // Filter spares
-        renderSparesTable(query);
-    });
+    // Helper Debouncer for 60FPS Smooth Input Typing
+    const debounce = (fn, ms = 150) => {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), ms);
+        };
+    };
 
-    // Quick Action menu toggled inline from HTML template button
+    // Global Search Bar with 150ms Debouncing
+    const globalSearchInput = document.getElementById('global-search');
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('input', debounce((e) => {
+            const query = e.target.value.toLowerCase();
+            renderUnloadTable(query);
+            renderSparesTable(query);
+        }, 150));
+    }
 
+    // Filter changes for Unloads with Debouncing
+    const fUnloadSupp = document.getElementById('filter-unload-supplier');
+    const fUnloadPlace = document.getElementById('filter-unload-place');
+    const fUnloadLorry = document.getElementById('filter-unload-lorry');
 
-    // Filter changes for Unloads
-    document.getElementById('filter-unload-supplier').addEventListener('change', () => renderUnloadTable());
-    document.getElementById('filter-unload-place').addEventListener('input', () => renderUnloadTable());
-    document.getElementById('filter-unload-lorry').addEventListener('input', () => renderUnloadTable());
+    if (fUnloadSupp) fUnloadSupp.addEventListener('change', () => renderUnloadTable());
+    if (fUnloadPlace) fUnloadPlace.addEventListener('input', debounce(() => renderUnloadTable(), 150));
+    if (fUnloadLorry) fUnloadLorry.addEventListener('input', debounce(() => renderUnloadTable(), 150));
     document.getElementById('clear-unload-filters').addEventListener('click', () => {
         document.getElementById('filter-unload-supplier').value = "";
         document.getElementById('filter-unload-place').value = "";
@@ -945,108 +991,137 @@ function switchTab(tabId) {
         }
     });
 
-    // Custom view actions upon loading specific tabs
-    if (tabId === 'dashboard') {
-        renderCharts();
-    } else if (tabId === 'stock') {
-        renderStockStatement();
-    } else if (tabId === 'invoices') {
-        handleBillModeChange();
-        renderGSTSummary();
-    } else if (tabId === 'sales') {
-        switchSalesSubtab('sales-register');
-    } else if (tabId === 'unloads') {
-        switchUnloadsSubtab('unloads-register');
-    } else if (tabId === 'production') {
-        renderProductionTable();
-    } else if (tabId === 'refining') {
-        renderRefiningTable();
-    } else if (tabId === 'party-accounts') {
-        populateLedgerPartyDropdown();
-        renderPartyAccounts();
-    } else if (tabId === 'analytics') {
-        renderAnalyticsTab();
-    } else if (tabId === 'data-mgmt') {
-        renderBackupsList();
-    } else if (tabId === 'gate-passes') {
-        renderGatePassTable();
-    }
+    // Non-blocking asynchronous view render with error isolation prevents tab freezes
+    setTimeout(() => {
+        try {
+            if (tabId === 'dashboard') {
+                renderCharts();
+            } else if (tabId === 'stock') {
+                renderStockStatement();
+            } else if (tabId === 'invoices') {
+                handleBillModeChange();
+                renderGSTSummary();
+            } else if (tabId === 'sales') {
+                switchSalesSubtab('sales-register');
+            } else if (tabId === 'unloads') {
+                switchUnloadsSubtab('unloads-register');
+            } else if (tabId === 'production') {
+                renderProductionTable();
+            } else if (tabId === 'refining') {
+                renderRefiningTable();
+            } else if (tabId === 'party-accounts') {
+                populateLedgerPartyDropdown();
+                renderPartyAccounts();
+            } else if (tabId === 'analytics') {
+                renderAnalyticsTab();
+            } else if (tabId === 'data-mgmt') {
+                renderBackupsList();
+            } else if (tabId === 'gate-passes') {
+                renderGatePassTable();
+            }
+        } catch (err) {
+            console.error(`[Tab Render Safeguard] Non-fatal error rendering tab '${tabId}':`, err);
+        }
+    }, 0);
 }
 
 // --- MODAL UTILITIES ---
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.warn(`Modal element with ID '${modalId}' not found.`);
+        return;
+    }
+    
+    // Always display modal first!
     modal.classList.add('active');
     
-    // Clear forms if clean load
-    if (modalId === 'unload-modal') {
-        populateSupplierDropdowns();
-        if (!document.getElementById('unload-id').value) {
-            document.getElementById('unload-form').reset();
-            document.getElementById('unload-id').value = "";
-            document.getElementById('unload-modal-title').textContent = "Log Raw Material Load";
-            if (document.getElementById('unload-invoice-no')) document.getElementById('unload-invoice-no').value = "";
-            if (document.getElementById('unload-bag-gst')) document.getElementById('unload-bag-gst').value = "0";
-        }
-    } else if (modalId === 'sales-modal') {
-        populateSalesCustomersDropdown();
-        populateSalesGatePassDropdown();
-        populateSalesBrokersDropdown();
-        updateSalesCustomerOutstandingDisplay();
-        if (!document.getElementById('sales-id').value) {
-            document.getElementById('sales-form').reset();
-            document.getElementById('sales-id').value = "";
-            document.getElementById('sales-modal-title').textContent = "Record Outbound Sales dispatch";
-            if (document.getElementById('sales-gatepass-select')) document.getElementById('sales-gatepass-select').value = "";
-            if (document.getElementById('sales-broker')) document.getElementById('sales-broker').value = "";
-            document.getElementById('sales-items-tbody').innerHTML = '';
-            addSalesItemRow();
-            const addBtn = document.getElementById('sales-add-row-btn');
-            if (addBtn) addBtn.style.display = 'inline-block';
+    try {
+        if (modalId === 'unload-modal') {
+            populateSupplierDropdowns();
+            if (!document.getElementById('unload-id').value) {
+                document.getElementById('unload-form').reset();
+                document.getElementById('unload-id').value = "";
+                document.getElementById('unload-modal-title').textContent = "Log Raw Material Load";
+                if (document.getElementById('unload-invoice-no')) document.getElementById('unload-invoice-no').value = "";
+                if (document.getElementById('unload-bag-gst')) document.getElementById('unload-bag-gst').value = "0";
+            }
+        } else if (modalId === 'sales-modal') {
+            populateSalesCustomersDropdown();
+            populateSalesGatePassDropdown();
+            populateSalesBrokersDropdown();
             updateSalesCustomerOutstandingDisplay();
+            if (!document.getElementById('sales-id').value) {
+                document.getElementById('sales-form').reset();
+                document.getElementById('sales-id').value = "";
+                document.getElementById('sales-modal-title').textContent = "Record Outbound Sales dispatch";
+                if (document.getElementById('sales-gatepass-select')) document.getElementById('sales-gatepass-select').value = "";
+                if (document.getElementById('sales-broker')) document.getElementById('sales-broker').value = "";
+                document.getElementById('sales-items-tbody').innerHTML = '';
+                addSalesItemRow();
+                const addBtn = document.getElementById('sales-add-row-btn');
+                if (addBtn) addBtn.style.display = 'inline-block';
+                updateSalesCustomerOutstandingDisplay();
+            }
+        } else if (modalId === 'customer-modal' && !document.getElementById('cust-id').value) {
+            document.getElementById('customer-form').reset();
+            document.getElementById('cust-id').value = "";
+            document.getElementById('customer-modal-title').textContent = "Register Client Details";
+        } else if (modalId === 'supplier-modal' && !document.getElementById('supp-id').value) {
+            document.getElementById('supplier-form').reset();
+            document.getElementById('supp-id').value = "";
+            document.getElementById('supplier-modal-title').textContent = "Register Supplier Details";
+        } else if (modalId === 'production-modal' && !document.getElementById('prod-log-id').value) {
+            document.getElementById('production-form').reset();
+            document.getElementById('prod-log-id').value = "";
+            document.getElementById('production-modal-title').textContent = "Log Seed Crushing / Issue to Production";
+            populateProductionLorryDropdown();
+            handleProductionLotChange();
+        } else if (modalId === 'active-crushing-modal') {
+            document.getElementById('active-crushing-form').reset();
+            populateActiveCrushingLots();
+        } else if (modalId === 'refining-modal' && !document.getElementById('refining-id').value) {
+            document.getElementById('refining-form').reset();
+            document.getElementById('refining-id').value = "";
+            document.getElementById('refining-modal-title').textContent = "Log Oil Refining Tanker Run";
+            document.getElementById('refining-batches-tbody').innerHTML = '';
+            addRefiningBatchRow(new Date().toISOString().split('T')[0]);
+            recalculateRefiningSummary();
+        } else if (modalId === 'machine-modal' && !document.getElementById('machine-id').value) {
+            document.getElementById('machine-form').reset();
+            document.getElementById('machine-id').value = "";
+            document.getElementById('machine-modal-title').textContent = "Register Machine";
+            document.getElementById('machine-interval').value = 500;
+        } else if (modalId === 'spare-modal' && !document.getElementById('spare-id').value) {
+            document.getElementById('spare-form').reset();
+            document.getElementById('spare-id').value = "";
+            document.getElementById('spare-modal-title').textContent = "Register Spare Part";
+        } else if (modalId === 'repair-modal' && !document.getElementById('repair-id').value) {
+            document.getElementById('repair-form').reset();
+            document.getElementById('repair-id').value = "";
+            document.getElementById('repair-modal-title').textContent = "Record Machinery Repair Job";
+            modalConsumedSpares = [];
+            renderModalConsumedSparesList();
+            populateRepairSpareDropdown();
+        } else if (modalId === 'quick-stock-modal') {
+            populateQuickStockDropdown();
+        } else if (modalId === 'vehicle-modal') {
+            document.getElementById('vehicle-form').reset();
+        } else if (modalId === 'dip-modal') {
+            document.getElementById('dip-form').reset();
+            const dtInput = document.getElementById('dip-datetime');
+            if (dtInput) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                dtInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
         }
-    } else if (modalId === 'customer-modal' && !document.getElementById('cust-id').value) {
-        document.getElementById('customer-form').reset();
-        document.getElementById('cust-id').value = "";
-        document.getElementById('customer-modal-title').textContent = "Register Client Details";
-    } else if (modalId === 'supplier-modal' && !document.getElementById('supp-id').value) {
-        document.getElementById('supplier-form').reset();
-        document.getElementById('supp-id').value = "";
-        document.getElementById('supplier-modal-title').textContent = "Register Supplier Details";
-    } else if (modalId === 'production-modal' && !document.getElementById('prod-log-id').value) {
-        document.getElementById('production-form').reset();
-        document.getElementById('prod-log-id').value = "";
-        document.getElementById('production-modal-title').textContent = "Log Seed Crushing / Issue to Production";
-        populateProductionLorryDropdown();
-        handleProductionLotChange();
-    } else if (modalId === 'active-crushing-modal') {
-        document.getElementById('active-crushing-form').reset();
-        populateActiveCrushingLots();
-    } else if (modalId === 'refining-modal' && !document.getElementById('refining-id').value) {
-        document.getElementById('refining-form').reset();
-        document.getElementById('refining-id').value = "";
-        document.getElementById('refining-modal-title').textContent = "Log Oil Refining Tanker Run";
-        document.getElementById('refining-batches-tbody').innerHTML = '';
-        addRefiningBatchRow(new Date().toISOString().split('T')[0]);
-        recalculateRefiningSummary();
-    } else if (modalId === 'machine-modal' && !document.getElementById('machine-id').value) {
-        document.getElementById('machine-form').reset();
-        document.getElementById('machine-id').value = "";
-        document.getElementById('machine-modal-title').textContent = "Register Machine";
-        document.getElementById('machine-interval').value = 500;
-    } else if (modalId === 'spare-modal' && !document.getElementById('spare-id').value) {
-        document.getElementById('spare-form').reset();
-        document.getElementById('spare-id').value = "";
-        document.getElementById('spare-modal-title').textContent = "Register Spare Part";
-    } else if (modalId === 'repair-modal' && !document.getElementById('repair-id').value) {
-        document.getElementById('repair-form').reset();
-        document.getElementById('repair-id').value = "";
-        document.getElementById('repair-modal-title').textContent = "Record Machinery Repair Job";
-        modalConsumedSpares = [];
-        renderModalConsumedSparesList();
-        populateRepairSpareDropdown();
-    } else if (modalId === 'quick-stock-modal') {
-        populateQuickStockDropdown();
+    } catch (err) {
+        console.error(`[Modal Safeguard] Non-fatal error populating modal '${modalId}':`, err);
     }
 }
 
@@ -1127,6 +1202,8 @@ function renderAllViews() {
     renderSuppliersTable();
     renderProductionTable();
     renderRefiningTable();
+    renderDipLogTable();
+    updateProductionRefiningPipeline();
     renderPartyAccounts();
     renderStockStatement();
     renderSparesTable();
@@ -1135,6 +1212,7 @@ function renderAllViews() {
     renderMachineSchedule();
     renderTransportTable();
     renderTransportKPIs();
+    populateVehicleDropdowns();
     populateSupplierSelects();
     renderInvoicesArchive();
     renderGSTSummary();
@@ -1232,7 +1310,21 @@ function renderDashboardKPIs() {
 }
 
 // --- 2. RAW MATERIAL UNLOADS CONTROLLER ---
-function renderUnloadTable(searchQuery = '') {
+// Safe Date Parser Helper (prevents NaN sorting freezes in Chrome/Safari/Edge)
+function safeDateMs(dateStr) {
+    if (!dateStr) return 0;
+    let str = String(dateStr).trim();
+    if (str.includes('/')) {
+        const parts = str.split('/');
+        if (parts.length === 3 && parts[2].length === 4) {
+            str = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+    }
+    const ms = new Date(str).getTime();
+    return isNaN(ms) ? 0 : ms;
+}
+
+function renderUnloadTable(filterQuery = '') {
     const tbody = document.getElementById('unload-tbody');
     tbody.innerHTML = '';
     
@@ -1240,12 +1332,14 @@ function renderUnloadTable(searchQuery = '') {
     const placeFilter = document.getElementById('filter-unload-place').value.toLowerCase();
     const lorryFilter = document.getElementById('filter-unload-lorry').value.toLowerCase();
     
+    const searchQuery = (filterQuery || '').toLowerCase();
+    
     // Filter data
     const filtered = state.unloads.filter(item => {
         const matchesSearch = !searchQuery || 
-                              item.supplier.toLowerCase().includes(searchQuery) ||
-                              item.place.toLowerCase().includes(searchQuery) ||
-                              item.lorryNo.toLowerCase().includes(searchQuery) ||
+                              (item.supplier && item.supplier.toLowerCase().includes(searchQuery)) ||
+                              (item.place && item.place.toLowerCase().includes(searchQuery)) ||
+                              (item.lorryNo && item.lorryNo.toLowerCase().includes(searchQuery)) ||
                               (item.remark && item.remark.toLowerCase().includes(searchQuery));
         
         const matchesSupplier = !supplierFilter || item.supplier === supplierFilter;
@@ -1263,9 +1357,12 @@ function renderUnloadTable(searchQuery = '') {
         return;
     }
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((item, index) => {
+    filtered.sort((a,b) => safeDateMs(b.date) - safeDateMs(a.date)).forEach((item, index) => {
         const tr = document.createElement('tr');
         tr.className = item.billed ? 'bg-billed-subtle text-muted' : '';
+        tr.setAttribute('ondblclick', `editUnload('${item.id}')`);
+        tr.setAttribute('title', 'Double-click row to edit entry');
+        tr.style.cursor = 'pointer';
         
         const invWeight = item.invoiceWeight !== undefined ? item.invoiceWeight : item.weight;
         const shortage = item.shortage !== undefined ? item.shortage : 0;
@@ -1281,10 +1378,6 @@ function renderUnloadTable(searchQuery = '') {
         }
         
         tr.innerHTML = `
-            <td style="white-space:nowrap;">
-                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
-            </td>
             <td>
                 <input type="checkbox" class="unload-row-checkbox" data-id="${item.id}" onchange="updateSelectedLorriesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
@@ -1302,6 +1395,10 @@ function renderUnloadTable(searchQuery = '') {
             <td><strong class="text-success">₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong></td>
             <td>${item.location || '-'}</td>
             <td><small class="text-muted" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">${qualityText}${escapeHtml(item.remark || '-')}</small></td>
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3422,31 +3519,22 @@ function renderSalesTable(searchQuery = '') {
         return;
     }
 
-    filtered.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach((item, index) => {
+    filtered.sort((a,b) => safeDateMs(b.date) - safeDateMs(a.date)).forEach((item, index) => {
         const tr = document.createElement('tr');
         tr.className = item.billed ? 'bg-billed-subtle text-muted' : '';
+        tr.setAttribute('ondblclick', `editSale('${item.id}')`);
+        tr.setAttribute('title', 'Double-click row to edit sales entry');
+        tr.style.cursor = 'pointer';
         const prodObj = PRODUCTS.find(p => p.id === item.product);
         const prodName = prodObj ? prodObj.name : item.product;
         const subTotal = item.weight * item.rate;
 
-        const qualityBadgeColor = {
-            'Grade A': 'badge-success',
-            'Grade B': 'badge-info',
-            'Grade C': 'badge-warning',
-            'Mixed': 'badge-secondary',
-            'Premium': 'badge-primary'
-        }[item.qualityGrade] || 'badge-secondary';
-        const juteSummary = (item.juteBagWeight && item.juteBagQty) 
-            ? `<br><span class="text-xs text-muted">🌿 ${item.juteBagQty}×${item.juteBagWeight}kg Jute = ${((item.juteBagWeight * item.juteBagQty)/100).toFixed(2)} Qtl</span>` 
-            : '';
-        const ppSummary = (item.bagType && item.bagQty) 
-            ? `<br><span class="text-xs text-muted">📦 ${item.bagQty} PP Bag(s)</span>` 
-            : '';
+        let statusBadge = 'badge-warning';
+        if (item.status === 'Paid') statusBadge = 'badge-success';
+        else if (item.status === 'Advance Payment') statusBadge = 'badge-primary';
+        else if (item.status && item.status.includes('Days')) statusBadge = 'badge-info';
+
         tr.innerHTML = `
-            <td style="white-space:nowrap;">
-                <button class="btn btn-secondary btn-sm" onclick="editSale('${item.id}')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteSale('${item.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-            </td>
             <td>
                 <input type="checkbox" class="sales-row-checkbox" data-id="${item.id}" onchange="updateSelectedSalesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
@@ -3455,13 +3543,17 @@ function renderSalesTable(searchQuery = '') {
             <td><code>${item.invoiceNo || '-'}</code></td>
             <td><strong>${item.customer}</strong></td>
             <td>${item.broker ? `<span class="badge badge-info text-xs"><i class="fa-solid fa-user-tie"></i> ${escapeHtml(item.broker)}</span>` : '<span class="text-muted text-xs">—</span>'}</td>
-            <td>${prodName}<br><span class="badge ${qualityBadgeColor} text-xs">${item.qualityGrade || 'Grade A'}</span>${item.qualityRemark ? `<br><span class="text-xs text-muted">${item.qualityRemark}</span>` : ''}</td>
+            <td>${prodName}</td>
             <td>${parseFloat(item.weight).toFixed(2)} Qtl${ppSummary}${juteSummary}</td>
             <td>₹${parseFloat(item.rate).toLocaleString('en-IN')}</td>
             <td><strong>₹${subTotal.toLocaleString('en-IN', {maximumFractionDigits:0})}</strong></td>
             <td><code>${item.lorryNo}</code></td>
             <td>${item.destination}</td>
-            <td><span class="badge ${item.status === 'Paid' ? 'badge-success' : 'badge-warning'}">${item.status}</span></td>
+            <td><span class="badge ${statusBadge}">${item.status || 'Pending'}</span></td>
+            <td style="white-space:nowrap;">
+                <button class="btn btn-secondary btn-sm" onclick="editSale('${item.id}')" title="Edit"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteSale('${item.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3535,8 +3627,6 @@ function handleSalesSubmit(e) {
         const status = document.getElementById('sales-status-select').value;
         const dispatchStatus = document.getElementById('sales-dispatch-status').value;
         const remark = document.getElementById('sales-remark').value;
-        const qualityGrade = document.getElementById('sales-quality-grade') ? document.getElementById('sales-quality-grade').value : 'Grade A';
-        const qualityRemark = document.getElementById('sales-quality-remark') ? document.getElementById('sales-quality-remark').value : '';
 
         if (!customer) {
             alert("Customer is a required field!");
@@ -3549,15 +3639,17 @@ function handleSalesSubmit(e) {
         if (tbody) {
             Array.from(tbody.children).forEach(tr => {
                 const product = tr.querySelector('.sales-item-product').value;
-                const weight = parseFloat(tr.querySelector('.sales-item-weight').value) || 0;
-                const rate = parseFloat(tr.querySelector('.sales-item-rate').value) || 0;
-                const bagType = tr.querySelector('.sales-item-bag-select').value;
-                const bagQty = parseInt(tr.querySelector('.sales-item-bag-qty').value) || 0;
-                const juteBagWeight = parseInt(tr.querySelector('.sales-item-jute-select').value) || 0;
-                const juteBagQty = parseInt(tr.querySelector('.sales-item-jute-qty').value) || 0;
+                const bagType = tr.querySelector('.sales-item-bag-select') ? tr.querySelector('.sales-item-bag-select').value : '';
+                const singleBagWeight = parseFloat(tr.querySelector('.sales-item-bag-weight')?.value) || 0;
+                const bagQty = parseInt(tr.querySelector('.sales-item-bag-qty')?.value) || 0;
+                let weight = parseFloat(tr.querySelector('.sales-item-weight').value) || 0;
+                if (!weight && bagQty > 0 && singleBagWeight > 0) {
+                    weight = (bagQty * singleBagWeight) / 100;
+                }
+                const rate = 0; // Rate is not entered in dispatch entry
 
-                if (product && weight > 0 && rate > 0) {
-                    items.push({ product, weight, rate, bagType, bagQty, juteBagWeight, juteBagQty });
+                if (product && weight > 0) {
+                    items.push({ product, weight, rate, bagType, bagQty, singleBagWeight });
                 }
             });
         }
@@ -3579,6 +3671,7 @@ function handleSalesSubmit(e) {
                     ...state.sales[index],
                     date,
                     customer,
+                    broker,
                     product: itemData.product,
                     lorryNo,
                     weight: itemData.weight,
@@ -3589,8 +3682,6 @@ function handleSalesSubmit(e) {
                     remark,
                     bagType: itemData.bagType,
                     bagQty: itemData.bagQty,
-                    qualityGrade,
-                    qualityRemark,
                     juteBagWeight: itemData.juteBagWeight,
                     juteBagQty: itemData.juteBagQty
                 };
@@ -3616,8 +3707,6 @@ function handleSalesSubmit(e) {
                     remark: idx === 0 ? remark : (remark ? remark + ` (Part of dispatch Lorry ${lorryNo})` : `Part of dispatch Lorry ${lorryNo}`),
                     bagType: itemData.bagType,
                     bagQty: itemData.bagQty,
-                    qualityGrade,
-                    qualityRemark,
                     juteBagWeight: itemData.juteBagWeight,
                     juteBagQty: itemData.juteBagQty
                 };
@@ -3720,17 +3809,15 @@ function editSale(id) {
     updateSalesCustomerOutstandingDisplay();
     document.getElementById('sales-lorry').value = item.lorryNo;
     document.getElementById('sales-destination').value = item.destination;
-    document.getElementById('sales-status-select').value = item.status;
+    document.getElementById('sales-status-select').value = item.status || 'Pending';
     document.getElementById('sales-dispatch-status').value = item.dispatchStatus || 'Standard';
     document.getElementById('sales-remark').value = item.remark || '';
-    if (document.getElementById('sales-quality-grade')) document.getElementById('sales-quality-grade').value = item.qualityGrade || 'Grade A';
-    if (document.getElementById('sales-quality-remark')) document.getElementById('sales-quality-remark').value = item.qualityRemark || '';
 
     // Clear and populate exactly one row representing this sale record's product details
     const tbody = document.getElementById('sales-items-tbody');
     if (tbody) {
         tbody.innerHTML = '';
-        addSalesItemRow(item.product, item.weight, item.rate, item.bagType, item.bagQty, item.juteBagWeight, item.juteBagQty);
+        addSalesItemRow(item.product, item.weight, item.rate || '', item.bagType || '', item.bagQty || '', item.singleBagWeight || '');
     }
     
     // Hide the add product row button in edit mode because editing a single sale record should remain restricted to 1 product
@@ -3739,6 +3826,38 @@ function editSale(id) {
 
     document.getElementById('sales-modal-title').textContent = "Edit Outward Sales Entry";
     openModal('sales-modal');
+}
+
+function resetSalesForm() {
+    document.getElementById('sales-id').value = '';
+    
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('sales-date').value = today;
+    
+    document.getElementById('sales-customer').value = '';
+    if (document.getElementById('sales-broker')) document.getElementById('sales-broker').value = '';
+    document.getElementById('sales-lorry').value = '';
+    document.getElementById('sales-destination').value = '';
+    document.getElementById('sales-status-select').value = 'Pending';
+    document.getElementById('sales-dispatch-status').value = 'Standard';
+    document.getElementById('sales-remark').value = '';
+    
+    if (document.getElementById('sales-gatepass-select')) {
+        document.getElementById('sales-gatepass-select').value = '';
+    }
+    
+    updateSalesCustomerOutstandingDisplay();
+    
+    const addBtn = document.getElementById('sales-add-row-btn');
+    if (addBtn) addBtn.style.display = 'inline-block';
+    
+    const tbody = document.getElementById('sales-items-tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+        addSalesItemRow();
+    }
+    
+    document.getElementById('sales-modal-title').textContent = "Record Outbound Sales Dispatch";
 }
 
 function deleteSale(id) {
@@ -4704,6 +4823,9 @@ function renderProductionTable() {
 
         const tr = document.createElement('tr');
         if (isHighLoss) tr.style.background = 'rgba(239,68,68,0.05)';
+        tr.setAttribute('ondblclick', `editProduction('${item.id}')`);
+        tr.setAttribute('title', 'Double-click row to edit crushing run');
+        tr.style.cursor = 'pointer';
         tr.innerHTML = `
             <td style="white-space:nowrap;">
                 <div class="action-buttons" style="display:flex;gap:6px;">
@@ -5120,6 +5242,9 @@ function renderRefiningTable() {
         const recColor = recovery >= 90 ? '#10b981' : recovery >= 80 ? '#f59e0b' : '#ef4444';
 
         const tr = document.createElement('tr');
+        tr.setAttribute('ondblclick', `editRefining('${item.id}')`);
+        tr.setAttribute('title', 'Double-click row to edit refining batch');
+        tr.style.cursor = 'pointer';
         tr.innerHTML = `
             <td style="white-space:nowrap;">
                 <div class="action-buttons" style="display:flex;gap:6px;">
@@ -5608,7 +5733,7 @@ function renderPartyAccounts() {
                     debit: 0,
                     credit: totalVal,
                     type: 'purchase',
-                    timestamp: new Date(u.date).getTime()
+                    timestamp: safeDateMs(u.date)
                 });
             }
         });
@@ -5624,7 +5749,7 @@ function renderPartyAccounts() {
                     debit: parseFloat(p.amount),
                     credit: 0,
                     type: 'payment',
-                    timestamp: new Date(p.date).getTime()
+                    timestamp: safeDateMs(p.date)
                 });
             }
         });
@@ -5644,7 +5769,7 @@ function renderPartyAccounts() {
                     debit: val,
                     credit: 0,
                     type: 'sale',
-                    timestamp: new Date(s.date).getTime()
+                    timestamp: safeDateMs(s.date)
                 });
             }
         });
@@ -5660,7 +5785,7 @@ function renderPartyAccounts() {
                     debit: 0,
                     credit: parseFloat(p.amount),
                     type: 'payment',
-                    timestamp: new Date(p.date).getTime()
+                    timestamp: safeDateMs(p.date)
                 });
             }
         });
@@ -6739,7 +6864,7 @@ function printGatePass(id) {
 // --- DYNAMIC SALES MULTI-PRODUCT ITEM CONTROLLERS ---
 let salesItemRowCounter = 0;
 
-function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bagQty = '', juteBagWeight = '', juteBagQty = '') {
+function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bagQty = '', singleBagWeight = '') {
     salesItemRowCounter++;
     const tbody = document.getElementById('sales-items-tbody');
     if (!tbody) return;
@@ -6749,56 +6874,91 @@ function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bag
 
     const productOptions = getSalesProductOptionsHtml(product);
 
-    const ppOptions = `
-        <option value="" ${!bagType ? 'selected' : ''}>-- None --</option>
-        <option value="gm-pp-50" ${bagType === 'gm-pp-50' ? 'selected' : ''}>50kg PP</option>
-        <option value="gm-pp-60" ${bagType === 'gm-pp-60' ? 'selected' : ''}>60kg PP</option>
-        <option value="gm-pp-70" ${bagType === 'gm-pp-70' ? 'selected' : ''}>70kg PP</option>
-        <option value="gm-pp-km" ${bagType === 'gm-pp-km' ? 'selected' : ''}>KM PP</option>
-        <option value="gm-pp-mm" ${bagType === 'gm-pp-mm' ? 'selected' : ''}>MM PP</option>
+    const bagTypeOptions = `
+        <option value="" ${!bagType ? 'selected' : ''}>-- Bulk / No Bag --</option>
+        <option value="gm-pp-50" ${bagType === 'gm-pp-50' || bagType === '50kg PP' ? 'selected' : ''}>50kg PP Bag</option>
+        <option value="gm-pp-60" ${bagType === 'gm-pp-60' || bagType === '60kg PP' ? 'selected' : ''}>60kg PP Bag</option>
+        <option value="gm-pp-70" ${bagType === 'gm-pp-70' || bagType === '70kg PP' ? 'selected' : ''}>70kg PP Bag</option>
+        <option value="gm-pp-km" ${bagType === 'gm-pp-km' ? 'selected' : ''}>KM PP Bag</option>
+        <option value="gm-pp-mm" ${bagType === 'gm-pp-mm' ? 'selected' : ''}>MM PP Bag</option>
+        <option value="jute-45" ${bagType === 'jute-45' ? 'selected' : ''}>45kg Jute Bag</option>
+        <option value="jute-50" ${bagType === 'jute-50' ? 'selected' : ''}>50kg Jute Bag</option>
+        <option value="jute-60" ${bagType === 'jute-60' ? 'selected' : ''}>60kg Jute Bag</option>
+        <option value="jute-75" ${bagType === 'jute-75' ? 'selected' : ''}>75kg Jute Bag</option>
+        <option value="jute-90" ${bagType === 'jute-90' ? 'selected' : ''}>90kg Jute Bag</option>
+        <option value="jute-100" ${bagType === 'jute-100' ? 'selected' : ''}>100kg Jute Bag</option>
     `;
 
-    const juteOptions = `
-        <option value="" ${!juteBagWeight ? 'selected' : ''}>-- None --</option>
-        <option value="45" ${juteBagWeight === 45 ? 'selected' : ''}>45 kg Jute</option>
-        <option value="50" ${juteBagWeight === 50 ? 'selected' : ''}>50 kg Jute</option>
-        <option value="60" ${juteBagWeight === 60 ? 'selected' : ''}>60 kg Jute</option>
-        <option value="75" ${juteBagWeight === 75 ? 'selected' : ''}>75 kg Jute</option>
-        <option value="90" ${juteBagWeight === 90 ? 'selected' : ''}>90 kg Jute</option>
-        <option value="100" ${juteBagWeight === 100 ? 'selected' : ''}>100 kg Jute</option>
-    `;
+    let initialBagWeight = singleBagWeight;
+    if (!initialBagWeight && bagType) {
+        if (bagType.includes('50')) initialBagWeight = 50;
+        else if (bagType.includes('60')) initialBagWeight = 60;
+        else if (bagType.includes('70')) initialBagWeight = 70;
+        else if (bagType.includes('45')) initialBagWeight = 45;
+        else if (bagType.includes('75')) initialBagWeight = 75;
+        else if (bagType.includes('90')) initialBagWeight = 90;
+        else if (bagType.includes('100')) initialBagWeight = 100;
+    }
 
     tr.innerHTML = `
         <td>
-            <select class="form-control text-xs sales-item-product" required>
+            <select class="form-control text-xs sales-item-product" required style="padding: 3px 6px;">
                 ${productOptions}
             </select>
         </td>
         <td>
-            <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Weight" value="${weight}">
-        </td>
-        <td>
-            <input type="number" step="0.01" class="form-control text-xs sales-item-rate" required placeholder="Rate" value="${rate}">
-        </td>
-        <td>
-            <select class="form-control text-xs sales-item-bag-select" style="margin-bottom: 4px; padding: 2px;">
-                ${ppOptions}
+            <select class="form-control text-xs sales-item-bag-select" onchange="autoFillBagWeightAndCalculateTotal('${salesItemRowCounter}')" style="padding: 3px 6px;">
+                ${bagTypeOptions}
             </select>
-            <input type="number" class="form-control text-xs sales-item-bag-qty" placeholder="PP Count" min="0" value="${bagQty || ''}">
         </td>
         <td>
-            <select class="form-control text-xs sales-item-jute-select" style="margin-bottom: 4px; padding: 2px;">
-                ${juteOptions}
-            </select>
-            <input type="number" class="form-control text-xs sales-item-jute-qty" placeholder="Jute Count" min="0" value="${juteBagQty || ''}">
+            <input type="number" step="0.1" class="form-control text-xs sales-item-bag-weight" placeholder="e.g. 50" value="${initialBagWeight || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 3px 6px;">
+        </td>
+        <td>
+            <input type="number" class="form-control text-xs sales-item-bag-qty" placeholder="Count" min="0" value="${bagQty || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 3px 6px;">
+        </td>
+        <td>
+            <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Total Qtl" value="${weight}" style="padding: 3px 6px; font-weight: bold; color: var(--primary);">
         </td>
         <td style="text-align: center; vertical-align: middle;">
-            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 4px 8px;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 2px 6px;">
                 <i class="fa-solid fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(tr);
+}
+
+function autoFillBagWeightAndCalculateTotal(rowIdNum) {
+    const row = document.getElementById(`sales-item-row-${rowIdNum}`);
+    if (!row) return;
+    const bagSelect = row.querySelector('.sales-item-bag-select');
+    const weightInput = row.querySelector('.sales-item-bag-weight');
+    if (!bagSelect || !weightInput) return;
+
+    const val = bagSelect.value;
+    if (val.includes('50')) weightInput.value = 50;
+    else if (val.includes('60')) weightInput.value = 60;
+    else if (val.includes('70')) weightInput.value = 70;
+    else if (val.includes('45')) weightInput.value = 45;
+    else if (val.includes('75')) weightInput.value = 75;
+    else if (val.includes('90')) weightInput.value = 90;
+    else if (val.includes('100')) weightInput.value = 100;
+    else weightInput.value = '';
+
+    calculateSalesRowTotalWeight(rowIdNum);
+}
+
+function calculateSalesRowTotalWeight(rowIdNum) {
+    const row = document.getElementById(`sales-item-row-${rowIdNum}`);
+    if (!row) return;
+    const singleWt = parseFloat(row.querySelector('.sales-item-bag-weight').value) || 0;
+    const qty = parseInt(row.querySelector('.sales-item-bag-qty').value) || 0;
+    const totalWtInput = row.querySelector('.sales-item-weight');
+
+    if (qty > 0 && singleWt > 0 && totalWtInput) {
+        totalWtInput.value = ((qty * singleWt) / 100).toFixed(2);
+    }
 }
 
 function removeSalesItemRow(rowId) {
@@ -7020,6 +7180,237 @@ function removeRefiningBatchRow(rowId) {
     recalculateRefiningSummary();
 }
 
+// --- VEHICLE REGISTRATION & TRANSPORT EXPENSE HANDLERS ---
+function handleVehicleRegisterSubmit(e) {
+    e.preventDefault();
+    const regNo = document.getElementById('veh-reg-no').value.trim();
+    const type = document.getElementById('veh-type').value;
+    const driver = document.getElementById('veh-driver').value.trim();
+    const odometer = parseFloat(document.getElementById('veh-odometer').value) || 0;
+
+    if (!regNo) {
+        alert("Vehicle Registration Number is required!");
+        return;
+    }
+
+    if (!Array.isArray(state.vehicles)) state.vehicles = [];
+
+    const newVeh = {
+        id: 'veh-' + Date.now(),
+        regNo,
+        name: `${type} (${regNo})`,
+        type,
+        driver,
+        odometer
+    };
+
+    state.vehicles.push(newVeh);
+    saveState();
+    populateVehicleDropdowns();
+    closeModal('vehicle-modal');
+    alert(`Vehicle ${regNo} registered successfully!`);
+}
+
+function populateVehicleDropdowns() {
+    const selects = [document.getElementById('filter-transport-vehicle'), document.getElementById('trans-vehicle')];
+    selects.forEach(select => {
+        if (!select) return;
+        const currentVal = select.value;
+        select.innerHTML = select.id === 'filter-transport-vehicle' ? '<option value="">All Vehicles</option>' : '<option value="">-- Select Vehicle --</option>';
+        
+        const vehList = [
+            'Truck #1 (MH-16-AE-4860)',
+            'Truck #2 (MH-16-CC-9750)',
+            'JCB #1 (Yellow Crawler)',
+            'JCB #2 (Backhoe Loader)'
+        ];
+
+        if (Array.isArray(state.vehicles)) {
+            state.vehicles.forEach(v => {
+                const label = `${v.type} (${v.regNo})`;
+                if (!vehList.includes(label)) vehList.push(label);
+            });
+        }
+
+        vehList.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            select.appendChild(opt);
+        });
+
+        if (currentVal) select.value = currentVal;
+    });
+}
+
+// --- OIL REFINERY TANK DIP TRACKER (MATCHING NOTEBOOK IMAGE 2) ---
+function handleDipSubmit(e) {
+    e.preventDefault();
+    const datetime = document.getElementById('dip-datetime').value;
+    const tank = document.getElementById('dip-tank').value;
+    const inches = parseFloat(document.getElementById('dip-inches').value) || 0;
+    const action = document.getElementById('dip-action').value;
+    const remarks = document.getElementById('dip-remarks').value;
+
+    if (!datetime || !inches) {
+        alert("Date & Dip measurement in inches are required!");
+        return;
+    }
+
+    if (!Array.isArray(state.tankDips)) state.tankDips = [];
+
+    const dipLog = {
+        id: 'dip-' + Date.now(),
+        datetime,
+        tank,
+        inches,
+        action,
+        remarks
+    };
+
+    state.tankDips.push(dipLog);
+    saveState();
+    renderDipLogTable();
+    closeModal('dip-modal');
+}
+
+function renderDipLogTable() {
+    const tbody = document.getElementById('dip-log-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!Array.isArray(state.tankDips) || state.tankDips.length === 0) {
+        state.tankDips = [
+            { id: 'dip-1', datetime: '2026-07-26T09:00', tank: 'Big Tank', inches: 32.0, action: 'सामान्य डिप', remarks: 'Morning regular dip' },
+            { id: 'dip-2', datetime: '2026-07-29T09:00', tank: 'Big Tank', inches: 36.0, action: 'सामान्य डिप', remarks: 'Morning regular dip' },
+            { id: 'dip-3', datetime: '2026-07-29T14:30', tank: 'Big Tank', inches: 37.5, action: 'डिप ऊपर लिया', remarks: 'Dip Top - Crude Loaded' },
+            { id: 'dip-4', datetime: '2026-07-29T14:40', tank: 'Small Tank', inches: 28.0, action: 'डिप निचे बच्चा', remarks: 'Dip Bottom - Remaining Balance' },
+            { id: 'dip-5', datetime: '2026-07-30T12:50', tank: 'Big Tank', inches: 38.0, action: 'डिप माल चेन्ज', remarks: 'Dip Material / Batch Shift' },
+            { id: 'dip-6', datetime: '2026-08-01T09:00', tank: 'Big Tank', inches: 41.5, action: 'डिप ऊपर लिया', remarks: 'Dip Top - Crude Shift' }
+        ];
+    }
+
+    state.tankDips.sort((a,b) => new Date(b.datetime) - new Date(a.datetime)).forEach((item, index) => {
+        let actionBadge = 'badge-secondary';
+        if (item.action.includes('ऊपर')) actionBadge = 'badge-success';
+        else if (item.action.includes('निचे')) actionBadge = 'badge-warning';
+        else if (item.action.includes('चेन्ज')) actionBadge = 'badge-primary';
+
+        const dateStr = item.datetime ? item.datetime.replace('T', ' ') : '-';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-family: monospace; color: var(--text-secondary); font-weight: bold; text-align: center;">${index + 1}</td>
+            <td><code>${dateStr}</code></td>
+            <td><strong>${escapeHtml(item.tank)}</strong></td>
+            <td class="text-center"><strong style="font-size:1.05rem; color:var(--primary); font-family:monospace;">${parseFloat(item.inches).toFixed(2)}"</strong></td>
+            <td><span class="badge ${actionBadge}">${escapeHtml(item.action)}</span></td>
+            <td><span class="text-xs text-muted">${escapeHtml(item.remarks || '-')}</span></td>
+            <td>
+                <button class="btn btn-danger btn-sm" onclick="deleteDipLog('${item.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function deleteDipLog(id) {
+    if (confirm("Delete this dip reading entry?")) {
+        state.tankDips = state.tankDips.filter(d => d.id !== id);
+        saveState();
+        renderDipLogTable();
+    }
+}
+
+// --- PRINT REPORTS FOR MAINTENANCE & TRANSPORT ---
+function printMaintenanceReport() {
+    const content = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="text-align: center; color: #0f172a; margin-bottom: 5px;">Vitthal Oil Mill - Machinery Repair & Maintenance Report</h2>
+            <p style="text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 0;">Line 1 (Seed Crushing) & Line 2 (Refining & Boiler) Maintenance Log</p>
+            <hr style="border: 1px solid #cbd5e1; margin: 15px 0;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem;" border="1" cellpadding="6">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left;">
+                        <th>Sr.</th>
+                        <th>Date</th>
+                        <th>Machine / Line</th>
+                        <th>Maintenance Type</th>
+                        <th>Issue Description</th>
+                        <th>Spare Parts Consumed</th>
+                        <th>Engineer / Contractor</th>
+                        <th>Cost (₹)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(state.maintenanceLogs || []).map((m, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${m.date}</td>
+                            <td><strong>${m.machine}</strong></td>
+                            <td>${m.type}</td>
+                            <td>${m.description}</td>
+                            <td>${m.spares || '-'}</td>
+                            <td>${m.contractor || '-'}</td>
+                            <td>₹${parseFloat(m.cost || 0).toLocaleString('en-IN')}</td>
+                            <td>${m.status}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    const printWin = window.open('', '_blank');
+    printWin.document.write(content);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => printWin.print(), 500);
+}
+
+function printTransportReport() {
+    const content = `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="text-align: center; color: #0f172a; margin-bottom: 5px;">Vitthal Oil Mill - Transport Fleet & Expense Log</h2>
+            <p style="text-align: center; color: #64748b; font-size: 0.9rem; margin-top: 0;">Trucks, Tankers, JCB Loaders & Equipment Expenses Report</p>
+            <hr style="border: 1px solid #cbd5e1; margin: 15px 0;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem;" border="1" cellpadding="6">
+                <thead>
+                    <tr style="background: #f1f5f9; text-align: left;">
+                        <th>Sr.</th>
+                        <th>Date</th>
+                        <th>Vehicle</th>
+                        <th>Expense / Entry Type</th>
+                        <th>Odometer / Hours</th>
+                        <th>Diesel (Ltr)</th>
+                        <th>Cost (₹)</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${(state.transportLogs || []).map((t, i) => `
+                        <tr>
+                            <td>${i + 1}</td>
+                            <td>${t.date}</td>
+                            <td><strong>${t.vehicle}</strong></td>
+                            <td>${t.type}</td>
+                            <td>${t.usage || 0}</td>
+                            <td>${t.litres ? t.litres + ' L' : '-'}</td>
+                            <td>₹${parseFloat(t.cost || 0).toLocaleString('en-IN')}</td>
+                            <td>${t.remark || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    const printWin = window.open('', '_blank');
+    printWin.document.write(content);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => printWin.print(), 500);
+}
+
 function recalculateRefiningSummary() {
     const tbody = document.getElementById('refining-batches-tbody');
     if (!tbody) return;
@@ -7055,5 +7446,116 @@ function recalculateRefiningSummary() {
     if (acidEl) acidEl.textContent = `${totalAcid.toFixed(2)} Qtl`;
     if (gaadEl) gaadEl.textContent = `${totalGaad.toFixed(2)} Qtl`;
     if (lossEl) lossEl.textContent = `${loss.toFixed(2)} Qtl (${lossPct}%)`;
+}
+
+// --- SHARED PRODUCTION ➔ REFINING COMPLEMENTARY PIPELINE ---
+function updateProductionRefiningPipeline() {
+    let totalSeedCrushed = 0;
+    let totalCrudeExtracted = 0;
+
+    (state.productionLogs || []).forEach(p => {
+        totalSeedCrushed += parseFloat(p.weight) || 0;
+        totalCrudeExtracted += parseFloat(p.oilYield) || 0;
+    });
+
+    let totalCrudeRefined = 0;
+    let totalWashProduced = 0;
+    let totalGaadProduced = 0;
+
+    (state.refiningLogs || []).forEach(r => {
+        if (r.batches && Array.isArray(r.batches)) {
+            r.batches.forEach(b => {
+                totalCrudeRefined += parseFloat(b.crudeInput) || 0;
+                totalWashProduced += parseFloat(b.washYield) || 0;
+                totalGaadProduced += parseFloat(b.gaadYield) || 0;
+            });
+        }
+    });
+
+    const unrefinedCrudeStock = Math.max(0, totalCrudeExtracted - totalCrudeRefined);
+
+    const elSeed = document.getElementById('pipeline-seed-crushed');
+    const elCrude = document.getElementById('pipeline-crude-extracted');
+    const elWash = document.getElementById('pipeline-refined-wash');
+    const elGaad = document.getElementById('pipeline-refined-gaad');
+    const elBadge = document.getElementById('pipeline-unrefined-badge');
+
+    if (elSeed) elSeed.textContent = `${totalSeedCrushed.toFixed(2)} Qtl`;
+    if (elCrude) elCrude.textContent = `${totalCrudeExtracted.toFixed(2)} Qtl`;
+    if (elWash) elWash.textContent = `${totalWashProduced.toFixed(2)} Qtl Wash`;
+    if (elGaad) elGaad.textContent = `${totalGaadProduced.toFixed(2)} Qtl Gaad`;
+    if (elBadge) elBadge.textContent = `🛢️ Unrefined Crude Stock: ${unrefinedCrudeStock.toFixed(2)} Qtl`;
+
+    const elRefRec = document.getElementById('refining-crude-received');
+    const elRefCon = document.getElementById('refining-crude-consumed');
+    const elRefBadge = document.getElementById('refining-unrefined-badge');
+
+    if (elRefRec) elRefRec.textContent = `${totalCrudeExtracted.toFixed(2)} Qtl`;
+    if (elRefCon) elRefCon.textContent = `${totalCrudeRefined.toFixed(2)} Qtl`;
+    if (elRefBadge) elRefBadge.textContent = `🟢 Crude Available to Refine: ${unrefinedCrudeStock.toFixed(2)} Qtl`;
+}
+
+function transferCrudeToRefinery() {
+    let totalCrudeExtracted = 0;
+    (state.productionLogs || []).forEach(p => {
+        totalCrudeExtracted += parseFloat(p.oilYield) || 0;
+    });
+
+    let totalCrudeRefined = 0;
+    (state.refiningLogs || []).forEach(r => {
+        if (r.batches && Array.isArray(r.batches)) {
+            r.batches.forEach(b => {
+                totalCrudeRefined += parseFloat(b.crudeInput) || 0;
+            });
+        }
+    });
+
+    const unrefinedCrudeStock = Math.max(0, totalCrudeExtracted - totalCrudeRefined);
+
+    switchTab('refining');
+    openModal('refining-modal');
+
+    const tbody = document.getElementById('refining-batches-tbody');
+    if (tbody && tbody.children.length > 0) {
+        const firstRow = tbody.children[0];
+        const crudeInput = firstRow.querySelector('.ref-batch-crude');
+        if (crudeInput && unrefinedCrudeStock > 0) {
+            crudeInput.value = unrefinedCrudeStock.toFixed(2);
+            recalculateRefiningSummary();
+        }
+    }
+}
+
+// --- FORM RESET HELPERS FOR ENTRY BOXES ---
+function resetUnloadForm() {
+    const form = document.getElementById('unload-form');
+    if (form) form.reset();
+    document.getElementById('unload-id').value = '';
+    const dateInput = document.getElementById('unload-date');
+    if (dateInput) dateInput.valueAsDate = new Date();
+}
+
+function resetProductionForm() {
+    const form = document.getElementById('production-form');
+    if (form) form.reset();
+    document.getElementById('production-id').value = '';
+    const dateInput = document.getElementById('prod-date');
+    if (dateInput) dateInput.valueAsDate = new Date();
+}
+
+function resetRefiningForm() {
+    const form = document.getElementById('refining-form');
+    if (form) form.reset();
+    document.getElementById('refining-id').value = '';
+    const dateInput = document.getElementById('refining-date');
+    if (dateInput) dateInput.valueAsDate = new Date();
+}
+
+function resetTransportForm() {
+    const form = document.getElementById('transport-form');
+    if (form) form.reset();
+    document.getElementById('transport-id').value = '';
+    const dateInput = document.getElementById('trans-date');
+    if (dateInput) dateInput.valueAsDate = new Date();
 }
 

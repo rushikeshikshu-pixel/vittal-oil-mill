@@ -9,7 +9,7 @@ import glob
 import shutil
 from datetime import datetime
 
-PORT = 4567
+PORT = int(os.environ.get('PORT', 4567))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_FILE = os.path.join(BASE_DIR, "database.json")
 CONFIG_FILE = os.path.join(BASE_DIR, "firebase-config.json")
