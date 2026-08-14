@@ -6920,27 +6920,27 @@ function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bag
     }
 
     tr.innerHTML = `
-        <td>
-            <select class="form-control text-xs sales-item-product" required style="padding: 3px 6px;">
+        <td style="padding: 2px 3px;">
+            <select class="form-control text-xs sales-item-product" required style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
                 ${productOptions}
             </select>
         </td>
-        <td>
-            <select class="form-control text-xs sales-item-bag-select" onchange="autoFillBagWeightAndCalculateTotal('${salesItemRowCounter}')" style="padding: 3px 6px;">
+        <td style="padding: 2px 3px;">
+            <select class="form-control text-xs sales-item-bag-select" onchange="autoFillBagWeightAndCalculateTotal('${salesItemRowCounter}')" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
                 ${bagTypeOptions}
             </select>
         </td>
-        <td>
-            <input type="number" step="0.1" class="form-control text-xs sales-item-bag-weight" placeholder="e.g. 50" value="${initialBagWeight || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 3px 6px;">
+        <td style="padding: 2px 3px;">
+            <input type="number" step="0.1" class="form-control text-xs sales-item-bag-weight" placeholder="e.g. 50" value="${initialBagWeight || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td>
-            <input type="number" class="form-control text-xs sales-item-bag-qty" placeholder="Count" min="0" value="${bagQty || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 3px 6px;">
+        <td style="padding: 2px 3px;">
+            <input type="number" class="form-control text-xs sales-item-bag-qty" placeholder="Qty" min="0" value="${bagQty || ''}" oninput="calculateSalesRowTotalWeight('${salesItemRowCounter}')" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td>
-            <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Total Qtl" value="${weight}" style="padding: 3px 6px; font-weight: bold; color: var(--primary);">
+        <td style="padding: 2px 3px;">
+            <input type="number" step="0.01" class="form-control text-xs sales-item-weight" required placeholder="Total Qtl" value="${weight}" style="padding: 2px 4px; font-size: 0.75rem; font-weight: bold; color: var(--primary); width: 100%; box-sizing: border-box;">
         </td>
-        <td style="text-align: center; vertical-align: middle;">
-            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 2px 6px;" tabindex="-1">
+        <td style="text-align: center; vertical-align: middle; padding: 2px 1px;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeSalesItemRow('sales-item-row-${salesItemRowCounter}')" style="padding: 1px 5px; font-size: 0.75rem;" tabindex="-1">
                 <i class="fa-solid fa-times"></i>
             </button>
         </td>

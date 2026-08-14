@@ -2424,16 +2424,16 @@
                     </button>
                 </div>
 
-                <div class="table-responsive" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 8px;">
-                    <table class="data-table" style="margin-bottom: 0;">
-                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; font-size: 0.78rem;">
+                <div class="table-responsive" style="max-height: 180px; overflow-y: auto; overflow-x: hidden; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 8px;">
+                    <table class="data-table" style="margin-bottom: 0; width: 100%; table-layout: fixed;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; font-size: 0.75rem;">
                             <tr>
-                                <th>Product *</th>
-                                <th style="width: 140px;">Type of Bag</th>
-                                <th style="width: 110px;">Bag Wt (kg)</th>
-                                <th style="width: 110px;">No. of Bags</th>
-                                <th style="width: 130px;">Total Weight (Qtl) *</th>
-                                <th style="width: 45px;">Action</th>
+                                <th style="width: 28%;">Product *</th>
+                                <th style="width: 22%;">Type of Bag</th>
+                                <th style="width: 13%;">Bag Wt</th>
+                                <th style="width: 13%;">Bags Qty</th>
+                                <th style="width: 18%;">Total Qtl *</th>
+                                <th style="width: 6%; text-align: center;"></th>
                             </tr>
                         </thead>
                         <tbody id="sales-items-tbody">
@@ -3231,6 +3231,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=10.0"></script>
+    <script src="app.js?v=11.0"></script>
 </body>
 </html>
