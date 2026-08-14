@@ -516,30 +516,30 @@ async function checkFirebaseStatus() {
 }
 
 async function loadState() {
-    if (window.location.protocol.startsWith('http')) {
-        updateSyncStatus('warning', 'Syncing...');
+    updateSyncStatus('warning', 'Syncing...');
 
-        // 1. Direct Firebase Cloud REST check (Fastest for 100% PC-free Cloud Hosting)
-        try {
-            const fbRes = await fetch(FIREBASE_REST_URL, { cache: 'no-cache' });
-            if (fbRes.ok) {
-                const cloudData = await fbRes.json();
-                if (cloudData && typeof cloudData === 'object' && (cloudData.unloads || cloudData.suppliers || cloudData._rev)) {
-                    state = cloudData;
-                    sanitizeStateArrays();
-                    currentRev = cloudData._rev || 0;
-                    setStorageItem('vitthal_mill_state', JSON.stringify(state));
-                    snapshotSynced();
-                    updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
-                    renderAllViews();
-                    return;
-                }
+    // 1. Direct Firebase Cloud REST check (Works 24/7 on web app and local offline file mode)
+    try {
+        const fbRes = await fetch(FIREBASE_REST_URL, { cache: 'no-cache' });
+        if (fbRes.ok) {
+            const cloudData = await fbRes.json();
+            if (cloudData && typeof cloudData === 'object' && (cloudData.unloads || cloudData.suppliers || cloudData._rev)) {
+                state = cloudData;
+                sanitizeStateArrays();
+                currentRev = cloudData._rev || 0;
+                setStorageItem('vitthal_mill_state', JSON.stringify(state));
+                snapshotSynced();
+                updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
+                renderAllViews();
+                return;
             }
-        } catch (fbErr) {
-            console.warn("Direct Firebase Cloud load failed:", fbErr);
         }
+    } catch (fbErr) {
+        console.warn("Direct Firebase Cloud load failed:", fbErr);
+    }
 
-        // 2. Try local server API (/api/load) if local server is running
+    // 2. Try local server API (/api/load) if local server is running over http
+    if (window.location.protocol.startsWith('http')) {
         try {
             const res = await fetch('/api/load');
             if (res.ok) {
@@ -574,25 +574,25 @@ async function saveState() {
         return;
     }
 
-    if (window.location.protocol.startsWith('http')) {
-        // 1. Direct Firebase Cloud REST save
-        try {
-            state._rev = (state._rev || 0) + 1;
-            const fbRes = await fetch(FIREBASE_REST_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(state)
-            });
-            if (fbRes.ok) {
-                snapshotSynced();
-                updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
-                return;
-            }
-        } catch (fbErr) {
-            console.warn("Direct Firebase Cloud save failed, trying local API...", fbErr);
+    // 1. Direct Firebase Cloud REST save (Works on web app and local offline file mode)
+    try {
+        state._rev = (state._rev || 0) + 1;
+        const fbRes = await fetch(FIREBASE_REST_URL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(state)
+        });
+        if (fbRes.ok) {
+            snapshotSynced();
+            updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
+            return;
         }
+    } catch (fbErr) {
+        console.warn("Direct Firebase Cloud save failed, trying local API...", fbErr);
+    }
 
-        // 2. Local server API fallback (/api/save)
+    // 2. Local server API fallback (/api/save) if server is running over http
+    if (window.location.protocol.startsWith('http')) {
         try {
             const deletes = computeDeletes();
             const res = await fetch('/api/save', {
