@@ -1458,6 +1458,7 @@ function handleUnloadSubmit(e) {
     const id = document.getElementById('unload-id').value;
     const date = document.getElementById('unload-date').value;
     const supplier = document.getElementById('unload-supplier').value;
+    const broker = document.getElementById('unload-broker') ? document.getElementById('unload-broker').value.trim() : '';
     const place = document.getElementById('unload-place').value;
     const lorryNo = document.getElementById('unload-lorry').value;
     const seedType = document.getElementById('unload-seed-type').value;
@@ -1489,7 +1490,7 @@ function handleUnloadSubmit(e) {
     const bagGst = parseFloat(document.getElementById('unload-bag-gst') ? document.getElementById('unload-bag-gst').value : 0) || 0;
 
     const data = { 
-        date, supplier, place, lorryNo, seedType, invoiceNo,
+        date, supplier, broker, place, lorryNo, seedType, invoiceNo,
         invoiceWeight, weight, shortage, 
         rate, freight, forRate, discount, gstRate, 
         location, status, quality, remark, 
@@ -1535,6 +1536,7 @@ function editUnload(id) {
     document.getElementById('unload-id').value = item.id;
     document.getElementById('unload-date').value = item.date;
     document.getElementById('unload-supplier').value = item.supplier;
+    if (document.getElementById('unload-broker')) document.getElementById('unload-broker').value = item.broker || '';
     document.getElementById('unload-place').value = item.place;
     document.getElementById('unload-lorry').value = item.lorryNo;
     document.getElementById('unload-seed-type').value = item.seedType || 'OMS';

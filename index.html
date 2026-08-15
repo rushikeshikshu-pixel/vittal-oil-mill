@@ -2189,14 +2189,18 @@
             <form id="unload-form">
                 <input type="hidden" id="unload-id">
                 <div class="form-row">
-                    <div class="form-group mb-3 col-6">
+                    <div class="form-group mb-3 col-4">
                         <label for="unload-date">Unloading Date *</label>
                         <input type="date" id="unload-date" required class="form-control">
                     </div>
-                    <div class="form-group mb-3 col-6">
+                    <div class="form-group mb-3 col-4">
                         <label for="unload-supplier">Supplier Name *</label>
                         <input type="text" id="unload-supplier" required placeholder="Type or select supplier..." class="form-control" list="suppliers-datalist">
                         <datalist id="suppliers-datalist"></datalist>
+                    </div>
+                    <div class="form-group mb-3 col-4">
+                        <label for="unload-broker">Broker / Dalal Name (दलाल)</label>
+                        <input type="text" id="unload-broker" placeholder="e.g. Ramesh Seth" class="form-control" list="brokers-datalist">
                     </div>
                 </div>
                 <div class="form-row">
@@ -3231,6 +3235,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=11.0"></script>
+    <script src="app.js?v=12.0"></script>
 </body>
 </html>
