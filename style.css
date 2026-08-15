@@ -1645,3 +1645,172 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
 
 /* Hide nav items not permitted for the active role. */
 .nav-item.role-hidden { display: none !important; }
+
+/* ===================== MOBILE RESPONSIVE UI DESIGN (SMARTPHONES & TABLETS) ===================== */
+@media (max-width: 768px) {
+    /* 1. Reset Main App Layout for Mobile Screens */
+    .app-container {
+        flex-direction: column !important;
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    /* 2. Convert Fixed Sidebar to Mobile Horizontal Nav Bar */
+    .sidebar {
+        position: relative !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 10px 12px !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        top: auto !important;
+        bottom: auto !important;
+        left: auto !important;
+        z-index: 95;
+    }
+
+    .brand {
+        margin-bottom: 8px !important;
+        padding-bottom: 8px !important;
+    }
+
+    .brand-logo {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 1rem !important;
+    }
+
+    .brand-info h1 {
+        font-size: 1rem !important;
+    }
+
+    .nav-menu {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        padding-bottom: 4px !important;
+        gap: 6px !important;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+    }
+
+    .nav-item {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        padding: 6px 12px !important;
+        font-size: 0.78rem !important;
+        border-radius: 20px !important;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .nav-item.active {
+        background: var(--primary) !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+
+    .sidebar-footer {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding-top: 8px !important;
+        gap: 6px !important;
+    }
+
+    .theme-btn, .system-time {
+        width: auto !important;
+        font-size: 0.75rem !important;
+        padding: 4px 10px !important;
+    }
+
+    /* 3. Main Content Full Width */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 8px 10px 24px 10px !important;
+    }
+
+    /* 4. Mobile Header Adjustments */
+    .app-header {
+        height: auto !important;
+        padding: 8px 10px !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        position: relative !important;
+    }
+
+    .header-search {
+        width: 100% !important;
+    }
+
+    .header-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    /* 5. Responsive Form Rows */
+    .form-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .form-group.col-2,
+    .form-group.col-3,
+    .form-group.col-4,
+    .form-group.col-6,
+    .form-group.col-8 {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    /* 6. Mobile Modals */
+    .modal {
+        padding: 6px !important;
+        align-items: flex-start !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 4px 0 !important;
+        padding: 12px 10px !important;
+        border-radius: 12px !important;
+        max-height: 96vh !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-header h3 {
+        font-size: 1rem !important;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 8px !important;
+    }
+
+    .modal-footer button {
+        width: 100% !important;
+    }
+
+    /* 7. Mobile KPI Cards */
+    .kpi-grid, .sales-mini-kpis {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+    }
+
+    /* 8. Mobile Tables */
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table th, .data-table td {
+        padding: 6px 4px !important;
+        font-size: 0.75rem !important;
+    }
+}
