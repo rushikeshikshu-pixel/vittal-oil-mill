@@ -1503,6 +1503,7 @@ function handleUnloadSubmit(e) {
     
     const discount = parseFloat(document.getElementById('unload-discount').value) || 0;
     const gstRate = parseFloat(document.getElementById('unload-gst-rate').value) || 0;
+    const otherExpenses = parseFloat(document.getElementById('unload-other-expenses') ? document.getElementById('unload-other-expenses').value : 0) || 0;
     
     const location = document.getElementById('unload-location').value;
     const status = document.getElementById('unload-status').value;
@@ -1517,7 +1518,7 @@ function handleUnloadSubmit(e) {
     const data = { 
         date, supplier, broker, place, lorryNo, seedType, invoiceNo,
         invoiceWeight, weight, shortage, 
-        rate, freight, forRate, discount, gstRate, 
+        rate, freight, forRate, discount, gstRate, otherExpenses,
         location, status, quality, remark, 
         bagType, bagQty, bagRate, bagGst 
     };
@@ -1575,6 +1576,7 @@ function editUnload(id) {
     
     document.getElementById('unload-discount').value = item.discount || 0;
     document.getElementById('unload-gst-rate').value = item.gstRate !== undefined ? item.gstRate : 5;
+    if (document.getElementById('unload-other-expenses')) document.getElementById('unload-other-expenses').value = item.otherExpenses || 0;
     
     document.getElementById('unload-location').value = item.location || '';
     document.getElementById('unload-status').value = item.status || 'Standard';
@@ -1592,32 +1594,38 @@ function editUnload(id) {
 }
 
 function updateUnloadLiveBillSummary() {
-    const qty = parseFloat(document.getElementById('unload-weight')?.value) || 0;
+    const invQtyInput = parseFloat(document.getElementById('unload-invoice-weight')?.value);
+    const recQtyInput = parseFloat(document.getElementById('unload-weight')?.value) || 0;
+    const billQty = !isNaN(invQtyInput) && invQtyInput > 0 ? invQtyInput : recQtyInput;
+
     const rate = parseFloat(document.getElementById('unload-rate')?.value) || 0;
     const discount = parseFloat(document.getElementById('unload-discount')?.value) || 0;
     const seedGstPct = parseFloat(document.getElementById('unload-gst-rate')?.value) || 0;
+    const otherExpenses = parseFloat(document.getElementById('unload-other-expenses')?.value) || 0;
 
     const bagQty = parseInt(document.getElementById('unload-bag-qty')?.value) || 0;
     const bagRate = parseFloat(document.getElementById('unload-bag-rate')?.value) || 0;
     const bagGstPct = parseFloat(document.getElementById('unload-bag-gst')?.value) || 0;
 
-    const seedVal = qty * Math.max(0, rate - discount);
+    const seedVal = billQty * Math.max(0, rate - discount);
     const bagVal = bagQty * bagRate;
 
     const seedGstAmt = (seedVal * seedGstPct) / 100;
     const bagGstAmt = (bagVal * bagGstPct) / 100;
     const totalGst = seedGstAmt + bagGstAmt;
 
-    const grandTotal = seedVal + bagVal + totalGst;
+    const grandTotal = seedVal + bagVal + totalGst + otherExpenses;
 
     const seedValEl = document.getElementById('live-seed-val');
     const bagValEl = document.getElementById('live-bardan-val');
     const gstValEl = document.getElementById('live-gst-val');
+    const otherValEl = document.getElementById('live-other-val');
     const totalValEl = document.getElementById('unload-live-grand-total');
 
     if (seedValEl) seedValEl.textContent = `₹${seedVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
     if (bagValEl) bagValEl.textContent = `₹${bagVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
     if (gstValEl) gstValEl.textContent = `₹${totalGst.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (otherValEl) otherValEl.textContent = `₹${otherExpenses.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
     if (totalValEl) totalValEl.textContent = `Total Bill: ₹${grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
 }
 
@@ -2861,8 +2869,9 @@ function compileInvoiceBill() {
     items.forEach(item => {
         const discountVal = mode === 'inward' ? (parseFloat(item.discount) || 0) : 0;
         const itemRate = !isNaN(cRateOverride) && cRateOverride > 0 ? cRateOverride : (mode === 'inward' ? (item.forRate - discountVal) : item.rate);
-        const lineTotal = item.weight * itemRate;
-        totalQty += item.weight;
+        const billWeight = mode === 'inward' ? (item.invoiceWeight !== undefined ? item.invoiceWeight : item.weight) : item.weight;
+        const lineTotal = billWeight * itemRate;
+        totalQty += billWeight;
         subtotalAmount += lineTotal;
 
         const tr = document.createElement('tr');
@@ -2875,7 +2884,7 @@ function compileInvoiceBill() {
                 <td><code>${item.lorryNo}</code></td>
                 <td>${formatDateString(item.date)}</td>
                 <td>${seedLabel}</td>
-                <td>${item.weight.toFixed(2)} Qtl</td>
+                <td>${billWeight.toFixed(2)} Qtl</td>
                 <td>${rateDetail}</td>
                 <td class="text-right font-bold">₹${lineTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
             `;
@@ -2899,6 +2908,23 @@ function compileInvoiceBill() {
                     <td class="text-right font-bold">₹${bagTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
                 `;
                 itemTbody.appendChild(bagTr);
+            }
+
+            // Add separate row for Other Expenses if logged
+            if (item.otherExpenses > 0) {
+                const expTr = document.createElement('tr');
+                const expTotal = parseFloat(item.otherExpenses);
+                subtotalAmount += expTotal;
+                
+                expTr.innerHTML = `
+                    <td><code>${item.lorryNo}</code></td>
+                    <td>${formatDateString(item.date)}</td>
+                    <td>Other Expenses / Loading / Misc</td>
+                    <td>1 Job</td>
+                    <td>₹${expTotal.toFixed(2)}</td>
+                    <td class="text-right font-bold">₹${expTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+                `;
+                itemTbody.appendChild(expTr);
             }
         } else {
             const prodObj = PRODUCTS.find(p => p.id === item.product);
