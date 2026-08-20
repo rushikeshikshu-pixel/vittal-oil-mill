@@ -1400,7 +1400,7 @@ function renderUnloadTable(filterQuery = '') {
         const shortage = item.shortage !== undefined ? item.shortage : 0;
         const discount = item.discount || 0;
         const gstRate = item.gstRate !== undefined ? item.gstRate : 5;
-        const qualityText = item.quality ? `<span class="badge badge-secondary text-xs" style="margin-right: 4px; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); font-size: 0.72rem;">${escapeHtml(item.quality)}</span>` : '';
+        const qualityText = item.quality ? `<div style="margin-bottom: 4px;"><span class="badge badge-secondary text-xs" style="padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); font-size: 0.72rem; white-space: normal; display: inline-block; word-break: break-word;">${escapeHtml(item.quality)}</span></div>` : '';
         
         let statusBadge = '';
         if (item.status === 'Rejected') {
@@ -1412,7 +1412,25 @@ function renderUnloadTable(filterQuery = '') {
         const brokerBadge = item.broker ? `<span class="badge badge-secondary text-xs" style="font-size:0.68rem; padding: 1px 4px; background: rgba(255,255,255,0.08); white-space: nowrap;">Dalal: ${escapeHtml(item.broker)}</span>` : '';
         const placeText = item.place ? `<span class="text-xs text-muted" style="font-weight: normal; margin-left: 4px;">(${escapeHtml(item.place)})</span>` : '';
         const shortageBadge = shortage > 0 ? `<br><span class="text-xs text-danger font-bold">Short: -${shortage.toFixed(2)} Qtl</span>` : '';
-        const rateDetails = `₹${parseFloat(item.rate).toLocaleString('en-IN')}${item.freight ? `<br><span class="text-xs text-muted">+₹${parseFloat(item.freight).toLocaleString('en-IN')} Frt</span>` : ''}`;
+
+        const isBardanOnly = (parseFloat(item.weight) === 0 && item.bagQty > 0);
+        let weightCellHtml = '';
+        let rateCellHtml = '';
+
+        if (isBardanOnly) {
+            const bagNameObj = PRODUCTS.find(p => p.id === item.bagType);
+            const bagLabel = bagNameObj ? bagNameObj.name : (item.bagType || 'Bardan');
+            weightCellHtml = `<strong class="text-info">${item.bagQty.toLocaleString('en-IN')} Bags</strong><br><span class="text-xs text-muted" style="font-size:0.68rem;">${escapeHtml(bagLabel)}</span>`;
+            
+            const bagSubtotal = item.bagQty * (item.bagRate || 0);
+            const bagGstAmt = (bagSubtotal * (item.bagGst || 0)) / 100;
+            const bagGrandTotal = bagSubtotal + bagGstAmt;
+
+            rateCellHtml = `₹${(item.bagRate || 0).toFixed(2)}/bag<br><span class="text-muted" style="font-size:0.72rem;">GST: ${item.bagGst||0}%</span> | <strong class="text-success" style="font-size:0.78rem;">FOR: ₹${bagGrandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</strong>`;
+        } else {
+            weightCellHtml = `${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong>${shortageBadge}`;
+            rateCellHtml = `Base: ₹${parseFloat(item.rate).toLocaleString('en-IN')}<br><span class="text-muted" style="font-size: 0.72rem;">GST: ${gstRate}%</span> | <strong class="text-success" style="font-size: 0.78rem;">FOR: ₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong>`;
+        }
 
         tr.innerHTML = `
             <td style="text-align: center;">
@@ -1423,24 +1441,22 @@ function renderUnloadTable(filterQuery = '') {
             <td style="font-size: 0.8rem; line-height: 1.3; white-space: normal !important; word-break: break-word !important;">
                 <div><strong>${item.supplier}</strong>${placeText}</div>
                 <div style="margin-top: 2px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-                    <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'OMS')}</span>
+                    <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'MS')}</span>
                     ${item.invoiceNo ? `<span class="text-xs text-muted">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}
                 </div>
                 ${item.broker || statusBadge ? `<div style="margin-top: 2px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${brokerBadge}${statusBadge}</div>` : ''}
             </td>
             <td><code>${item.lorryNo}</code></td>
             <td style="font-size: 0.8rem; font-family: monospace; line-height: 1.2;">
-                ${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong>
-                ${shortageBadge}
+                ${weightCellHtml}
             </td>
             <td style="font-size: 0.78rem; line-height: 1.25;">
-                Base: ₹${parseFloat(item.rate).toLocaleString('en-IN')}<br>
-                <span class="text-muted" style="font-size: 0.72rem;">GST: ${gstRate}%</span> | <strong class="text-success" style="font-size: 0.78rem;">FOR: ₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong>
+                ${rateCellHtml}
             </td>
             <td style="font-size: 0.78rem;">${item.location || '-'}</td>
-            <td style="font-size: 0.72rem; line-height: 1.2; word-break: break-word; overflow: hidden;">
+            <td style="font-size: 0.72rem; line-height: 1.25; word-break: break-word; overflow: hidden;">
                 ${qualityText}
-                <div class="text-muted" style="font-size: 0.68rem; line-height: 1.1; margin-top: 2px;">${escapeHtml(item.remark || '-')}</div>
+                <div class="text-muted" style="font-size: 0.68rem; line-height: 1.2;">${escapeHtml(item.remark || '-')}</div>
             </td>
             <td style="text-align: center; white-space: nowrap; padding: 2px 2px;">
                 <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry" style="padding: 2px 6px; font-size: 0.72rem;"><i class="fa-solid fa-pencil"></i></button>
