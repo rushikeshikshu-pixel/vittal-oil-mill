@@ -1647,6 +1647,7 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
 .nav-item.role-hidden { display: none !important; }
 
 /* ===================== MOBILE RESPONSIVE UI DESIGN (SMARTPHONES & TABLETS) ===================== */
+/* ===================== MOBILE RESPONSIVE UI DESIGN (SMARTPHONES & TABLETS) ===================== */
 @media (max-width: 768px) {
     /* 1. Reset Main App Layout for Mobile Screens */
     .app-container {
@@ -1655,12 +1656,12 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         overflow-x: hidden;
     }
 
-    /* 2. Convert Fixed Sidebar to Mobile Horizontal Nav Bar */
+    /* 2. Convert Fixed Sidebar to Mobile App Top Header & Touch Nav Bar */
     .sidebar {
         position: relative !important;
         width: 100% !important;
         height: auto !important;
-        padding: 10px 12px !important;
+        padding: 8px 10px 4px 10px !important;
         border-right: none !important;
         border-bottom: 1px solid var(--border-color) !important;
         top: auto !important;
@@ -1670,18 +1671,24 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .brand {
-        margin-bottom: 8px !important;
-        padding-bottom: 8px !important;
+        margin-bottom: 4px !important;
+        padding-bottom: 4px !important;
+        border-bottom: none !important;
     }
 
     .brand-logo {
-        width: 34px !important;
-        height: 34px !important;
-        font-size: 1rem !important;
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 0.9rem !important;
     }
 
     .brand-info h1 {
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
+        line-height: 1.1 !important;
+    }
+
+    .brand-info span {
+        display: none !important;
     }
 
     .nav-menu {
@@ -1689,8 +1696,8 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         flex-direction: row !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
-        padding-bottom: 4px !important;
-        gap: 6px !important;
+        padding: 4px 0 6px 0 !important;
+        gap: 4px !important;
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
     }
@@ -1698,11 +1705,17 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     .nav-item {
         flex: 0 0 auto !important;
         width: auto !important;
-        padding: 6px 12px !important;
-        font-size: 0.78rem !important;
-        border-radius: 20px !important;
+        padding: 5px 10px !important;
+        font-size: 0.75rem !important;
+        border-radius: 16px !important;
         background: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
+        gap: 6px !important;
+    }
+
+    .nav-item i {
+        font-size: 0.85rem !important;
+        width: auto !important;
     }
 
     .nav-item.active {
@@ -1715,45 +1728,145 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding-top: 8px !important;
-        gap: 6px !important;
+        padding-top: 4px !important;
+        border-top: 1px solid var(--border-color) !important;
+        gap: 4px !important;
     }
 
     .theme-btn, .system-time {
         width: auto !important;
-        font-size: 0.75rem !important;
-        padding: 4px 10px !important;
+        font-size: 0.7rem !important;
+        padding: 3px 8px !important;
     }
 
     /* 3. Main Content Full Width */
     .main-content {
         margin-left: 0 !important;
         width: 100% !important;
-        padding: 8px 10px 24px 10px !important;
+        padding: 6px 8px 24px 8px !important;
     }
 
-    /* 4. Mobile Header Adjustments */
+    /* 4. Mobile Header Bar */
     .app-header {
         height: auto !important;
-        padding: 8px 10px !important;
+        padding: 6px 8px !important;
         flex-direction: column !important;
-        gap: 8px !important;
+        gap: 6px !important;
         position: relative !important;
+        background: var(--bg-card) !important;
+        border-radius: 8px !important;
+        margin-bottom: 8px !important;
     }
 
     .header-search {
         width: 100% !important;
     }
 
-    .header-actions {
-        width: 100% !important;
-        justify-content: space-between !important;
+    .header-search input {
+        padding: 6px 12px 6px 32px !important;
+        font-size: 0.78rem !important;
     }
 
-    /* 5. Responsive Form Rows */
+    .header-actions {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+    }
+
+    #sync-status-badge {
+        font-size: 0.7rem !important;
+        padding: 3px 8px !important;
+    }
+
+    #quick-action-btn {
+        padding: 4px 10px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .user-details span {
+        display: none !important;
+    }
+
+    .user-details h3 {
+        font-size: 0.8rem !important;
+    }
+
+    /* 5. Pane Header Compact */
+    .pane-header {
+        margin-bottom: 8px !important;
+    }
+
+    .pane-header h2 {
+        font-size: 1.05rem !important;
+    }
+
+    .pane-header p {
+        font-size: 0.72rem !important;
+        line-height: 1.3 !important;
+    }
+
+    /* 6. Mobile KPI Grid & Cards Overhaul */
+    .kpi-grid, .sales-mini-kpis {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .kpi-card {
+        padding: 8px 10px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        border-radius: 10px !important;
+        min-height: 56px !important;
+    }
+
+    .kpi-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.9rem !important;
+        flex-shrink: 0 !important;
+        border-radius: 8px !important;
+    }
+
+    .kpi-data {
+        overflow: hidden !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+
+    .kpi-title {
+        font-size: 0.65rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: block !important;
+        line-height: 1.1 !important;
+    }
+
+    .kpi-value {
+        font-size: 1.1rem !important;
+        margin-top: 1px !important;
+        margin-bottom: 1px !important;
+        white-space: nowrap !important;
+        line-height: 1.1 !important;
+    }
+
+    .kpi-meta {
+        font-size: 0.62rem !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: block !important;
+    }
+
+    /* 7. Responsive Form Rows & Modals */
     .form-row {
         flex-direction: column !important;
-        gap: 8px !important;
+        gap: 6px !important;
     }
 
     .form-group.col-2,
@@ -1766,9 +1879,8 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         flex: 1 1 100% !important;
     }
 
-    /* 6. Mobile Modals */
     .modal {
-        padding: 6px !important;
+        padding: 4px !important;
         align-items: flex-start !important;
         overflow-y: auto !important;
     }
@@ -1776,33 +1888,27 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     .modal-content {
         width: 100% !important;
         max-width: 100% !important;
-        margin: 4px 0 !important;
-        padding: 12px 10px !important;
-        border-radius: 12px !important;
+        margin: 2px 0 !important;
+        padding: 10px 8px !important;
+        border-radius: 10px !important;
         max-height: 96vh !important;
         overflow-y: auto !important;
     }
 
     .modal-header h3 {
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
     }
 
     .modal-footer {
         flex-direction: column-reverse !important;
-        gap: 8px !important;
+        gap: 6px !important;
     }
 
     .modal-footer button {
         width: 100% !important;
     }
 
-    /* 7. Mobile KPI Cards */
-    .kpi-grid, .sales-mini-kpis {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
-    }
-
-    /* 8. Mobile Tables */
+    /* 8. Mobile Data Tables */
     .table-responsive {
         width: 100% !important;
         overflow-x: auto !important;
@@ -1810,7 +1916,7 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .data-table th, .data-table td {
-        padding: 6px 4px !important;
-        font-size: 0.75rem !important;
+        padding: 5px 4px !important;
+        font-size: 0.72rem !important;
     }
 }
