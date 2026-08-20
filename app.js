@@ -2893,17 +2893,36 @@ function compileInvoiceBill() {
     document.getElementById('preview-notebook-math').innerHTML = notebookHtml;
 
     let taxBaseAmount = 0;
+    let computedTaxAmount = 0;
+
     if (mode === 'inward') {
         items.forEach(item => {
             const discountVal = parseFloat(item.discount) || 0;
             const baseRate = !isNaN(cRateOverride) && cRateOverride > 0 ? cRateOverride : (item.rate - discountVal);
-            const bagTotal = item.bagQty * (item.bagRate || 0);
-            taxBaseAmount += (item.weight * baseRate) + bagTotal;
+            const seedVal = item.weight * baseRate;
+            const bagTotal = (item.bagQty || 0) * (item.bagRate || 0);
+            
+            taxBaseAmount += seedVal + bagTotal;
+            
+            // Calculate itemized GST: Seed GST + Bardan GST
+            const seedGstPct = item.gstRate !== undefined ? item.gstRate : 5;
+            const bagGstPct = item.bagGst !== undefined ? item.bagGst : 12;
+            
+            const seedGstAmt = (seedVal * seedGstPct) / 100;
+            const bagGstAmt = (bagTotal * bagGstPct) / 100;
+            
+            computedTaxAmount += seedGstAmt + bagGstAmt;
         });
     } else {
         taxBaseAmount = subtotalAmount;
+        items.forEach(item => {
+            const prodGstPct = item.gstRate !== undefined ? item.gstRate : 5;
+            computedTaxAmount += (item.weight * item.rate * prodGstPct) / 100;
+        });
     }
-    const taxAmount = (taxBaseAmount * taxPercent) / 100;
+
+    const taxAmount = taxPercent > 0 ? (taxBaseAmount * taxPercent) / 100 : computedTaxAmount;
+    const effectiveTaxRate = taxBaseAmount > 0 ? ((taxAmount / taxBaseAmount) * 100).toFixed(2) : 0;
     const grandTotal = subtotalAmount + taxAmount + adjustment;
 
     document.getElementById('preview-total-weight').textContent = `${totalQty.toFixed(2)} units`;
@@ -2921,12 +2940,12 @@ function compileInvoiceBill() {
             sgstRow.style.display = 'table-row';
             document.getElementById('preview-cgst-amount').textContent = `₹${(taxAmount / 2).toLocaleString('en-IN', {maximumFractionDigits:2})}`;
             document.getElementById('preview-sgst-amount').textContent = `₹${(taxAmount / 2).toLocaleString('en-IN', {maximumFractionDigits:2})}`;
-            document.getElementById('cgst-label').textContent = `CGST (${(taxPercent / 2)}%):`;
-            document.getElementById('sgst-label').textContent = `SGST (${(taxPercent / 2)}%):`;
+            document.getElementById('cgst-label').textContent = `CGST (${(effectiveTaxRate / 2)}%):`;
+            document.getElementById('sgst-label').textContent = `SGST (${(effectiveTaxRate / 2)}%):`;
         } else {
             igstRow.style.display = 'table-row';
             document.getElementById('preview-igst-amount').textContent = `₹${taxAmount.toLocaleString('en-IN', {maximumFractionDigits:2})}`;
-            document.getElementById('igst-label').textContent = `IGST (${taxPercent}%):`;
+            document.getElementById('igst-label').textContent = `IGST (${effectiveTaxRate}%):`;
         }
     }
 
