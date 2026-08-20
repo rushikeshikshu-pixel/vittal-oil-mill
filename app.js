@@ -7027,14 +7027,28 @@ function removeSalesItemRow(rowId) {
 
 function getSalesProductOptionsHtml(selectedId = '') {
     let html = '<option value="">-- Select Product --</option>';
-    PRODUCTS.forEach(p => {
-        if (p.category !== 'Seed' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr') {
-            const selected = p.id === selectedId ? 'selected' : '';
-            const currentStock = (typeof getProductCurrentStock === 'function') ? getProductCurrentStock(p.id) : 0;
-            const stockLabel = ` (Stock: ${currentStock.toFixed(2)} Qtl)`;
-            html += `<option value="${p.id}" ${selected}>${p.name}${stockLabel}</option>`;
-        }
+    
+    const commodities = PRODUCTS.filter(p => p.category === 'Khal' || p.category === 'Oil');
+    const bardan = PRODUCTS.filter(p => p.category === 'Bardan' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr');
+    
+    html += '<optgroup label="--- Oil Mill Commodities (खल / तेल / ढेप) ---">';
+    commodities.forEach(p => {
+        const selected = p.id === selectedId ? 'selected' : '';
+        const currentStock = (typeof getProductCurrentStock === 'function') ? getProductCurrentStock(p.id) : 0;
+        const stockLabel = ` (Stock: ${currentStock.toFixed(2)} Qtl)`;
+        html += `<option value="${p.id}" ${selected}>${p.name}${stockLabel}</option>`;
     });
+    html += '</optgroup>';
+
+    html += '<optgroup label="--- Empty Bags & Bardan Sales (बारदान विक्री) ---">';
+    bardan.forEach(p => {
+        const selected = p.id === selectedId ? 'selected' : '';
+        const currentStock = (typeof getProductCurrentStock === 'function') ? getProductCurrentStock(p.id) : 0;
+        const stockLabel = ` (Stock: ${currentStock.toFixed(2)} Qtl)`;
+        html += `<option value="${p.id}" ${selected}>${p.name}${stockLabel}</option>`;
+    });
+    html += '</optgroup>';
+
     return html;
 }
 
