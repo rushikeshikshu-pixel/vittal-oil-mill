@@ -1406,8 +1406,8 @@ function renderUnloadTable(filterQuery = '') {
             statusBadge = `<span class="badge badge-warning" style="margin-left: 6px; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">Returned</span>`;
         }
         
-        const brokerBadge = item.broker ? `<span class="badge badge-secondary text-xs" style="font-size:0.68rem; margin-left:3px; padding: 1px 4px; background: rgba(255,255,255,0.08);">Dalal: ${escapeHtml(item.broker)}</span>` : '';
-        const placeText = item.place ? `<span class="text-xs text-muted"> (${escapeHtml(item.place)})</span>` : '';
+        const brokerBadge = item.broker ? `<span class="badge badge-secondary text-xs" style="font-size:0.68rem; padding: 1px 4px; background: rgba(255,255,255,0.08); white-space: nowrap;">Dalal: ${escapeHtml(item.broker)}</span>` : '';
+        const placeText = item.place ? `<span class="text-xs text-muted" style="font-weight: normal; margin-left: 4px;">(${escapeHtml(item.place)})</span>` : '';
         const shortageBadge = shortage > 0 ? `<br><span class="text-xs text-danger font-bold">Short: -${shortage.toFixed(2)} Qtl</span>` : '';
         const rateDetails = `₹${parseFloat(item.rate).toLocaleString('en-IN')}${item.freight ? `<br><span class="text-xs text-muted">+₹${parseFloat(item.freight).toLocaleString('en-IN')} Frt</span>` : ''}`;
 
@@ -1417,11 +1417,13 @@ function renderUnloadTable(filterQuery = '') {
             </td>
             <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
             <td style="font-size: 0.78rem;">${formatDateString(item.date)}</td>
-            <td style="font-size: 0.8rem; line-height: 1.2;">
-                <strong>${item.supplier}</strong>${placeText}<br>
-                <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'OMS')}</span>
-                ${item.invoiceNo ? `<span class="text-xs text-muted" style="margin-left:3px;">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}
-                ${brokerBadge}${statusBadge}
+            <td style="font-size: 0.8rem; line-height: 1.25; word-wrap: break-word; overflow: hidden;">
+                <div><strong>${item.supplier}</strong>${placeText}</div>
+                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-top: 2px;">
+                    <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'OMS')}</span>
+                    ${item.invoiceNo ? `<span class="text-xs text-muted">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}
+                    ${brokerBadge}${statusBadge}
+                </div>
             </td>
             <td><code>${item.lorryNo}</code></td>
             <td style="font-size: 0.8rem; font-family: monospace; line-height: 1.2;">
