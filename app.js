@@ -1396,27 +1396,39 @@ function renderUnloadTable(filterQuery = '') {
             statusBadge = `<span class="badge badge-warning" style="margin-left: 6px; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">Returned</span>`;
         }
         
+        const brokerBadge = item.broker ? `<span class="badge badge-secondary text-xs" style="font-size:0.68rem; margin-left:3px; padding: 1px 4px; background: rgba(255,255,255,0.08);">Dalal: ${escapeHtml(item.broker)}</span>` : '';
+        const placeText = item.place ? `<span class="text-xs text-muted"> (${escapeHtml(item.place)})</span>` : '';
+        const shortageBadge = shortage > 0 ? `<br><span class="text-xs text-danger font-bold">Short: -${shortage.toFixed(2)} Qtl</span>` : '';
+        const rateDetails = `₹${parseFloat(item.rate).toLocaleString('en-IN')}${item.freight ? `<br><span class="text-xs text-muted">+₹${parseFloat(item.freight).toLocaleString('en-IN')} Frt</span>` : ''}`;
+
         tr.innerHTML = `
-            <td>
+            <td style="text-align: center;">
                 <input type="checkbox" class="unload-row-checkbox" data-id="${item.id}" onchange="updateSelectedLorriesCount()" ${item.billed ? 'disabled' : ''}>
             </td>
             <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
-            <td>${formatDateString(item.date)}</td>
-            <td><strong>${item.supplier}</strong><br><span class="badge badge-info text-xs" style="font-size:0.7rem; padding: 2px 6px;">${escapeHtml(item.seedType || 'OMS')}</span>${item.invoiceNo ? `<span class="text-xs text-muted" style="margin-left:4px;">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}${statusBadge}</td>
-            <td>${item.place}</td>
+            <td style="font-size: 0.78rem;">${formatDateString(item.date)}</td>
+            <td style="font-size: 0.8rem; line-height: 1.2;">
+                <strong>${item.supplier}</strong>${placeText}<br>
+                <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'OMS')}</span>
+                ${item.invoiceNo ? `<span class="text-xs text-muted" style="margin-left:3px;">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}
+                ${brokerBadge}${statusBadge}
+            </td>
             <td><code>${item.lorryNo}</code></td>
-            <td style="font-size: 0.88rem; font-family: monospace;">${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong></td>
-            <td class="${shortage > 0 ? 'text-danger font-bold' : ''}" style="font-family: monospace;">${shortage > 0 ? shortage.toFixed(2) : '-'}</td>
-            <td>₹${parseFloat(item.rate).toLocaleString('en-IN')}</td>
-            <td>₹${parseFloat(item.freight).toLocaleString('en-IN')}</td>
-            <td>${discount > 0 ? '₹' + discount : '-'}</td>
-            <td>${gstRate}%</td>
-            <td><strong class="text-success">₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong></td>
-            <td>${item.location || '-'}</td>
-            <td><small class="text-muted" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">${qualityText}${escapeHtml(item.remark || '-')}</small></td>
-            <td style="white-space:nowrap;">
-                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry"><i class="fa-solid fa-trash"></i></button>
+            <td style="font-size: 0.8rem; font-family: monospace; line-height: 1.2;">
+                ${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong>
+                ${shortageBadge}
+            </td>
+            <td style="font-size: 0.78rem; line-height: 1.2;">${rateDetails}</td>
+            <td style="font-size: 0.78rem;">${gstRate}%</td>
+            <td style="font-size: 0.82rem;"><strong class="text-success">₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong></td>
+            <td style="font-size: 0.78rem;">${item.location || '-'}</td>
+            <td style="font-size: 0.72rem; line-height: 1.2; word-break: break-word;">
+                ${qualityText}
+                <span class="text-muted">${escapeHtml(item.remark || '-')}</span>
+            </td>
+            <td style="text-align: center; white-space: nowrap; padding: 2px 2px;">
+                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry" style="padding: 2px 5px; font-size: 0.72rem;"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry" style="padding: 2px 5px; font-size: 0.72rem;"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         tbody.appendChild(tr);

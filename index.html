@@ -395,31 +395,27 @@
                                 <i class="fa-solid fa-calculator"></i> Calculate Selected Bill
                             </button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="data-table" id="unload-table">
-                                <thead>
+                        <div class="table-responsive" style="overflow-x: hidden; width: 100%;">
+                            <table class="data-table" id="unload-table" style="width: 100%; table-layout: fixed; margin-bottom: 0;">
+                                <thead style="font-size: 0.75rem;">
                                     <tr>
-                                        <th width="40px"><input type="checkbox" id="select-all-unloads"></th>
-                                        <th width="60px">Sr. No.</th>
-                                        <th>Date</th>
-                                        <th>Supplier Name</th>
-                                        <th>Place</th>
-                                        <th>Lorry No.</th>
-                                        <th>Inv / Rec Weight (Qtl)</th>
-                                        <th>Shortage (Qtl)</th>
-                                        <th>Base Rate (₹)</th>
-                                        <th>Freight (₹)</th>
-                                        <th>Discount (₹)</th>
-                                        <th>GST (%)</th>
-                                        <th>FOR (₹)</th>
-                                        <th>Silo</th>
-                                        <th>Quality / Remark</th>
-                                        <th width="90px">Actions</th>
+                                        <th style="width: 3%; text-align: center;"><input type="checkbox" id="select-all-unloads"></th>
+                                        <th style="width: 4%; text-align: center;">Sr</th>
+                                        <th style="width: 7%;">Date</th>
+                                        <th style="width: 22%;">Supplier / Location / Broker</th>
+                                        <th style="width: 9%;">Lorry No.</th>
+                                        <th style="width: 12%;">Weight (Inv / Rec)</th>
+                                        <th style="width: 10%;">Base / Freight</th>
+                                        <th style="width: 5%;">GST</th>
+                                        <th style="width: 8%;">FOR Rate</th>
+                                        <th style="width: 6%;">Silo</th>
+                                        <th style="width: 10%;">Quality & Remarks</th>
+                                        <th style="width: 4%; text-align: center;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="unload-tbody">
                                     <tr>
-                                        <td colspan="16" class="text-center text-muted py-4">No unload records found. Click "Add Lorry Load" or seed mock data.</td>
+                                        <td colspan="12" class="text-center text-muted py-4">No unload records found. Click "Add Lorry Load" or seed mock data.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -3235,6 +3231,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=23.0"></script>
+    <script src="app.js?v=24.0"></script>
 </body>
 </html>
