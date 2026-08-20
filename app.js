@@ -1025,6 +1025,66 @@ function switchTab(tabId) {
     }, 0);
 }
 
+// --- MOBILE TOUCH SWIPE GESTURE SUPPORT ---
+(function setupMobileSwipeGestures() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const minSwipeDistance = 65; // minimum horizontal distance required
+    const maxVerticalVariance = 50; // maximum vertical movement allowed to qualify as horizontal swipe
+
+    document.addEventListener('touchstart', (e) => {
+        // Ignore swipes originating inside inputs, textareas, selects, modals, or scrollable data tables
+        if (e.target.closest('input, textarea, select, .table-responsive, .modal-content, .nav-menu')) {
+            touchStartX = 0;
+            return;
+        }
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        if (!touchStartX) return;
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        // Reset touch start
+        touchStartX = 0;
+        touchStartY = 0;
+
+        // Check if swipe is horizontal enough and long enough
+        if (Math.abs(deltaX) >= minSwipeDistance && Math.abs(deltaY) <= maxVerticalVariance) {
+            // Get visible nav items
+            const navItems = Array.from(document.querySelectorAll('.nav-item:not(.role-hidden):not([style*="display: none"])'));
+            if (navItems.length === 0) return;
+
+            const activeIndex = navItems.findIndex(item => item.classList.contains('active'));
+            if (activeIndex === -1) return;
+
+            if (deltaX < 0) {
+                // Swipe Left -> Move to Next Tab
+                const nextIndex = (activeIndex + 1) % navItems.length;
+                const nextTabId = navItems[nextIndex].getAttribute('data-tab');
+                if (nextTabId) {
+                    switchTab(nextTabId);
+                    navItems[nextIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            } else {
+                // Swipe Right -> Move to Previous Tab
+                const prevIndex = (activeIndex - 1 + navItems.length) % navItems.length;
+                const prevTabId = navItems[prevIndex].getAttribute('data-tab');
+                if (prevTabId) {
+                    switchTab(prevTabId);
+                    navItems[prevIndex].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            }
+        }
+    }, { passive: true });
+})();
+
 // --- MODAL UTILITIES ---
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
