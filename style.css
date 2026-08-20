@@ -738,6 +738,13 @@ h1, h2, h3, h4, h5, h6 {
     white-space: nowrap;
 }
 
+/* Allow text wrapping for multi-badge columns in data tables */
+#unload-table td, #sales-table td, #unload-table th, #sales-table th {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
 .data-table tbody tr {
     transition: var(--transition);
 }

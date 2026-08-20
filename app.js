@@ -1417,13 +1417,13 @@ function renderUnloadTable(filterQuery = '') {
             </td>
             <td style="font-family: monospace; color: var(--text-secondary); text-align: center; font-weight: bold;">${index + 1}</td>
             <td style="font-size: 0.78rem;">${formatDateString(item.date)}</td>
-            <td style="font-size: 0.8rem; line-height: 1.25; word-wrap: break-word; overflow: hidden;">
+            <td style="font-size: 0.8rem; line-height: 1.3; white-space: normal !important; word-break: break-word !important;">
                 <div><strong>${item.supplier}</strong>${placeText}</div>
-                <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-top: 2px;">
+                <div style="margin-top: 2px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                     <span class="badge badge-info text-xs" style="font-size:0.68rem; padding: 1px 4px;">${escapeHtml(item.seedType || 'OMS')}</span>
                     ${item.invoiceNo ? `<span class="text-xs text-muted">Inv: <code>${escapeHtml(item.invoiceNo)}</code></span>` : ''}
-                    ${brokerBadge}${statusBadge}
                 </div>
+                ${item.broker || statusBadge ? `<div style="margin-top: 2px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${brokerBadge}${statusBadge}</div>` : ''}
             </td>
             <td><code>${item.lorryNo}</code></td>
             <td style="font-size: 0.8rem; font-family: monospace; line-height: 1.2;">
