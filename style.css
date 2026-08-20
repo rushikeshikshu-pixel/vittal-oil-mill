@@ -1647,7 +1647,6 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
 .nav-item.role-hidden { display: none !important; }
 
 /* ===================== MOBILE RESPONSIVE UI DESIGN (SMARTPHONES & TABLETS) ===================== */
-/* ===================== MOBILE RESPONSIVE UI DESIGN (SMARTPHONES & TABLETS) ===================== */
 @media (max-width: 768px) {
     /* 1. Reset Main App Layout for Mobile Screens */
     .app-container {
@@ -1661,7 +1660,7 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         position: relative !important;
         width: 100% !important;
         height: auto !important;
-        padding: 8px 10px 4px 10px !important;
+        padding: 6px 8px 24px 8px !important;
         border-right: none !important;
         border-bottom: 1px solid var(--border-color) !important;
         top: auto !important;
@@ -1671,19 +1670,20 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .brand {
-        margin-bottom: 4px !important;
-        padding-bottom: 4px !important;
+        margin-bottom: 2px !important;
+        padding-bottom: 2px !important;
         border-bottom: none !important;
+        gap: 8px !important;
     }
 
     .brand-logo {
-        width: 30px !important;
-        height: 30px !important;
-        font-size: 0.9rem !important;
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.8rem !important;
     }
 
     .brand-info h1 {
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
         line-height: 1.1 !important;
     }
 
@@ -1696,7 +1696,7 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         flex-direction: row !important;
         overflow-x: auto !important;
         white-space: nowrap !important;
-        padding: 4px 0 6px 0 !important;
+        padding: 3px 0 5px 0 !important;
         gap: 4px !important;
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
@@ -1705,16 +1705,16 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     .nav-item {
         flex: 0 0 auto !important;
         width: auto !important;
-        padding: 5px 10px !important;
-        font-size: 0.75rem !important;
-        border-radius: 16px !important;
+        padding: 4px 10px !important;
+        font-size: 0.72rem !important;
+        border-radius: 14px !important;
         background: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
-        gap: 6px !important;
+        gap: 5px !important;
     }
 
     .nav-item i {
-        font-size: 0.85rem !important;
+        font-size: 0.8rem !important;
         width: auto !important;
     }
 
@@ -1728,43 +1728,40 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        padding-top: 4px !important;
-        border-top: 1px solid var(--border-color) !important;
+        padding-top: 2px !important;
+        border-top: none !important;
         gap: 4px !important;
     }
 
     .theme-btn, .system-time {
         width: auto !important;
-        font-size: 0.7rem !important;
-        padding: 3px 8px !important;
+        font-size: 0.68rem !important;
+        padding: 2px 6px !important;
     }
 
     /* 3. Main Content Full Width */
     .main-content {
         margin-left: 0 !important;
         width: 100% !important;
-        padding: 6px 8px 24px 8px !important;
+        padding: 4px 6px 24px 6px !important;
     }
 
-    /* 4. Mobile Header Bar */
+    /* 4. Ultra-Compact Mobile Header Bar */
     .app-header {
         height: auto !important;
-        padding: 6px 8px !important;
-        flex-direction: column !important;
-        gap: 6px !important;
+        padding: 4px 6px !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
         position: relative !important;
         background: var(--bg-card) !important;
         border-radius: 8px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
     }
 
     .header-search {
-        width: 100% !important;
-    }
-
-    .header-search input {
-        padding: 6px 12px 6px 32px !important;
-        font-size: 0.78rem !important;
+        display: none !important; /* Hide wide search bar on phone header to free screen space */
     }
 
     .header-actions {
@@ -1772,17 +1769,17 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 6px !important;
+        gap: 4px !important;
     }
 
     #sync-status-badge {
-        font-size: 0.7rem !important;
-        padding: 3px 8px !important;
+        font-size: 0.65rem !important;
+        padding: 2px 6px !important;
     }
 
     #quick-action-btn {
-        padding: 4px 10px !important;
-        font-size: 0.75rem !important;
+        padding: 3px 8px !important;
+        font-size: 0.72rem !important;
     }
 
     .user-details span {
@@ -1790,46 +1787,52 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .user-details h3 {
-        font-size: 0.8rem !important;
+        font-size: 0.75rem !important;
     }
 
-    /* 5. Pane Header Compact */
+    .avatar {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* 5. Pane Header Compact (Hide paragraph text on mobile to save vertical height) */
     .pane-header {
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
     }
 
     .pane-header h2 {
-        font-size: 1.05rem !important;
+        font-size: 0.95rem !important;
+        margin-bottom: 0 !important;
     }
 
     .pane-header p {
-        font-size: 0.72rem !important;
-        line-height: 1.3 !important;
+        display: none !important; /* Hide description paragraph on mobile */
     }
 
-    /* 6. Mobile KPI Grid & Cards Overhaul */
+    /* 6. Ultra-Compact Mobile Micro-KPI Cards Grid */
     .kpi-grid, .sales-mini-kpis {
         grid-template-columns: 1fr 1fr !important;
-        gap: 6px !important;
-        margin-bottom: 12px !important;
+        gap: 4px !important;
+        margin-bottom: 8px !important;
     }
 
     .kpi-card {
-        padding: 8px 10px !important;
+        padding: 6px 8px !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 8px !important;
-        border-radius: 10px !important;
-        min-height: 56px !important;
+        gap: 6px !important;
+        border-radius: 8px !important;
+        min-height: 42px !important;
     }
 
     .kpi-icon {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 0.9rem !important;
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 0.75rem !important;
         flex-shrink: 0 !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
     }
 
     .kpi-data {
@@ -1839,28 +1842,32 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .kpi-title {
-        font-size: 0.65rem !important;
+        font-size: 0.6rem !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         display: block !important;
-        line-height: 1.1 !important;
+        line-height: 1.0 !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
     }
 
     .kpi-value {
-        font-size: 1.1rem !important;
-        margin-top: 1px !important;
-        margin-bottom: 1px !important;
+        font-size: 0.95rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         white-space: nowrap !important;
-        line-height: 1.1 !important;
+        line-height: 1.0 !important;
+        font-weight: 800 !important;
     }
 
     .kpi-meta {
-        font-size: 0.62rem !important;
+        font-size: 0.58rem !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         display: block !important;
+        line-height: 1.0 !important;
     }
 
     /* 7. Responsive Form Rows & Modals */
@@ -1889,14 +1896,14 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         width: 100% !important;
         max-width: 100% !important;
         margin: 2px 0 !important;
-        padding: 10px 8px !important;
-        border-radius: 10px !important;
+        padding: 8px 6px !important;
+        border-radius: 8px !important;
         max-height: 96vh !important;
         overflow-y: auto !important;
     }
 
     .modal-header h3 {
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
     }
 
     .modal-footer {
@@ -1916,7 +1923,7 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
     }
 
     .data-table th, .data-table td {
-        padding: 5px 4px !important;
-        font-size: 0.72rem !important;
+        padding: 4px 3px !important;
+        font-size: 0.7rem !important;
     }
 }
