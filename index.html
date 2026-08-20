@@ -2223,12 +2223,19 @@
                     </div>
                 </div>
                 <div class="card mb-3 py-2 bg-dark-subtle">
-                    <h4 class="mb-1 text-sm font-bold">Inbound Gunnies / Packaging (Bardan) Details</h4>
-                    <p class="text-xs text-muted mb-2">If seeds are received in bags, select bag type, count, rate, and GST %.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;" class="mb-2">
+                        <div>
+                            <h4 class="mb-0 text-sm font-bold">Inbound Gunnies / Packaging (Bardan) Details</h4>
+                            <p class="text-xs text-muted mb-0">If seeds are received in bags, select bag type, count, rate, and GST %.</p>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm text-xs" onclick="promptAddNewBagVariety()" style="padding: 2px 8px; border-radius: 4px;">
+                            <i class="fa-solid fa-plus"></i> + Add Custom Variety
+                        </button>
+                    </div>
                     <div class="form-row">
                         <div class="form-group mb-2 col-3">
                             <label for="unload-bag-select" class="text-xs">Select Bag Type / Size</label>
-                            <select id="unload-bag-select" class="form-control text-xs">
+                            <select id="unload-bag-select" class="form-control text-xs" onchange="handleBardanSelectChange(event)">
                                 <option value="">-- No Bag (Bulk) --</option>
                                 <option value="60kora">60 Kora Jute Bag (60कोरा)</option>
                                 <option value="50kora">50 Kora Jute Bag (50कोरा)</option>
@@ -2239,6 +2246,7 @@
                                 <option value="gm-pp-70">70kg PP Bag</option>
                                 <option value="gm-pp-km">KM PP</option>
                                 <option value="gm-pp-mm">MM PP</option>
+                                <option value="__add_custom_bag__" style="font-weight: bold; color: var(--accent-primary);">+ Add Custom Variety...</option>
                             </select>
                         </div>
                         <div class="form-group mb-2 col-3">
@@ -3249,6 +3257,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=30.0"></script>
+    <script src="app.js?v=31.0"></script>
 </body>
 </html>

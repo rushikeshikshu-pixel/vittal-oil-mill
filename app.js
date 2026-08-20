@@ -1561,6 +1561,7 @@ function editUnload(id) {
     if (!item) return;
 
     populateSupplierDropdowns();
+    populateBardanBagSelect(item.bagType || '');
 
     document.getElementById('unload-id').value = item.id;
     document.getElementById('unload-date').value = item.date;
@@ -4621,6 +4622,82 @@ function populateSupplierDropdowns() {
         opt.value = s.name;
         dl.appendChild(opt);
     });
+
+    populateBardanBagSelect();
+}
+
+function populateBardanBagSelect(selectedVal = '') {
+    const select = document.getElementById('unload-bag-select');
+    if (!select) return;
+
+    const defaultBardanList = [
+        { id: '60kora', name: '60 Kora Jute Bag (60कोरा)' },
+        { id: '50kora', name: '50 Kora Jute Bag (50कोरा)' },
+        { id: 'jute-new', name: 'New Jute Bag (नवीन)' },
+        { id: 'jute-bag', name: 'Old Gunny Bags (Jute)' },
+        { id: 'gm-pp-50', name: '50kg PP Bag' },
+        { id: 'gm-pp-60', name: '60kg PP Bag' },
+        { id: 'gm-pp-70', name: '70kg PP Bag' },
+        { id: 'gm-pp-km', name: 'KM PP' },
+        { id: 'gm-pp-mm', name: 'MM PP' }
+    ];
+
+    if (!state.customBardanTypes) state.customBardanTypes = [];
+    
+    // Register custom Bardan into PRODUCTS array
+    state.customBardanTypes.forEach(custom => {
+        if (!PRODUCTS.some(p => p.id === custom.id)) {
+            PRODUCTS.push({ id: custom.id, name: custom.name, category: 'Bardan' });
+        }
+    });
+
+    let html = `<option value="">-- No Bag (Bulk) --</option>`;
+    
+    defaultBardanList.forEach(b => {
+        html += `<option value="${b.id}">${escapeHtml(b.name)}</option>`;
+    });
+
+    if (state.customBardanTypes.length > 0) {
+        html += `<optgroup label="--- Custom Added Bag Varieties ---">`;
+        state.customBardanTypes.forEach(c => {
+            html += `<option value="${c.id}">${escapeHtml(c.name)}</option>`;
+        });
+        html += `</optgroup>`;
+    }
+
+    html += `<option value="__add_custom_bag__" style="font-weight: bold; color: var(--accent-primary);">+ Add Custom Variety...</option>`;
+
+    select.innerHTML = html;
+
+    if (selectedVal) {
+        select.value = selectedVal;
+    }
+}
+
+function promptAddNewBagVariety() {
+    const newName = prompt("Enter New Bardan / Bag / Packaging Variety Name (e.g. 70 Kora Jute Bag, Sugar Bag, HDPE Bag):");
+    if (newName && newName.trim()) {
+        const cleanName = newName.trim();
+        const newId = 'bag-cust-' + Date.now();
+        
+        if (!state.customBardanTypes) state.customBardanTypes = [];
+        const newObj = { id: newId, name: cleanName, category: 'Bardan' };
+        state.customBardanTypes.push(newObj);
+        
+        if (!PRODUCTS.some(p => p.id === newId)) {
+            PRODUCTS.push({ id: newId, name: cleanName, category: 'Bardan' });
+        }
+        
+        saveState();
+        populateBardanBagSelect(newId);
+        alert(`New Bag Variety "${cleanName}" added to dropdown successfully!`);
+    }
+}
+
+function handleBardanSelectChange(e) {
+    if (e.target.value === '__add_custom_bag__') {
+        promptAddNewBagVariety();
+    }
 }
 
 function getLotAvailableWeight(unloadId, excludeLogId = '') {
