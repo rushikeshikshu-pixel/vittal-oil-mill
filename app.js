@@ -1430,17 +1430,18 @@ function renderUnloadTable(filterQuery = '') {
                 ${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong>
                 ${shortageBadge}
             </td>
-            <td style="font-size: 0.78rem; line-height: 1.2;">${rateDetails}</td>
-            <td style="font-size: 0.78rem;">${gstRate}%</td>
-            <td style="font-size: 0.82rem;"><strong class="text-success">₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong></td>
+            <td style="font-size: 0.78rem; line-height: 1.25;">
+                Base: ₹${parseFloat(item.rate).toLocaleString('en-IN')}<br>
+                <span class="text-muted" style="font-size: 0.72rem;">GST: ${gstRate}%</span> | <strong class="text-success" style="font-size: 0.78rem;">FOR: ₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong>
+            </td>
             <td style="font-size: 0.78rem;">${item.location || '-'}</td>
-            <td style="font-size: 0.72rem; line-height: 1.2; word-break: break-word;">
+            <td style="font-size: 0.72rem; line-height: 1.2; word-break: break-word; overflow: hidden;">
                 ${qualityText}
-                <span class="text-muted">${escapeHtml(item.remark || '-')}</span>
+                <div class="text-muted" style="font-size: 0.68rem; line-height: 1.1; margin-top: 2px;">${escapeHtml(item.remark || '-')}</div>
             </td>
             <td style="text-align: center; white-space: nowrap; padding: 2px 2px;">
-                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry" style="padding: 2px 5px; font-size: 0.72rem;"><i class="fa-solid fa-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry" style="padding: 2px 5px; font-size: 0.72rem;"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn btn-secondary btn-sm" onclick="editUnload('${item.id}')" title="Edit Entry" style="padding: 2px 6px; font-size: 0.72rem;"><i class="fa-solid fa-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUnload('${item.id}')" title="Delete Entry" style="padding: 2px 6px; font-size: 0.72rem;"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
