@@ -868,7 +868,17 @@ function setupEventListeners() {
     }
 
     // Form Submissions
-    document.getElementById('unload-form').addEventListener('submit', handleUnloadSubmit);
+    const unloadFormEl = document.getElementById('unload-form');
+    if (unloadFormEl) {
+        unloadFormEl.addEventListener('submit', handleUnloadSubmit);
+        ['input', 'change'].forEach(evt => {
+            unloadFormEl.addEventListener(evt, () => {
+                if (typeof updateUnloadLiveBillSummary === 'function') {
+                    updateUnloadLiveBillSummary();
+                }
+            });
+        });
+    }
     
     // Auto-select supplier location (place) on supplier selection
     const handleUnloadSupplierChange = (e) => {
@@ -1574,7 +1584,38 @@ function editUnload(id) {
     document.getElementById('unload-remark').value = item.remark || '';
 
     document.getElementById('unload-modal-title').textContent = "Edit Lorry Load Entry";
+    updateUnloadLiveBillSummary();
     openModal('unload-modal');
+}
+
+function updateUnloadLiveBillSummary() {
+    const qty = parseFloat(document.getElementById('unload-weight')?.value) || 0;
+    const rate = parseFloat(document.getElementById('unload-rate')?.value) || 0;
+    const discount = parseFloat(document.getElementById('unload-discount')?.value) || 0;
+    const seedGstPct = parseFloat(document.getElementById('unload-gst-rate')?.value) || 0;
+
+    const bagQty = parseInt(document.getElementById('unload-bag-qty')?.value) || 0;
+    const bagRate = parseFloat(document.getElementById('unload-bag-rate')?.value) || 0;
+    const bagGstPct = parseFloat(document.getElementById('unload-bag-gst')?.value) || 0;
+
+    const seedVal = qty * Math.max(0, rate - discount);
+    const bagVal = bagQty * bagRate;
+
+    const seedGstAmt = (seedVal * seedGstPct) / 100;
+    const bagGstAmt = (bagVal * bagGstPct) / 100;
+    const totalGst = seedGstAmt + bagGstAmt;
+
+    const grandTotal = seedVal + bagVal + totalGst;
+
+    const seedValEl = document.getElementById('live-seed-val');
+    const bagValEl = document.getElementById('live-bardan-val');
+    const gstValEl = document.getElementById('live-gst-val');
+    const totalValEl = document.getElementById('unload-live-grand-total');
+
+    if (seedValEl) seedValEl.textContent = `₹${seedVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (bagValEl) bagValEl.textContent = `₹${bagVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (gstValEl) gstValEl.textContent = `₹${totalGst.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (totalValEl) totalValEl.textContent = `Total Bill: ₹${grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
 }
 
 function deleteUnload(id) {

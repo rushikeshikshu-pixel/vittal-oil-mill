@@ -2312,6 +2312,18 @@
                     </div>
                 </div>
 
+                <div class="card mb-3 py-2 px-3 bg-dark-subtle" style="border: 1px solid var(--accent-primary); background: rgba(59, 130, 246, 0.05); border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <h4 class="mb-0 text-sm font-bold text-primary" style="margin: 0;"><i class="fa-solid fa-calculator"></i> Live Purchase Bill Summary (पावती जुळवणी)</h4>
+                        <span id="unload-live-grand-total" class="font-bold text-success" style="font-size: 1.05rem;">Total Purchase Bill: ₹0.00</span>
+                    </div>
+                    <div class="form-row text-xs text-muted mt-2" id="unload-live-math-details" style="gap: 4px;">
+                        <div class="col-4">Seed Amount: <strong id="live-seed-val" class="text-primary">₹0.00</strong></div>
+                        <div class="col-4">Bardan Amount: <strong id="live-bardan-val" class="text-info">₹0.00</strong></div>
+                        <div class="col-4">GST Tax Amount: <strong id="live-gst-val" class="text-warning">₹0.00</strong></div>
+                    </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group mb-3 col-6">
                         <label for="unload-quality">Quality Remark / Moisture / Grade</label>
@@ -3231,6 +3243,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=24.0"></script>
+    <script src="app.js?v=25.0"></script>
 </body>
 </html>
