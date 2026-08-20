@@ -26,6 +26,9 @@ const PRODUCTS = [
     { id: 'oil-acid', name: 'Acid Oil', category: 'Oil' },
     { id: 'sarki-bardan', name: 'Sarki Bardan', category: 'Bardan' },
     { id: 'gm-pp-hdr', name: 'Gauri Malai PP', category: 'Bardan' }, // Header/Direct row in screenshot
+    { id: '60kora', name: '60 Kora Jute Bag (60कोरा)', category: 'Bardan' },
+    { id: '50kora', name: '50 Kora Jute Bag (50कोरा)', category: 'Bardan' },
+    { id: 'jute-new', name: 'New Jute Bag (नवीन बारदान)', category: 'Bardan' },
     { id: 'gm-pp-50', name: '50kg PP Bag', category: 'Bardan' },
     { id: 'gm-pp-60', name: '60kg PP Bag', category: 'Bardan' },
     { id: 'gm-pp-70', name: '70kg PP Bag', category: 'Bardan' },
