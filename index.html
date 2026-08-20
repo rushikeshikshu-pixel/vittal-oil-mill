@@ -3093,17 +3093,17 @@
                     </button>
                 </div>
 
-                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 15px;">
-                    <table class="data-table" style="margin-bottom: 0;">
-                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10;">
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto; overflow-x: hidden; width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 15px;">
+                    <table class="data-table" style="margin-bottom: 0; width: 100%; table-layout: fixed;">
+                        <thead style="position: sticky; top: 0; background: var(--bg-card); z-index: 10; font-size: 0.75rem;">
                             <tr>
-                                <th style="width: 50px;">Sr</th>
-                                <th>Product Name (माल प्रकार)</th>
-                                <th style="width: 100px;">Bhartee (भरती kg)</th>
-                                <th style="width: 100px;">Bags (पोते)</th>
-                                <th>Marka (मार्का)</th>
-                                <th>Thappi (थप्पी)</th>
-                                <th style="width: 50px;">Action</th>
+                                <th style="width: 5%; text-align: center;">Sr</th>
+                                <th style="width: 27%;">Product Name (माल प्रकार)</th>
+                                <th style="width: 14%;">Bhartee (kg)</th>
+                                <th style="width: 14%;">Bags (पोते)</th>
+                                <th style="width: 18%;">Marka (मार्का)</th>
+                                <th style="width: 16%;">Thappi (थप्पी)</th>
+                                <th style="width: 6%; text-align: center;"></th>
                             </tr>
                         </thead>
                         <tbody id="gp-items-tbody">
@@ -3235,6 +3235,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=15.0"></script>
+    <script src="app.js?v=16.0"></script>
 </body>
 </html>

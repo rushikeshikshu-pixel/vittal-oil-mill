@@ -6506,9 +6506,9 @@ function addGatePassItemRow(productName = '', bhartee = '50', bags = '', marka =
     const productOptions = PRODUCTS.map(p => `<option value="${p.name}"></option>`).join('');
 
     tr.innerHTML = `
-        <td class="text-center font-bold" style="vertical-align: middle;">${tbody.children.length + 1}</td>
-        <td>
-            <input type="text" class="form-control gp-item-product" required value="${productName}" placeholder="e.g. Wash Oil, Hulls" list="gp-products-list-${gpItemRowCounter}">
+        <td class="text-center font-bold" style="vertical-align: middle; padding: 2px 2px; font-size: 0.75rem;">${tbody.children.length + 1}</td>
+        <td style="padding: 2px 3px;">
+            <input type="text" class="form-control text-xs gp-item-product" required value="${productName}" placeholder="e.g. Wash Oil, Hulls" list="gp-products-list-${gpItemRowCounter}" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
             <datalist id="gp-products-list-${gpItemRowCounter}">
                 ${productOptions}
                 <option value="Keshar Malai (केशर मलाई)"></option>
@@ -6516,26 +6516,56 @@ function addGatePassItemRow(productName = '', bhartee = '50', bags = '', marka =
                 <option value="Mastavan Malai (मस्तवन मलाई)"></option>
             </datalist>
         </td>
-        <td>
-            <input type="number" class="form-control gp-item-bhartee" required value="${bhartee}" placeholder="50">
+        <td style="padding: 2px 3px;">
+            <input type="number" class="form-control text-xs gp-item-bhartee" required value="${bhartee}" placeholder="50" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td>
-            <input type="number" class="form-control gp-item-bags" required value="${bags}" placeholder="Bags qty">
+        <td style="padding: 2px 3px;">
+            <input type="number" class="form-control text-xs gp-item-bags" required value="${bags}" placeholder="Bags qty" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td>
-            <input type="text" class="form-control gp-item-marka" value="${marka}" placeholder="e.g. Gokul">
+        <td style="padding: 2px 3px;">
+            <input type="text" class="form-control text-xs gp-item-marka" value="${marka}" placeholder="e.g. Gokul" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td>
-            <input type="text" class="form-control gp-item-thappi" value="${thappi}" placeholder="Stack No">
+        <td style="padding: 2px 3px;">
+            <input type="text" class="form-control text-xs gp-item-thappi" value="${thappi}" placeholder="Stack No" style="padding: 2px 4px; font-size: 0.75rem; width: 100%; box-sizing: border-box;">
         </td>
-        <td style="text-align: center; vertical-align: middle;">
-            <button class="btn btn-danger btn-sm" type="button" onclick="removeGatePassItemRow('${tr.id}')" title="Delete Row" style="padding: 4px 8px;">
+        <td style="text-align: center; vertical-align: middle; padding: 2px 1px;">
+            <button class="btn btn-danger btn-sm" type="button" onclick="removeGatePassItemRow('${tr.id}')" title="Delete Row" style="padding: 1px 5px; font-size: 0.75rem;" tabindex="-1">
                 <i class="fa-solid fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(tr);
     recalculateGatePassSrs();
+
+    // Mouse-Free Keyboard Navigation (Enter / Tab auto-creates new item row)
+    const rowInputs = tr.querySelectorAll('input');
+    rowInputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (index < rowInputs.length - 1) {
+                    rowInputs[index + 1].focus();
+                } else {
+                    addGatePassItemRow();
+                    const allRows = tbody.querySelectorAll('tr');
+                    const newRow = allRows[allRows.length - 1];
+                    if (newRow) {
+                        const newProdInput = newRow.querySelector('.gp-item-product');
+                        if (newProdInput) newProdInput.focus();
+                    }
+                }
+            } else if (e.key === 'Tab' && !e.shiftKey && index === rowInputs.length - 1) {
+                e.preventDefault();
+                addGatePassItemRow();
+                const allRows = tbody.querySelectorAll('tr');
+                const newRow = allRows[allRows.length - 1];
+                if (newRow) {
+                    const newProdInput = newRow.querySelector('.gp-item-product');
+                    if (newProdInput) newProdInput.focus();
+                }
+            }
+        });
+    });
 }
 
 function removeGatePassItemRow(rowId) {
