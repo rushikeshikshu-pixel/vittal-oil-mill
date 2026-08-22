@@ -882,6 +882,11 @@ function setupEventListeners() {
             });
         });
     }
+
+    const brokerFormEl = document.getElementById('broker-form');
+    if (brokerFormEl) {
+        brokerFormEl.addEventListener('submit', handleBrokerSubmit);
+    }
     
     // Auto-select supplier location (place) on supplier selection
     const handleUnloadSupplierChange = (e) => {
@@ -4635,6 +4640,37 @@ function deleteSupplier(id) {
     }
 }
 
+function handleBrokerSubmit(e) {
+    e.preventDefault();
+    const id = document.getElementById('broker-id').value;
+    const name = document.getElementById('broker-name').value.trim();
+    const phone = document.getElementById('broker-phone').value.trim();
+    const city = document.getElementById('broker-city').value.trim();
+    const commissionRate = parseFloat(document.getElementById('broker-commission-rate').value) || 5;
+
+    if (!state.brokers) state.brokers = [];
+
+    const data = { id: id || ('brk-' + Date.now()), name, phone, city, commissionRate };
+
+    if (id) {
+        const idx = state.brokers.findIndex(b => b.id === id);
+        if (idx !== -1) state.brokers[idx] = data;
+    } else {
+        if (state.brokers.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+            alert(`Broker "${name}" is already registered!`);
+            return;
+        }
+        state.brokers.push(data);
+    }
+
+    saveState();
+    closeModal('broker-modal');
+    document.getElementById('broker-form').reset();
+    populateLedgerPartyDropdown();
+    populateAutocompleteDatalists();
+    alert(`Broker Account "${name}" saved successfully!`);
+}
+
 function populateSupplierDropdowns() {
     const dl = document.getElementById('suppliers-datalist');
     if (!dl) return;
@@ -5845,9 +5881,23 @@ function populateLedgerPartyDropdown() {
         optionsDiv.appendChild(div);
     });
     
-    // Sort customers alphabetically
-    const sortedCustomers = [...state.customers].sort((a,b) => a.name.localeCompare(b.name));
-    sortedCustomers.forEach(c => {
+    // 3. Sort brokers alphabetically
+    if (!state.brokers) state.brokers = [];
+    
+    // Extract unique brokers from unloads and sales
+    const extraBrokersFromLoads = [...new Set([
+        ...state.unloads.map(u => u.broker).filter(Boolean),
+        ...state.sales.map(s => s.broker).filter(Boolean)
+    ])];
+    
+    extraBrokersFromLoads.forEach(bName => {
+        if (!state.brokers.some(b => b.name.toLowerCase() === bName.toLowerCase())) {
+            state.brokers.push({ id: 'brk-' + Date.now(), name: bName, commissionRate: 5, commissionType: 'per_qtl' });
+        }
+    });
+
+    const sortedBrokers = [...state.brokers].sort((a,b) => a.name.localeCompare(b.name));
+    sortedBrokers.forEach(b => {
         const div = document.createElement('div');
         div.className = 'searchable-option';
         div.style.padding = '10px 14px';
@@ -5860,11 +5910,11 @@ function populateLedgerPartyDropdown() {
         div.onmouseenter = () => div.style.backgroundColor = 'var(--bg-card-hover)';
         div.onmouseleave = () => div.style.backgroundColor = 'transparent';
         
-        div.onclick = () => selectLedgerParty('cust:' + c.name, c.name);
+        div.onclick = () => selectLedgerParty('broker:' + b.name, b.name);
         
         div.innerHTML = `
-            <span class="option-name" style="font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(c.name)}</span>
-            <span class="badge badge-success" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">Customer</span>
+            <span class="option-name" style="font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(b.name)}</span>
+            <span class="badge badge-warning" style="font-size: 0.72rem; padding: 3px 8px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">Broker / Dalal</span>
         `;
         optionsDiv.appendChild(div);
     });
@@ -5893,6 +5943,30 @@ function getPartyBalance(partyName, role) {
             }
         });
         return billed - paid; // Outstanding payable to supplier
+    } else if (role === 'broker') {
+        const brkObj = state.brokers?.find(b => b.name === partyName);
+        const commRate = brkObj ? (parseFloat(brkObj.commissionRate) || 5) : 5;
+
+        // Commission from raw material unloads
+        state.unloads.forEach(u => {
+            if (u.broker === partyName && u.status !== 'Rejected' && u.status !== 'Returned') {
+                const w = parseFloat(u.weight) > 0 ? parseFloat(u.weight) : (parseFloat(u.invoiceWeight) || 0);
+                billed += (w * commRate);
+            }
+        });
+        // Commission from sales dispatches
+        state.sales.forEach(s => {
+            if (s.broker === partyName && s.status !== 'Rejected' && s.status !== 'Returned') {
+                const w = parseFloat(s.weight) || 0;
+                billed += (w * commRate);
+            }
+        });
+        state.payments.forEach(p => {
+            if (p.partyName === partyName && p.partyRole === 'broker') {
+                paid += parseFloat(p.amount) || 0;
+            }
+        });
+        return billed - paid; // Outstanding commission payable to broker
     } else { // customer
         state.sales.forEach(s => {
             if (s.customer === partyName && s.status !== 'Rejected' && s.status !== 'Returned') {
@@ -5969,6 +6043,9 @@ function renderPartyAccounts() {
     if (role === 'supp') {
         payTypeSelect.value = 'Paid';
         document.getElementById('ledger-kpi-balance-title').textContent = 'Outstanding Payable';
+    } else if (role === 'broker') {
+        payTypeSelect.value = 'Paid';
+        document.getElementById('ledger-kpi-balance-title').textContent = 'Broker Commission Payable';
     } else {
         payTypeSelect.value = 'Received';
         document.getElementById('ledger-kpi-balance-title').textContent = 'Outstanding Receivable';
@@ -5983,25 +6060,40 @@ function renderPartyAccounts() {
 
     if (avatarEl) {
         const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
-        const avatarColor = role === 'supp' ? 'background:rgba(59,130,246,0.2);color:#60a5fa;' : 'background:rgba(16,185,129,0.2);color:#34d399;';
+        let avatarColor = 'background:rgba(59,130,246,0.2);color:#60a5fa;';
+        if (role === 'cust') avatarColor = 'background:rgba(16,185,129,0.2);color:#34d399;';
+        else if (role === 'broker') avatarColor = 'background:rgba(245,158,11,0.2);color:#f59e0b;';
+
         avatarEl.style.cssText += avatarColor;
         avatarEl.textContent = initials;
     }
     if (nameDisplay) nameDisplay.textContent = name;
     if (detailEl) {
-        const partyObj = role === 'supp'
-            ? state.suppliers?.find(s => s.name === name)
-            : state.customers?.find(c => c.name === name);
-        detailEl.textContent = partyObj
-            ? [partyObj.address, partyObj.phone, partyObj.gstin].filter(Boolean).join(' · ')
-            : (role === 'supp' ? 'Supplier' : 'Customer');
+        let detailText = 'Party Account';
+        if (role === 'supp') {
+            const partyObj = state.suppliers?.find(s => s.name === name);
+            detailText = partyObj ? [partyObj.address, partyObj.phone, partyObj.gstin].filter(Boolean).join(' · ') : 'Supplier Account';
+        } else if (role === 'broker') {
+            const brkObj = state.brokers?.find(b => b.name === name);
+            detailText = brkObj ? [brkObj.city ? 'City: ' + brkObj.city : '', brkObj.phone ? 'Phone: ' + brkObj.phone : '', `Comm Rate: ₹${brkObj.commissionRate || 5}/Qtl`].filter(Boolean).join(' · ') : 'Broker / Dalal Account';
+        } else {
+            const partyObj = state.customers?.find(c => c.name === name);
+            detailText = partyObj ? [partyObj.address, partyObj.phone, partyObj.gstin].filter(Boolean).join(' · ') : 'Customer Account';
+        }
+        detailEl.textContent = detailText;
     }
     if (roleBadge && badgeWrap) {
         badgeWrap.style.display = 'block';
-        roleBadge.textContent = role === 'supp' ? '🏭 Supplier' : '🛒 Customer';
-        roleBadge.style.cssText = role === 'supp'
-            ? 'padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;background:rgba(59,130,246,0.15);color:#60a5fa;'
-            : 'padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;background:rgba(16,185,129,0.15);color:#34d399;';
+        if (role === 'broker') {
+            roleBadge.textContent = '🤝 Broker / Dalal';
+            roleBadge.style.cssText = 'padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);';
+        } else if (role === 'supp') {
+            roleBadge.textContent = '🏭 Supplier';
+            roleBadge.style.cssText = 'padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;background:rgba(59,130,246,0.15);color:#60a5fa;';
+        } else {
+            roleBadge.textContent = '🛒 Customer';
+            roleBadge.style.cssText = 'padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;background:rgba(16,185,129,0.15);color:#34d399;';
+        }
     }
 
     // --- Build Entries ---
@@ -6038,13 +6130,75 @@ function renderPartyAccounts() {
 
         state.payments.forEach(p => {
             if (p.partyName === name && p.partyRole === 'supplier') {
-                totalPaidVal += parseFloat(p.amount);
+                totalPaidVal += parseFloat(p.amount) || 0;
                 entries.push({
                     date: p.date,
-                    description: `Payout · ${p.method}${p.remark ? ' — ' + p.remark : ''}`,
-                    ref: p.id.slice(-6).toUpperCase(),
+                    description: `Payment (${p.paymentMethod || 'Bank/Cash'}) ${p.remark ? '· ' + p.remark : ''}`,
+                    ref: p.referenceNo || 'PAY-REF',
                     weight: 0,
-                    debit: parseFloat(p.amount),
+                    debit: parseFloat(p.amount) || 0,
+                    credit: 0,
+                    type: 'payment',
+                    timestamp: safeDateMs(p.date)
+                });
+            }
+        });
+    } else if (role === 'broker') {
+        const brkObj = state.brokers?.find(b => b.name === name);
+        const commRate = brkObj ? (parseFloat(brkObj.commissionRate) || 5) : 5;
+
+        // Unloads linked to broker
+        state.unloads.forEach(u => {
+            if (u.broker === name && u.status !== 'Rejected' && u.status !== 'Returned') {
+                const w = parseFloat(u.weight) > 0 ? parseFloat(u.weight) : (parseFloat(u.invoiceWeight) || 0);
+                const commEarned = w * commRate;
+                totalBilledVal += commEarned;
+                totalWeight += w;
+
+                entries.push({
+                    date: u.date,
+                    description: `Commission: Raw Unload (${u.supplier})`,
+                    ref: `Lorry: ${u.lorryNo} · ${w.toFixed(2)} Qtl @ ₹${commRate}/Qtl`,
+                    weight: w,
+                    debit: 0,
+                    credit: commEarned,
+                    type: 'purchase',
+                    timestamp: safeDateMs(u.date)
+                });
+            }
+        });
+
+        // Sales linked to broker
+        state.sales.forEach(s => {
+            if (s.broker === name && s.status !== 'Rejected' && s.status !== 'Returned') {
+                const w = parseFloat(s.weight) || 0;
+                const commEarned = w * commRate;
+                totalBilledVal += commEarned;
+                totalWeight += w;
+
+                entries.push({
+                    date: s.date,
+                    description: `Commission: Sales Dispatch (${s.customer})`,
+                    ref: `Ref: ${s.gatePassNo || s.invoiceNo || 'SALE'} · ${w.toFixed(2)} Qtl @ ₹${commRate}/Qtl`,
+                    weight: w,
+                    debit: 0,
+                    credit: commEarned,
+                    type: 'purchase',
+                    timestamp: safeDateMs(s.date)
+                });
+            }
+        });
+
+        // Payments made to broker
+        state.payments.forEach(p => {
+            if (p.partyName === name && (p.partyRole === 'broker' || p.partyRole === 'supplier')) {
+                totalPaidVal += parseFloat(p.amount) || 0;
+                entries.push({
+                    date: p.date,
+                    description: `Commission Payout (${p.paymentMethod || 'Bank/Cash'}) ${p.remark ? '· ' + p.remark : ''}`,
+                    ref: p.referenceNo || 'PAY-REF',
+                    weight: 0,
+                    debit: parseFloat(p.amount) || 0,
                     credit: 0,
                     type: 'payment',
                     timestamp: safeDateMs(p.date)
@@ -6135,7 +6289,7 @@ function renderPartyAccounts() {
         }
 
         filteredEntries.forEach(e => {
-            if (role === 'supp') {
+            if (role === 'supp' || role === 'broker') {
                 balance += e.credit - e.debit;
             } else {
                 balance += e.debit - e.credit;
@@ -6167,13 +6321,13 @@ function renderPartyAccounts() {
 
     // --- KPIs ---
     const balance_final = entries.reduce((acc, e) => {
-        return acc + (role === 'supp' ? (e.credit - e.debit) : (e.debit - e.credit));
+        return acc + ((role === 'supp' || role === 'broker') ? (e.credit - e.debit) : (e.debit - e.credit));
     }, 0);
 
     const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     setEl('ledger-kpi-balance', '₹' + Math.abs(balance_final).toLocaleString('en-IN', {maximumFractionDigits:2}));
     setEl('ledger-kpi-balance-meta', balance_final > 0
-        ? (role === 'supp' ? 'Amount Payable to Supplier' : 'Amount Receivable from Customer')
+        ? (role === 'supp' ? 'Amount Payable to Supplier' : (role === 'broker' ? 'Commission Payable to Broker' : 'Amount Receivable from Customer'))
         : '✅ Fully Settled / Advance Paid');
     setEl('ledger-kpi-billed', '₹' + totalBilledVal.toLocaleString('en-IN', {maximumFractionDigits:2}));
     setEl('ledger-kpi-weight', `${totalWeight.toFixed(2)} Qtl Cumulative`);
@@ -6212,7 +6366,7 @@ function handlePaymentSubmit(e) {
         id: 'pay-' + Date.now(),
         date,
         partyName: name,
-        partyRole: role === 'supp' ? 'supplier' : 'customer',
+        partyRole: role === 'supp' ? 'supplier' : (role === 'broker' ? 'broker' : 'customer'),
         type, // 'Paid' or 'Received'
         amount,
         method,
