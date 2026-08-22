@@ -1896,18 +1896,24 @@ function getDayLog(prodId, monthKey, day) {
     const dayStr = day < 10 ? '0' + day : '' + day;
     const dateStr = `${monthKey}-${dayStr}`;
 
-    // 1. Raw Cotton Seed / Kandi unloads (Receipts)
-    if (prodId === 'cs-oms' || prodId === 'cs-ms' || prodId === 'kandi') {
-        let targetType;
-        if (prodId === 'cs-ms') targetType = 'MS';
-        else if (prodId === 'cs-oms') targetType = 'OMS';
-        else targetType = 'Kandi';
-
+    // 1. Raw Cotton Seed / Kandi / Custom Seed unloads (Receipts - Physical Weight in Qtl only)
+    const seedProdObj = PRODUCTS.find(p => p.id === prodId && p.category === 'Seed');
+    if (seedProdObj || prodId === 'cs-oms' || prodId === 'cs-ms' || prodId === 'kandi') {
         state.unloads.forEach(u => {
             if (u.date === dateStr && u.status !== 'Rejected' && u.status !== 'Returned') {
                 const uType = u.seedType || 'OMS';
-                if (uType === targetType) {
-                    receipt += parseFloat(u.weight) || 0;
+                let matches = false;
+                if (prodId === 'cs-ms' && uType === 'MS') matches = true;
+                else if (prodId === 'cs-oms' && uType === 'OMS') matches = true;
+                else if (prodId === 'kandi' && uType === 'Kandi') matches = true;
+                else if (seedProdObj && (uType === seedProdObj.name || uType === seedProdObj.id)) matches = true;
+
+                if (matches) {
+                    // Kandi & Raw Seed in Stock Statement strictly take physical weight (Qtl), never rate
+                    const wVal = parseFloat(u.weight);
+                    const invWVal = parseFloat(u.invoiceWeight);
+                    const addQty = (!isNaN(wVal) && wVal > 0) ? wVal : ((!isNaN(invWVal) && invWVal > 0) ? invWVal : 0);
+                    receipt += addQty;
                 }
             }
         });
@@ -1916,16 +1922,17 @@ function getDayLog(prodId, monthKey, day) {
     // 2. Production issues & finished goods receipts
     state.productionLogs.forEach(p => {
         if (p.date === dateStr) {
-            // Issues: raw cotton seed / Kandi issued to crushing
-            if (prodId === 'cs-oms' || prodId === 'cs-ms' || prodId === 'kandi') {
-                const parentUnload = state.unloads.find(u => u.id === p.unloadId);
-                const uType = parentUnload ? (parentUnload.seedType || 'OMS') : 'OMS';
-                let targetType;
-                if (prodId === 'cs-ms') targetType = 'MS';
-                else if (prodId === 'cs-oms') targetType = 'OMS';
-                else targetType = 'Kandi';
+            // Issues: raw cotton seed / Kandi issued to crushing (Physical Weight in Qtl)
+            const parentUnload = state.unloads.find(u => u.id === p.unloadId);
+            if (parentUnload) {
+                const uType = parentUnload.seedType || 'OMS';
+                let matches = false;
+                if (prodId === 'cs-ms' && uType === 'MS') matches = true;
+                else if (prodId === 'cs-oms' && uType === 'OMS') matches = true;
+                else if (prodId === 'kandi' && uType === 'Kandi') matches = true;
+                else if (seedProdObj && (uType === seedProdObj.name || uType === seedProdObj.id)) matches = true;
 
-                if (uType === targetType) {
+                if (matches) {
                     issue += parseFloat(p.weight) || 0;
                 }
             }
