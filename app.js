@@ -1578,6 +1578,7 @@ function editUnload(id) {
 
     populateSupplierDropdowns();
     populateBardanBagSelect(item.bagType || '');
+    populateSeedTypeDropdown(item.seedType || 'OMS');
 
     document.getElementById('unload-id').value = item.id;
     document.getElementById('unload-date').value = item.date;
@@ -4640,6 +4641,78 @@ function populateSupplierDropdowns() {
     });
 
     populateBardanBagSelect();
+    populateSeedTypeDropdown();
+}
+
+function populateSeedTypeDropdown(selectedVal = '') {
+    const select = document.getElementById('unload-seed-type');
+    if (!select) return;
+
+    const defaultSeedList = [
+        { id: 'OMS', name: 'OMS (Out of State Cotton Seed)' },
+        { id: 'MS', name: 'MS (Maharashtra Cotton Seed)' },
+        { id: 'Kandi', name: 'Kandi (Cotton Seed Kandi)' },
+        { id: 'Hulls MS', name: 'Cotton Hulls (MS)' },
+        { id: 'Hulls OMS', name: 'Cotton Hulls (OMS)' }
+    ];
+
+    if (!state.customSeedTypes) state.customSeedTypes = [];
+    
+    // Register custom seed types into PRODUCTS array
+    state.customSeedTypes.forEach(custom => {
+        const prodId = 'seed-' + custom.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        if (!PRODUCTS.some(p => p.id === prodId || p.name === custom.name)) {
+            PRODUCTS.push({ id: prodId, name: custom.name, category: 'Seed' });
+        }
+    });
+
+    let html = '';
+    defaultSeedList.forEach(s => {
+        html += `<option value="${s.id}">${escapeHtml(s.name)}</option>`;
+    });
+
+    if (state.customSeedTypes.length > 0) {
+        html += `<optgroup label="--- Custom Added Seed Products ---">`;
+        state.customSeedTypes.forEach(c => {
+            html += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
+        });
+        html += `</optgroup>`;
+    }
+
+    html += `<option value="__add_custom_seed__" style="font-weight: bold; color: var(--accent-primary);">+ Add Custom Seed Product...</option>`;
+
+    select.innerHTML = html;
+
+    if (selectedVal) {
+        select.value = selectedVal;
+    }
+}
+
+function promptAddNewSeedType() {
+    const newName = prompt("Enter New Raw Material / Seed Product Name (e.g. Delinted Seed, Super Kandi, Black Seed):");
+    if (newName && newName.trim()) {
+        const cleanName = newName.trim();
+        
+        if (!state.customSeedTypes) state.customSeedTypes = [];
+        if (!state.customSeedTypes.some(s => s.name.toLowerCase() === cleanName.toLowerCase())) {
+            state.customSeedTypes.push({ name: cleanName });
+        }
+        
+        const prodId = 'seed-' + cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        if (!PRODUCTS.some(p => p.id === prodId || p.name === cleanName)) {
+            PRODUCTS.push({ id: prodId, name: cleanName, category: 'Seed' });
+        }
+        
+        saveState();
+        populateSeedTypeDropdown(cleanName);
+        alert(`New Seed Product "${cleanName}" added successfully!`);
+    }
+}
+
+function handleSeedTypeSelectChange(e) {
+    if (e.target.value === '__add_custom_seed__') {
+        promptAddNewSeedType();
+    }
 }
 
 function populateBardanBagSelect(selectedVal = '') {

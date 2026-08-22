@@ -2210,11 +2210,19 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group mb-3 col-6">
-                        <label for="unload-seed-type">Seed Type *</label>
-                        <select id="unload-seed-type" required class="form-control">
-                            <option value="OMS" selected>OMS (Out of State)</option>
-                            <option value="MS">MS (Maharashtra)</option>
-                            <option value="Kandi">Kandi</option>
+                        <div style="display: flex; justify-content: space-between; align-items: center;" class="mb-1">
+                            <label for="unload-seed-type" class="mb-0">Seed Type / Raw Material *</label>
+                            <button type="button" class="btn btn-link btn-xs text-primary p-0" onclick="promptAddNewSeedType()" style="font-size: 0.72rem; text-decoration: none;">
+                                <i class="fa-solid fa-plus"></i> + Add Custom Seed
+                            </button>
+                        </div>
+                        <select id="unload-seed-type" required class="form-control" onchange="handleSeedTypeSelectChange(event)">
+                            <option value="OMS" selected>OMS (Out of State Cotton Seed)</option>
+                            <option value="MS">MS (Maharashtra Cotton Seed)</option>
+                            <option value="Kandi">Kandi (Cotton Seed Kandi)</option>
+                            <option value="Hulls MS">Cotton Hulls (MS)</option>
+                            <option value="Hulls OMS">Cotton Hulls (OMS)</option>
+                            <option value="__add_custom_seed__" style="font-weight: bold; color: var(--accent-primary);">+ Add Custom Seed Product...</option>
                         </select>
                     </div>
                     <div class="form-group mb-3 col-6">
@@ -2270,12 +2278,12 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-invoice-weight">Invoice Weight (Qtl) *</label>
-                        <input type="number" step="0.01" id="unload-invoice-weight" required placeholder="e.g. 105.00" class="form-control">
+                        <label for="unload-invoice-weight">Invoice Weight (Qtl)</label>
+                        <input type="number" step="0.01" id="unload-invoice-weight" placeholder="e.g. 105.00" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-weight">Received Weight (Qtl) *</label>
-                        <input type="number" step="0.01" id="unload-weight" required placeholder="e.g. 102.85" class="form-control">
+                        <label for="unload-weight">Received Weight (Qtl)</label>
+                        <input type="number" step="0.01" id="unload-weight" placeholder="e.g. 102.85" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
                         <label for="unload-location">Dumping Silo/Location</label>
@@ -2285,12 +2293,12 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-rate">Base Rate (₹/Qtl) *</label>
+                        <label for="unload-rate">Base Rate (₹/Qtl or Lot) *</label>
                         <input type="number" step="1" id="unload-rate" required placeholder="e.g. 4591" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-freight">Freight Charges (₹/Qtl) *</label>
-                        <input type="number" step="0.01" id="unload-freight" required placeholder="e.g. 100" class="form-control">
+                        <label for="unload-freight">Freight Charges (₹/Qtl)</label>
+                        <input type="number" step="0.01" id="unload-freight" value="0" placeholder="e.g. 100" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
                         <label for="unload-for">FOR Rate (₹/Qtl)</label>
@@ -3257,6 +3265,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=32.0"></script>
+    <script src="app.js?v=33.0"></script>
 </body>
 </html>
