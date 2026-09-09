@@ -3689,6 +3689,9 @@ function renderSalesTable(searchQuery = '') {
         else if (item.status === 'Advance Payment') statusBadge = 'badge-primary';
         else if (item.status && item.status.includes('Days')) statusBadge = 'badge-info';
 
+        const ppSummary = (item.ppBags && parseFloat(item.ppBags) > 0) ? `<br><span class="text-xs text-info">${item.ppBags} PP Bags</span>` : '';
+        const juteSummary = (item.juteBags && parseFloat(item.juteBags) > 0) ? `<br><span class="text-xs text-warning">${item.juteBags} Jute Bags</span>` : '';
+
         tr.innerHTML = `
             <td>
                 <input type="checkbox" class="sales-row-checkbox" data-id="${item.id}" onchange="updateSelectedSalesCount()" ${item.billed ? 'disabled' : ''}>
