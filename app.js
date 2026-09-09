@@ -24,21 +24,40 @@ const PRODUCTS = [
     { id: 'oil-wash', name: 'Wash Oil', category: 'Oil' },
     { id: 'oil-gaad', name: 'Gaad', category: 'Oil' },
     { id: 'oil-acid', name: 'Acid Oil', category: 'Oil' },
-    { id: 'sarki-bardan', name: 'Sarki Bardan', category: 'Bardan' },
-    { id: 'gm-pp-hdr', name: 'Gauri Malai PP', category: 'Bardan' }, // Header/Direct row in screenshot
-    { id: '60kora', name: '60 Kora Jute Bag (60कोरा)', category: 'Bardan' },
-    { id: '50kora', name: '50 Kora Jute Bag (50कोरा)', category: 'Bardan' },
-    { id: 'jute-new', name: 'New Jute Bag (नवीन बारदान)', category: 'Bardan' },
-    { id: 'gm-pp-50', name: '50kg PP Bag', category: 'Bardan' },
-    { id: 'gm-pp-60', name: '60kg PP Bag', category: 'Bardan' },
-    { id: 'gm-pp-70', name: '70kg PP Bag', category: 'Bardan' },
-    { id: 'gm-pp-km', name: 'KM PP', category: 'Bardan' },
-    { id: 'gm-pp-mm', name: 'MM PP', category: 'Bardan' },
-    { id: 'gm-pp-gm', name: 'GM PP', category: 'Bardan' },
-    { id: 'gm-pp-kg', name: 'KG PP', category: 'Bardan' },
-    { id: 'gm-pp-murgi', name: 'Murgi', category: 'Bardan' },
-    { id: 'jute-bag', name: 'Old Gunny Bags (Jute bag)', category: 'Bardan' }
+    { id: 'jute-50', name: '50kg Jute', category: 'Bardan' },
+    { id: 'jute-60', name: '60kg Jute', category: 'Bardan' },
+    { id: 'jute-70', name: '70kg Jute', category: 'Bardan' },
+    { id: 'gathan-bardan', name: 'Gathan Bardan', category: 'Bardan' },
+    { id: 'pp-km', name: 'KM PP', category: 'Bardan' },
+    { id: 'pp-mm', name: 'MM PP', category: 'Bardan' },
+    { id: 'pp-gm', name: 'GM PP', category: 'Bardan' },
+    { id: 'pp-kg', name: 'KG PP', category: 'Bardan' },
+    { id: 'pp-other', name: 'PP Other', category: 'Bardan' }
 ];
+
+const legacyBagMap = {
+    '60kora': '60kg Jute',
+    '50kora': '50kg Jute',
+    'jute-new': 'Gathan Bardan',
+    'jute-bag': 'Gathan Bardan',
+    'sarki-bardan': 'Gathan Bardan',
+    'gm-pp-50': '50kg Jute',
+    'gm-pp-60': '60kg Jute',
+    'gm-pp-70': '70kg Jute',
+    'gm-pp-km': 'KM PP',
+    'gm-pp-mm': 'MM PP',
+    'gm-pp-gm': 'GM PP',
+    'gm-pp-kg': 'KG PP',
+    'gm-pp-hdr': 'PP Other',
+    'gm-pp-murgi': 'PP Other'
+};
+
+function getBagDisplayName(bagId) {
+    if (!bagId) return 'Bardan';
+    const found = PRODUCTS.find(p => p.id === bagId);
+    if (found) return found.name;
+    return legacyBagMap[bagId] || bagId;
+}
 
 // Initial Opening Stocks for June 2026 (matching Excel sheet starting values)
 const INITIAL_OPENING_STOCKS = {
@@ -56,17 +75,15 @@ const INITIAL_OPENING_STOCKS = {
     'oil-wash': 0.00,
     'oil-gaad': 0.00,
     'oil-acid': 0.00,
-    'sarki-bardan': 0.00,
-    'gm-pp-hdr': 0.00,
-    'gm-pp-50': 0.00,
-    'gm-pp-60': 0.00,
-    'gm-pp-70': 0.00,
-    'gm-pp-km': 0.00,
-    'gm-pp-mm': 0.00,
-    'gm-pp-gm': 0.00,
-    'gm-pp-kg': 0.00,
-    'gm-pp-murgi': 0.00,
-    'jute-bag': 0.00
+    'jute-50': 0.00,
+    'jute-60': 0.00,
+    'jute-70': 0.00,
+    'gathan-bardan': 0.00,
+    'pp-km': 0.00,
+    'pp-mm': 0.00,
+    'pp-gm': 0.00,
+    'pp-kg': 0.00,
+    'pp-other': 0.00
 };
 
 // --- SYSTEM STATE ---
@@ -1423,8 +1440,7 @@ function renderUnloadTable(filterQuery = '') {
         let rateCellHtml = '';
 
         if (isBardanOnly) {
-            const bagNameObj = PRODUCTS.find(p => p.id === item.bagType);
-            const bagLabel = bagNameObj ? bagNameObj.name : (item.bagType || 'Bardan');
+            const bagLabel = getBagDisplayName(item.bagType);
             weightCellHtml = `<strong class="text-info">${item.bagQty.toLocaleString('en-IN')} Bags</strong><br><span class="text-xs text-muted" style="font-size:0.68rem;">${escapeHtml(bagLabel)}</span>`;
             
             const bagSubtotal = item.bagQty * (item.bagRate || 0);
@@ -1999,10 +2015,25 @@ function getDayLog(prodId, monthKey, day) {
     // 3B. Packaging bags (Bardan) dynamic calculations
     const prodObj = PRODUCTS.find(p => p.id === prodId);
     if (prodObj && prodObj.category === 'Bardan') {
+        const matchesBag = (bType) => {
+            if (!bType) return false;
+            if (bType === prodId) return true;
+            if (prodId === 'jute-50' && (bType === '50kora' || bType === 'gm-pp-50' || bType === '50kg PP' || bType === '50kg Jute')) return true;
+            if (prodId === 'jute-60' && (bType === '60kora' || bType === 'gm-pp-60' || bType === '60kg PP' || bType === '60kg Jute')) return true;
+            if (prodId === 'jute-70' && (bType === 'gm-pp-70' || bType === '70kg PP' || bType === '70kg Jute')) return true;
+            if (prodId === 'gathan-bardan' && (bType === 'sarki-bardan' || bType === 'jute-bag' || bType === 'jute-new' || bType === 'Gathan Bardan')) return true;
+            if (prodId === 'pp-km' && (bType === 'gm-pp-km' || bType === 'KM PP')) return true;
+            if (prodId === 'pp-mm' && (bType === 'gm-pp-mm' || bType === 'MM PP')) return true;
+            if (prodId === 'pp-gm' && (bType === 'gm-pp-gm' || bType === 'GM PP')) return true;
+            if (prodId === 'pp-kg' && (bType === 'gm-pp-kg' || bType === 'KG PP')) return true;
+            if (prodId === 'pp-other' && (bType === 'gm-pp-hdr' || bType === 'gm-pp-murgi' || bType === 'PP Other')) return true;
+            return false;
+        };
+
         // Inbound bag receipts from unloads
         state.unloads.forEach(u => {
             if (u.date === dateStr && u.status !== 'Rejected' && u.status !== 'Returned') {
-                if (u.bagType === prodId && u.bagQty > 0) {
+                if (matchesBag(u.bagType) && u.bagQty > 0) {
                     receipt += parseInt(u.bagQty) || 0;
                 }
             }
@@ -2010,7 +2041,7 @@ function getDayLog(prodId, monthKey, day) {
         // Outbound bag issues from sales
         state.sales.forEach(s => {
             if (s.date === dateStr && s.status !== 'Rejected' && s.status !== 'Returned') {
-                if (s.bagType === prodId && s.bagQty > 0) {
+                if (matchesBag(s.bagType) && s.bagQty > 0) {
                     issue += parseInt(s.bagQty) || 0;
                 }
             }
@@ -2929,8 +2960,7 @@ function compileInvoiceBill() {
                 const bagTotal = item.bagQty * (item.bagRate || 0);
                 subtotalAmount += bagTotal;
                 
-                const bagObj = PRODUCTS.find(p => p.id === item.bagType);
-                const bagName = bagObj ? bagObj.name : 'Gunnies';
+                const bagName = getBagDisplayName(item.bagType);
                 
                 bagTr.innerHTML = `
                     <td><code>${item.lorryNo}</code></td>
@@ -3764,7 +3794,7 @@ function populateSalesProductsDropdown() {
     if (!select) return;
     select.innerHTML = '<option value="">-- Select Product --</option>';
     PRODUCTS.forEach(p => {
-        if (p.category !== 'Seed' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr') {
+        if (p.category !== 'Seed') {
             const opt = document.createElement('option');
             opt.value = p.id;
             opt.textContent = p.name;
@@ -4766,19 +4796,23 @@ function populateBardanBagSelect(selectedVal = '') {
     if (!select) return;
 
     const defaultBardanList = [
-        { id: '60kora', name: '60 Kora Jute Bag (60कोरा)' },
-        { id: '50kora', name: '50 Kora Jute Bag (50कोरा)' },
-        { id: 'jute-new', name: 'New Jute Bag (नवीन)' },
-        { id: 'jute-bag', name: 'Old Gunny Bags (Jute)' },
-        { id: 'gm-pp-50', name: '50kg PP Bag' },
-        { id: 'gm-pp-60', name: '60kg PP Bag' },
-        { id: 'gm-pp-70', name: '70kg PP Bag' },
-        { id: 'gm-pp-km', name: 'KM PP' },
-        { id: 'gm-pp-mm', name: 'MM PP' }
+        { id: 'jute-50', name: '50kg Jute' },
+        { id: 'jute-60', name: '60kg Jute' },
+        { id: 'jute-70', name: '70kg Jute' },
+        { id: 'gathan-bardan', name: 'Gathan Bardan' },
+        { id: 'pp-km', name: 'KM PP' },
+        { id: 'pp-mm', name: 'MM PP' },
+        { id: 'pp-gm', name: 'GM PP' },
+        { id: 'pp-kg', name: 'KG PP' },
+        { id: 'pp-other', name: 'PP Other' }
     ];
 
     if (!state.customBardanTypes) state.customBardanTypes = [];
     
+    // Erase legacy bag types from custom types to prevent stale options
+    const legacyNames = ['60 Kora Jute Bag (60कोरा)', '50 Kora Jute Bag (50कोरा)', 'New Jute Bag (नवीन बारदान)', 'New Jute Bag (नवीन)', 'Old Gunny Bags (Jute bag)', 'Old Gunny Bags (Jute)', 'Sarki Bardan', 'Gauri Malai PP', '50kg PP Bag', '60kg PP Bag', '70kg PP Bag', 'Murgi'];
+    state.customBardanTypes = state.customBardanTypes.filter(c => !legacyNames.includes(c.name));
+
     // Register custom Bardan into PRODUCTS array
     state.customBardanTypes.forEach(custom => {
         if (!PRODUCTS.some(p => p.id === custom.id)) {
@@ -7361,17 +7395,15 @@ function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bag
 
     const bagTypeOptions = `
         <option value="" ${!bagType ? 'selected' : ''}>-- Bulk / No Bag --</option>
-        <option value="gm-pp-50" ${bagType === 'gm-pp-50' || bagType === '50kg PP' ? 'selected' : ''}>50kg PP Bag</option>
-        <option value="gm-pp-60" ${bagType === 'gm-pp-60' || bagType === '60kg PP' ? 'selected' : ''}>60kg PP Bag</option>
-        <option value="gm-pp-70" ${bagType === 'gm-pp-70' || bagType === '70kg PP' ? 'selected' : ''}>70kg PP Bag</option>
-        <option value="gm-pp-km" ${bagType === 'gm-pp-km' ? 'selected' : ''}>KM PP Bag</option>
-        <option value="gm-pp-mm" ${bagType === 'gm-pp-mm' ? 'selected' : ''}>MM PP Bag</option>
-        <option value="jute-45" ${bagType === 'jute-45' ? 'selected' : ''}>45kg Jute Bag</option>
-        <option value="jute-50" ${bagType === 'jute-50' ? 'selected' : ''}>50kg Jute Bag</option>
-        <option value="jute-60" ${bagType === 'jute-60' ? 'selected' : ''}>60kg Jute Bag</option>
-        <option value="jute-75" ${bagType === 'jute-75' ? 'selected' : ''}>75kg Jute Bag</option>
-        <option value="jute-90" ${bagType === 'jute-90' ? 'selected' : ''}>90kg Jute Bag</option>
-        <option value="jute-100" ${bagType === 'jute-100' ? 'selected' : ''}>100kg Jute Bag</option>
+        <option value="jute-50" ${bagType === 'jute-50' || bagType === '50kg Jute' || bagType === '50kora' || bagType === 'gm-pp-50' ? 'selected' : ''}>50kg Jute</option>
+        <option value="jute-60" ${bagType === 'jute-60' || bagType === '60kg Jute' || bagType === '60kora' || bagType === 'gm-pp-60' ? 'selected' : ''}>60kg Jute</option>
+        <option value="jute-70" ${bagType === 'jute-70' || bagType === '70kg Jute' || bagType === 'gm-pp-70' ? 'selected' : ''}>70kg Jute</option>
+        <option value="gathan-bardan" ${bagType === 'gathan-bardan' || bagType === 'Gathan Bardan' ? 'selected' : ''}>Gathan Bardan</option>
+        <option value="pp-km" ${bagType === 'pp-km' || bagType === 'KM PP' || bagType === 'gm-pp-km' ? 'selected' : ''}>KM PP</option>
+        <option value="pp-mm" ${bagType === 'pp-mm' || bagType === 'MM PP' || bagType === 'gm-pp-mm' ? 'selected' : ''}>MM PP</option>
+        <option value="pp-gm" ${bagType === 'pp-gm' || bagType === 'GM PP' || bagType === 'gm-pp-gm' ? 'selected' : ''}>GM PP</option>
+        <option value="pp-kg" ${bagType === 'pp-kg' || bagType === 'KG PP' || bagType === 'gm-pp-kg' ? 'selected' : ''}>KG PP</option>
+        <option value="pp-other" ${bagType === 'pp-other' || bagType === 'PP Other' ? 'selected' : ''}>PP Other</option>
     `;
 
     let initialBagWeight = singleBagWeight;
@@ -7379,10 +7411,6 @@ function addSalesItemRow(product = '', weight = '', rate = '', bagType = '', bag
         if (bagType.includes('50')) initialBagWeight = 50;
         else if (bagType.includes('60')) initialBagWeight = 60;
         else if (bagType.includes('70')) initialBagWeight = 70;
-        else if (bagType.includes('45')) initialBagWeight = 45;
-        else if (bagType.includes('75')) initialBagWeight = 75;
-        else if (bagType.includes('90')) initialBagWeight = 90;
-        else if (bagType.includes('100')) initialBagWeight = 100;
     }
 
     tr.innerHTML = `
@@ -7493,7 +7521,7 @@ function getSalesProductOptionsHtml(selectedId = '') {
     let html = '<option value="">-- Select Product --</option>';
     
     const commodities = PRODUCTS.filter(p => p.category === 'Khal' || p.category === 'Oil');
-    const bardan = PRODUCTS.filter(p => p.category === 'Bardan' && p.id !== 'sarki-bardan' && p.id !== 'gm-pp-hdr');
+    const bardan = PRODUCTS.filter(p => p.category === 'Bardan');
     
     html += '<optgroup label="--- Oil Mill Commodities (खल / तेल / ढेप) ---">';
     commodities.forEach(p => {
