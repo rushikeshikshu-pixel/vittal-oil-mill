@@ -52,6 +52,526 @@ const legacyBagMap = {
     'gm-pp-murgi': 'PP Other'
 };
 
+
+// ==========================================================================
+// APPROACH 1: MULTI-TENANT CLIENT REGISTRY & FEATURE CONFIGURATION
+// ==========================================================================
+
+const DEFAULT_MILLS = {
+    'vitthal_oil_mill': {
+        id: 'vitthal_oil_mill',
+        name: 'Vitthal Oil Mill',
+        marathiName: 'मे. विठ्ठल ऑईल मिल',
+        tagline: 'Cottonseed Oil & Pend Manufacturing Unit',
+        proprietor: 'R. V. Dhoot',
+        address: '1423, Vitthal Oil Mill, Newasa Road, Shevgaon',
+        city: 'Shevgaon',
+        state: 'Maharashtra (27)',
+        pincode: '414502',
+        gstin: '27AAQFM8762P1Z4',
+        phone: '+91 94222 12345',
+        email: 'vitthaloilmill@gmail.com',
+        bank: {
+            bankName: 'Bank of Baroda, Shevgaon',
+            accountNo: '01234567890',
+            ifsc: 'BARB0SHEVGA'
+        },
+        features: {
+            unloads: true,
+            sales: true,
+            gatePasses: true,
+            stock: true,
+            production: true,
+            refining: true,
+            partyAccounts: true,
+            invoices: true,
+            transport: true,
+            analytics: true,
+            spares: true,
+            repairs: true
+        },
+        settings: {
+            oilRateUnit: 'per_10kg',
+            cakeRateUnit: 'per_qtl',
+            printTemplate: 'both',
+            defaultGstRate: 5
+        }
+    },
+    'shree_ganesh_cotton': {
+        id: 'shree_ganesh_cotton',
+        name: 'Shree Ganesh Cotton & Oil Ind.',
+        marathiName: 'श्री गणेश कॉटन अँड ऑईल इंडस्ट्रीज',
+        tagline: 'Ginning, Pressing & Oil Expeller Unit',
+        proprietor: 'S. Sudhakar',
+        address: '17/104-9A, A.P.M.C. Road, Adoni',
+        city: 'Adoni',
+        state: 'Andhra Pradesh (37)',
+        pincode: '518301',
+        gstin: '37AKTPG8774C1ZN',
+        phone: '+91 94401 23456',
+        email: 'ravi3302@gmail.com',
+        bank: {
+            bankName: 'City Union Bank Ltd, Adoni',
+            accountNo: '340120000210730',
+            ifsc: 'CIUB0000340'
+        },
+        features: {
+            unloads: true,
+            sales: true,
+            gatePasses: true,
+            stock: true,
+            production: true,
+            refining: false, // NO Refinery
+            partyAccounts: true,
+            invoices: true,
+            transport: true,
+            analytics: true,
+            spares: false,   // NO Spares
+            repairs: false   // NO Repairs
+        },
+        settings: {
+            oilRateUnit: 'per_10kg',
+            cakeRateUnit: 'per_qtl',
+            printTemplate: 'e-invoice-a4',
+            defaultGstRate: 5
+        }
+    },
+    'mahalaxmi_agro': {
+        id: 'mahalaxmi_agro',
+        name: 'Mahalaxmi Agro Industries',
+        marathiName: 'महालक्ष्मी ॲग्रो इंडस्ट्रीज',
+        tagline: 'Cotton Cake & Seed Trading Firm',
+        proprietor: 'M. Patel',
+        address: 'Shop 14, New Market Yard, Jalna',
+        city: 'Jalna',
+        state: 'Maharashtra (27)',
+        pincode: '431203',
+        gstin: '27AAAAA1111A1Z1',
+        phone: '+91 98220 54321',
+        email: 'mahalaxmi.agro@gmail.com',
+        bank: {
+            bankName: 'State Bank of India, Jalna',
+            accountNo: '300012345678',
+            ifsc: 'SBIN0001234'
+        },
+        features: {
+            unloads: true,
+            sales: true,
+            gatePasses: true,
+            stock: true,
+            production: false, // NO Crushing
+            refining: false,   // NO Refinery
+            partyAccounts: true,
+            invoices: true,
+            transport: false,  // NO Transport
+            analytics: true,
+            spares: false,
+            repairs: false
+        },
+        settings: {
+            oilRateUnit: 'per_qtl',
+            cakeRateUnit: 'per_qtl',
+            printTemplate: 'e-invoice-a4',
+            defaultGstRate: 5
+        }
+    }
+};
+
+let activeMillId = (typeof localStorage !== 'undefined' && localStorage.getItem('vom_active_mill_id')) || 'vitthal_oil_mill';
+
+function getMillRegistry() {
+    try {
+        const saved = localStorage.getItem('vom_mill_registry');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return { ...DEFAULT_MILLS, ...parsed };
+        }
+    } catch (e) {
+        console.warn("Could not parse mill registry from localStorage", e);
+    }
+    return { ...DEFAULT_MILLS };
+}
+
+function saveMillRegistry(registry) {
+    try {
+        localStorage.setItem('vom_mill_registry', JSON.stringify(registry));
+    } catch (e) {
+        console.warn("Could not save mill registry to localStorage", e);
+    }
+}
+
+function getActiveMillId() {
+    return activeMillId || 'vitthal_oil_mill';
+}
+
+function getActiveMillConfig() {
+    const registry = getMillRegistry();
+    return registry[activeMillId] || registry['vitthal_oil_mill'] || DEFAULT_MILLS['vitthal_oil_mill'];
+}
+
+function getActiveStorageKey() {
+    return activeMillId === 'vitthal_oil_mill' ? 'vitthal_mill_state' : ('vom_state_' + activeMillId);
+}
+
+function getFirebaseRestUrl() {
+    if (activeMillId === 'vitthal_oil_mill') {
+        return 'https://vittal-oil-mill-default-rtdb.asia-southeast1.firebasedatabase.app/vittal_oil_mill.json';
+    }
+    return 'https://vittal-oil-mill-default-rtdb.asia-southeast1.firebasedatabase.app/mills/' + activeMillId + '.json';
+}
+
+function updateInvoiceBrandingFromActiveMill() {
+    const cfg = getActiveMillConfig();
+    const brandNameEl = document.getElementById('preview-invoice-brand-name');
+    if (brandNameEl) brandNameEl.textContent = (cfg.name || 'VITTHAL OIL MILL').toUpperCase();
+
+    const addr1El = document.getElementById('preview-invoice-brand-addr1');
+    if (addr1El) addr1El.textContent = cfg.address || '';
+
+    const addr2El = document.getElementById('preview-invoice-brand-addr2');
+    if (addr2El) addr2El.textContent = (cfg.city ? cfg.city + ', ' : '') + (cfg.state || '') + (cfg.pincode ? ' - ' + cfg.pincode : '');
+
+    const gstinEl = document.getElementById('preview-invoice-brand-gstin');
+    if (gstinEl) gstinEl.textContent = cfg.gstin || '-';
+
+    const stateEl = document.getElementById('preview-invoice-brand-state');
+    if (stateEl) stateEl.textContent = cfg.state || '-';
+
+    const bankNameEl = document.getElementById('preview-invoice-bank-name');
+    if (bankNameEl && cfg.bank) bankNameEl.textContent = cfg.bank.bankName || '-';
+
+    const bankAccEl = document.getElementById('preview-invoice-bank-acc');
+    if (bankAccEl && cfg.bank) bankAccEl.textContent = cfg.bank.accountNo || '-';
+
+    const bankIfscEl = document.getElementById('preview-invoice-bank-ifsc');
+    if (bankIfscEl && cfg.bank) bankIfscEl.textContent = cfg.bank.ifsc || '-';
+}
+
+function applyTenantFeatures(cfg) {
+    if (!cfg) cfg = getActiveMillConfig();
+    const features = cfg.features || {};
+
+    // 1. Sidebar Brand & Document Title
+    const brandName = cfg.name || 'Vitthal Oil Mill';
+    document.title = brandName + ' - Management OS';
+    const sbTitle = document.getElementById('sidebar-mill-name');
+    if (sbTitle) sbTitle.textContent = brandName;
+    const sbSub = document.getElementById('sidebar-mill-sub');
+    if (sbSub) sbSub.textContent = cfg.tagline || 'Management OS';
+
+    // 2. Header Active Mill Selector sync
+    const sel = document.getElementById('active-mill-select');
+    if (sel && sel.value !== cfg.id) {
+        sel.value = cfg.id;
+    }
+
+    // 3. Tab Navigation Visibility Map
+    const tabFeatureMap = {
+        'unloads': features.unloads !== false,
+        'sales': features.sales !== false,
+        'gate-passes': features.gatePasses !== false,
+        'stock': features.stock !== false,
+        'production': features.production !== false,
+        'refining': features.refining !== false,
+        'party-accounts': features.partyAccounts !== false,
+        'invoices': features.invoices !== false,
+        'transport': features.transport !== false,
+        'analytics': features.analytics !== false,
+        'spares': features.spares !== false,
+        'repairs': features.repairs !== false
+    };
+
+    let activeTabHidden = false;
+    for (const tabKey in tabFeatureMap) {
+        const isVisible = tabFeatureMap[tabKey];
+        const btn = document.querySelector('.nav-item[data-tab="' + tabKey + '"]');
+        if (btn) {
+            btn.style.display = isVisible ? 'flex' : 'none';
+            if (!isVisible && btn.classList.contains('active')) {
+                activeTabHidden = true;
+            }
+        }
+    }
+
+    // If currently viewing a disabled tab, fallback to dashboard
+    if (activeTabHidden && typeof switchTab === 'function') {
+        switchTab('dashboard');
+    }
+
+    // 4. Update Quick Action dropdown items based on active features
+    const qaUnload = document.querySelector('a[onclick*="triggerQuickAction(\'unload\')"]');
+    if (qaUnload) qaUnload.style.display = features.unloads !== false ? 'flex' : 'none';
+    
+    const qaSales = document.querySelector('a[onclick*="triggerQuickAction(\'sales\')"]');
+    if (qaSales) qaSales.style.display = features.sales !== false ? 'flex' : 'none';
+    
+    const qaProd = document.querySelector('a[onclick*="triggerQuickAction(\'production\')"]');
+    if (qaProd) qaProd.style.display = features.production !== false ? 'flex' : 'none';
+
+    // 5. Update invoice branding
+    updateInvoiceBrandingFromActiveMill();
+}
+
+function populateMillDropdowns() {
+    const registry = getMillRegistry();
+    const headerSel = document.getElementById('active-mill-select');
+    const modalSel = document.getElementById('modal-mill-select');
+
+    if (headerSel) {
+        headerSel.innerHTML = '';
+        for (const mId in registry) {
+            const opt = document.createElement('option');
+            opt.value = mId;
+            opt.textContent = registry[mId].name || mId;
+            if (mId === activeMillId) opt.selected = true;
+            headerSel.appendChild(opt);
+        }
+    }
+
+    if (modalSel) {
+        modalSel.innerHTML = '';
+        for (const mId in registry) {
+            const opt = document.createElement('option');
+            opt.value = mId;
+            opt.textContent = registry[mId].name || mId;
+            if (mId === activeMillId) opt.selected = true;
+            modalSel.appendChild(opt);
+        }
+    }
+}
+
+async function switchActiveMill(newMillId) {
+    if (!newMillId) return;
+    const registry = getMillRegistry();
+    if (!registry[newMillId]) {
+        console.warn("Selected mill ID not found in registry:", newMillId);
+        return;
+    }
+
+    activeMillId = newMillId;
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('vom_active_mill_id', newMillId);
+    }
+
+    const cfg = registry[newMillId];
+    applyTenantFeatures(cfg);
+    populateMillDropdowns();
+
+    // Reload state for this mill
+    await loadState();
+}
+
+function openMillSettingsModal() {
+    populateMillDropdowns();
+    loadMillProfileToModal(activeMillId);
+    switchMillSettingsSubtab('features');
+    openModal('mill-settings-modal');
+}
+
+function switchMillSettingsSubtab(subtabName) {
+    const tabs = ['features', 'profile', 'prefs'];
+    tabs.forEach(t => {
+        const pane = document.getElementById('subtab-mill-' + t);
+        const btn = document.getElementById('tab-btn-mill-' + t);
+        if (pane) pane.style.display = (t === subtabName) ? 'block' : 'none';
+        if (btn) {
+            if (t === subtabName) {
+                btn.classList.add('active');
+                btn.style.backgroundColor = 'var(--accent-primary)';
+                btn.style.color = '#ffffff';
+            } else {
+                btn.classList.remove('active');
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = 'var(--text-secondary)';
+            }
+        }
+    });
+}
+
+function loadMillProfileToModal(millId) {
+    const registry = getMillRegistry();
+    const cfg = registry[millId] || DEFAULT_MILLS['vitthal_oil_mill'];
+
+    document.getElementById('edit-mill-id').value = cfg.id;
+    const modalSel = document.getElementById('modal-mill-select');
+    if (modalSel) modalSel.value = cfg.id;
+
+    // Features
+    const feat = cfg.features || {};
+    const featKeys = ['unloads', 'sales', 'gatePasses', 'stock', 'production', 'refining', 'partyAccounts', 'invoices', 'transport', 'analytics', 'spares', 'repairs'];
+    featKeys.forEach(k => {
+        const el = document.getElementById('feat-' + k);
+        if (el) el.checked = feat[k] !== false;
+    });
+
+    // Profile
+    document.getElementById('mill-name').value = cfg.name || '';
+    document.getElementById('mill-proprietor').value = cfg.proprietor || '';
+    document.getElementById('mill-gstin').value = cfg.gstin || '';
+    document.getElementById('mill-phone').value = cfg.phone || '';
+    document.getElementById('mill-address').value = cfg.address || '';
+    document.getElementById('mill-city').value = cfg.city || '';
+    document.getElementById('mill-state').value = cfg.state || '';
+    document.getElementById('mill-pincode').value = cfg.pincode || '';
+
+    if (cfg.bank) {
+        document.getElementById('mill-bank-name').value = cfg.bank.bankName || '';
+        document.getElementById('mill-bank-acc').value = cfg.bank.accountNo || '';
+        document.getElementById('mill-bank-ifsc').value = cfg.bank.ifsc || '';
+    }
+
+    // Prefs
+    const set = cfg.settings || {};
+    const oilUnit = document.getElementById('pref-oil-unit');
+    if (oilUnit) oilUnit.value = set.oilRateUnit || 'per_10kg';
+    const cakeUnit = document.getElementById('pref-cake-unit');
+    if (cakeUnit) cakeUnit.value = set.cakeRateUnit || 'per_qtl';
+    const printTemp = document.getElementById('pref-print-template');
+    if (printTemp) printTemp.value = set.printTemplate || 'both';
+    const defGst = document.getElementById('pref-default-gst');
+    if (defGst) defGst.value = set.defaultGstRate || 5;
+
+    // Delete button status (prevent deleting vitthal_oil_mill default)
+    const delBtn = document.getElementById('btn-delete-mill');
+    if (delBtn) {
+        delBtn.style.display = cfg.id === 'vitthal_oil_mill' ? 'none' : 'inline-flex';
+    }
+}
+
+function handleSaveMillSettings(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const millId = document.getElementById('edit-mill-id').value;
+    const registry = getMillRegistry();
+    const existing = registry[millId] || { id: millId };
+
+    const featKeys = ['unloads', 'sales', 'gatePasses', 'stock', 'production', 'refining', 'partyAccounts', 'invoices', 'transport', 'analytics', 'spares', 'repairs'];
+    const updatedFeatures = {};
+    featKeys.forEach(k => {
+        const el = document.getElementById('feat-' + k);
+        updatedFeatures[k] = el ? el.checked : true;
+    });
+
+    const updatedConfig = {
+        ...existing,
+        id: millId,
+        name: document.getElementById('mill-name').value.trim() || existing.name,
+        proprietor: document.getElementById('mill-proprietor').value.trim(),
+        gstin: document.getElementById('mill-gstin').value.trim().toUpperCase(),
+        phone: document.getElementById('mill-phone').value.trim(),
+        address: document.getElementById('mill-address').value.trim(),
+        city: document.getElementById('mill-city').value.trim(),
+        state: document.getElementById('mill-state').value.trim(),
+        pincode: document.getElementById('mill-pincode').value.trim(),
+        bank: {
+            bankName: document.getElementById('mill-bank-name').value.trim(),
+            accountNo: document.getElementById('mill-bank-acc').value.trim(),
+            ifsc: document.getElementById('mill-bank-ifsc').value.trim().toUpperCase()
+        },
+        features: updatedFeatures,
+        settings: {
+            oilRateUnit: document.getElementById('pref-oil-unit')?.value || 'per_10kg',
+            cakeRateUnit: document.getElementById('pref-cake-unit')?.value || 'per_qtl',
+            printTemplate: document.getElementById('pref-print-template')?.value || 'both',
+            defaultGstRate: parseInt(document.getElementById('pref-default-gst')?.value) || 5
+        }
+    };
+
+    registry[millId] = updatedConfig;
+    saveMillRegistry(registry);
+    applyTenantFeatures(updatedConfig);
+    populateMillDropdowns();
+
+    alert('Client Mill Profile "' + updatedConfig.name + '" saved successfully!');
+    closeModal('mill-settings-modal');
+}
+
+function addNewClientMillPrompt() {
+    const millName = prompt("Enter new Client Mill / Company Name (e.g. Balaji Agro Oil Mill):");
+    if (!millName || !millName.trim()) return;
+
+    const baseId = millName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 24);
+    const id = 'mill_' + baseId;
+
+    const registry = getMillRegistry();
+    if (registry[id]) {
+        alert("A mill with this ID already exists. Please choose a different name.");
+        return;
+    }
+
+    const newMill = {
+        id: id,
+        name: millName.trim(),
+        marathiName: millName.trim(),
+        tagline: 'Oil & Pend Manufacturing Unit',
+        proprietor: '',
+        address: '',
+        city: '',
+        state: 'Maharashtra (27)',
+        pincode: '',
+        gstin: '',
+        phone: '',
+        email: '',
+        bank: { bankName: '', accountNo: '', ifsc: '' },
+        features: {
+            unloads: true,
+            sales: true,
+            gatePasses: true,
+            stock: true,
+            production: true,
+            refining: false,
+            partyAccounts: true,
+            invoices: true,
+            transport: true,
+            analytics: true,
+            spares: false,
+            repairs: false
+        },
+        settings: {
+            oilRateUnit: 'per_10kg',
+            cakeRateUnit: 'per_qtl',
+            printTemplate: 'both',
+            defaultGstRate: 5
+        }
+    };
+
+    registry[id] = newMill;
+    saveMillRegistry(registry);
+    populateMillDropdowns();
+    loadMillProfileToModal(id);
+    switchMillSettingsSubtab('profile');
+    alert('New client "' + millName.trim() + '" created! Please fill in their address, GSTIN and bank details.');
+}
+
+function deleteCurrentMillProfile() {
+    const millId = document.getElementById('edit-mill-id').value;
+    if (millId === 'vitthal_oil_mill') {
+        alert("Vitthal Oil Mill is the master default profile and cannot be deleted.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to delete this client mill profile? This cannot be undone.")) return;
+
+    const registry = getMillRegistry();
+    delete registry[millId];
+    saveMillRegistry(registry);
+
+    if (activeMillId === millId) {
+        switchActiveMill('vitthal_oil_mill');
+    } else {
+        populateMillDropdowns();
+        loadMillProfileToModal('vitthal_oil_mill');
+    }
+
+    alert("Client profile deleted successfully.");
+}
+
+function initMultiTenantSystem() {
+    populateMillDropdowns();
+    const cfg = getActiveMillConfig();
+    applyTenantFeatures(cfg);
+}
+
+
 function getBagDisplayName(bagId) {
     if (!bagId) return 'Bardan';
     const found = PRODUCTS.find(p => p.id === bagId);
@@ -136,6 +656,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initClock();
     setupEventListeners();
     initStockMonthSelector();
+    if (typeof initMultiTenantSystem === 'function') initMultiTenantSystem();
 
     // Wait for the state to load (async from the host DB) before gating access,
     // otherwise the async load overwrites the security config we just applied.
@@ -498,7 +1019,8 @@ function sanitizeStateArrays() {
 }
 
 function loadStateFromLocal() {
-    const saved = getStorageItem('vitthal_mill_state');
+    const storageKey = typeof getActiveStorageKey === 'function' ? getActiveStorageKey() : 'vitthal_mill_state';
+    const saved = getStorageItem(storageKey);
     if (saved) {
         try {
             state = JSON.parse(saved);
@@ -540,14 +1062,16 @@ async function loadState() {
 
     // 1. Direct Firebase Cloud REST check (Works 24/7 on web app and local offline file mode)
     try {
-        const fbRes = await fetch(FIREBASE_REST_URL, { cache: 'no-cache' });
+        const activeUrl = typeof getFirebaseRestUrl === 'function' ? getFirebaseRestUrl() : FIREBASE_REST_URL;
+        const fbRes = await fetch(activeUrl, { cache: 'no-cache' });
         if (fbRes.ok) {
             const cloudData = await fbRes.json();
             if (cloudData && typeof cloudData === 'object' && (cloudData.unloads || cloudData.suppliers || cloudData._rev)) {
                 state = cloudData;
                 sanitizeStateArrays();
                 currentRev = cloudData._rev || 0;
-                setStorageItem('vitthal_mill_state', JSON.stringify(state));
+                const activeKey = typeof getActiveStorageKey === 'function' ? getActiveStorageKey() : 'vitthal_mill_state';
+    setStorageItem(activeKey, JSON.stringify(state));
                 snapshotSynced();
                 updateSyncStatus('success', 'Sync Active (Firebase Cloud)');
                 renderAllViews();
@@ -586,7 +1110,8 @@ async function loadState() {
 
 async function saveState() {
     sanitizeStateArrays();
-    setStorageItem('vitthal_mill_state', JSON.stringify(state));
+    const activeKey = typeof getActiveStorageKey === 'function' ? getActiveStorageKey() : 'vitthal_mill_state';
+    setStorageItem(activeKey, JSON.stringify(state));
     
     // Safety guard: Never send empty payload to cloud if state is uninitialized
     if ((!state.unloads || state.unloads.length === 0) && (!state.suppliers || state.suppliers.length === 0) && (!state._rev || state._rev === 0)) {
@@ -597,7 +1122,8 @@ async function saveState() {
     // 1. Direct Firebase Cloud REST save (Works on web app and local offline file mode)
     try {
         state._rev = (state._rev || 0) + 1;
-        const fbRes = await fetch(FIREBASE_REST_URL, {
+        const activeUrl = typeof getFirebaseRestUrl === 'function' ? getFirebaseRestUrl() : FIREBASE_REST_URL;
+        const fbRes = await fetch(activeUrl, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(state)
@@ -1436,6 +1962,13 @@ function renderUnloadTable(filterQuery = '') {
         const shortageBadge = shortage > 0 ? `<br><span class="text-xs text-danger font-bold">Short: -${shortage.toFixed(2)} Qtl</span>` : '';
 
         const isBardanOnly = (parseFloat(item.weight) === 0 && item.bagQty > 0);
+        const seedQtyKg = parseFloat(invWeight || item.weight || 0) * 100;
+        const seedRatePerKg = (parseFloat(item.rate || item.forRate || 0)) / 100;
+        const seedAmount = (parseFloat(invWeight || item.weight || 0) * parseFloat(item.rate || item.forRate || 0));
+        const bagAmount = (parseFloat(item.bagQty) || 0) * (parseFloat(item.bagRate) || 0);
+        const seedGstAmount = seedAmount * gstRate / 100;
+        const bagGstAmount = bagAmount * (parseFloat(item.bagGst) || 0) / 100;
+        const billTotal = seedAmount + bagAmount + seedGstAmount + bagGstAmount + (parseFloat(item.lorryAdvance) || 0) + (parseFloat(item.otherExpenses) || 0) + (parseFloat(item.roundOff) || 0);
         let weightCellHtml = '';
         let rateCellHtml = '';
 
@@ -1449,8 +1982,9 @@ function renderUnloadTable(filterQuery = '') {
 
             rateCellHtml = `₹${(item.bagRate || 0).toFixed(2)}/bag<br><span class="text-muted" style="font-size:0.72rem;">GST: ${item.bagGst||0}%</span> | <strong class="text-success" style="font-size:0.78rem;">FOR: ₹${bagGrandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</strong>`;
         } else {
-            weightCellHtml = `${parseFloat(invWeight).toFixed(2)} / <strong class="text-primary">${parseFloat(item.weight).toFixed(2)}</strong>${shortageBadge}`;
-            rateCellHtml = `Base: ₹${parseFloat(item.rate).toLocaleString('en-IN')}<br><span class="text-muted" style="font-size: 0.72rem;">GST: ${gstRate}%</span> | <strong class="text-success" style="font-size: 0.78rem;">FOR: ₹${parseFloat(item.forRate).toLocaleString('en-IN')}</strong>`;
+            weightCellHtml = `<strong class="text-primary">${seedQtyKg.toLocaleString('en-IN', {maximumFractionDigits: 2})} kg</strong><br><span class="text-xs text-muted">Inv / Rec: ${parseFloat(invWeight).toFixed(2)} / ${parseFloat(item.weight).toFixed(2)} Qtl</span>${shortageBadge}`;
+            const lorryAdvBadge = item.lorryAdvance > 0 ? `<br><span class="text-xs text-danger" style="font-size:0.68rem; font-weight:600;">Adv: ₹${parseFloat(item.lorryAdvance).toLocaleString('en-IN')}</span>` : '';
+            rateCellHtml = `₹${seedRatePerKg.toFixed(2)} / kg<br><span class="text-muted" style="font-size: 0.72rem;">GST: ${gstRate}%</span>${lorryAdvBadge}`;
         }
 
         tr.innerHTML = `
@@ -1473,6 +2007,11 @@ function renderUnloadTable(filterQuery = '') {
             </td>
             <td style="font-size: 0.78rem; line-height: 1.25;">
                 ${rateCellHtml}
+            </td>
+            <td style="font-size: 0.76rem; line-height: 1.25;">
+                <strong class="text-success">₹${billTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</strong><br>
+                <span class="text-xs text-muted">Seed: ₹${seedAmount.toLocaleString('en-IN', {maximumFractionDigits: 2})}</span><br>
+                <span class="text-xs text-info">Bags: ₹${bagAmount.toLocaleString('en-IN', {maximumFractionDigits: 2})}</span>
             </td>
             <td style="font-size: 0.78rem;">${item.location || '-'}</td>
             <td style="font-size: 0.72rem; line-height: 1.25; word-break: break-word; overflow: hidden;">
@@ -1543,7 +2082,9 @@ function handleUnloadSubmit(e) {
     
     const discount = parseFloat(document.getElementById('unload-discount').value) || 0;
     const gstRate = parseFloat(document.getElementById('unload-gst-rate').value) || 0;
+    const lorryAdvance = parseFloat(document.getElementById('unload-lorry-advance') ? document.getElementById('unload-lorry-advance').value : 0) || 0;
     const otherExpenses = parseFloat(document.getElementById('unload-other-expenses') ? document.getElementById('unload-other-expenses').value : 0) || 0;
+    const roundOff = parseFloat(document.getElementById('unload-round-off') ? document.getElementById('unload-round-off').value : 0) || 0;
     
     const location = document.getElementById('unload-location').value;
     const status = document.getElementById('unload-status').value;
@@ -1555,10 +2096,18 @@ function handleUnloadSubmit(e) {
     const bagRate = parseFloat(document.getElementById('unload-bag-rate').value) || 0;
     const bagGst = parseFloat(document.getElementById('unload-bag-gst') ? document.getElementById('unload-bag-gst').value : 0) || 0;
 
+    const primaryMaterialName = document.getElementById('unload-seed-type')?.selectedOptions?.[0]?.textContent?.trim() || seedType;
+    const materials = [...document.querySelectorAll('#unload-additional-materials .additional-material-row')].map(row => ({
+        material: (row.querySelector('.additional-material-name')?.value || '') === '__same_primary__' ? primaryMaterialName : (row.querySelector('.additional-material-name')?.value.trim() || ''),
+        quantityKg: parseFloat(row.querySelector('.additional-material-qty')?.value) || 0,
+        ratePerKg: parseFloat(row.querySelector('.additional-material-rate')?.value) || 0,
+        gstRate: parseFloat(row.querySelector('.additional-material-gst')?.value) || 0
+    })).filter(m => m.material && m.quantityKg > 0);
+
     const data = { 
         date, supplier, broker, place, lorryNo, seedType, invoiceNo,
         invoiceWeight, weight, shortage, 
-        rate, freight, forRate, discount, gstRate, otherExpenses,
+        rate, freight, forRate, discount, gstRate, lorryAdvance, otherExpenses, roundOff, materials,
         location, status, quality, remark, 
         bagType, bagQty, bagRate, bagGst 
     };
@@ -1618,7 +2167,12 @@ function editUnload(id) {
     
     document.getElementById('unload-discount').value = item.discount || 0;
     document.getElementById('unload-gst-rate').value = item.gstRate !== undefined ? item.gstRate : 5;
+    if (document.getElementById('unload-lorry-advance')) document.getElementById('unload-lorry-advance').value = item.lorryAdvance || 0;
     if (document.getElementById('unload-other-expenses')) document.getElementById('unload-other-expenses').value = item.otherExpenses || 0;
+    if (document.getElementById('unload-round-off')) document.getElementById('unload-round-off').value = item.roundOff || 0;
+    if (document.getElementById('unload-seed-kg')) document.getElementById('unload-seed-kg').value = ((parseFloat(item.invoiceWeight) || parseFloat(item.weight) || 0) * 100).toFixed(2);
+    if (document.getElementById('unload-seed-rate-kg')) document.getElementById('unload-seed-rate-kg').value = ((parseFloat(item.rate) || parseFloat(item.forRate) || 0) / 100).toFixed(2);
+    syncSeedKgInputs();
     
     document.getElementById('unload-location').value = item.location || '';
     document.getElementById('unload-status').value = item.status || 'Standard';
@@ -1643,7 +2197,9 @@ function updateUnloadLiveBillSummary() {
     const rate = parseFloat(document.getElementById('unload-rate')?.value) || 0;
     const discount = parseFloat(document.getElementById('unload-discount')?.value) || 0;
     const seedGstPct = parseFloat(document.getElementById('unload-gst-rate')?.value) || 0;
+    const lorryAdvance = parseFloat(document.getElementById('unload-lorry-advance')?.value) || 0;
     const otherExpenses = parseFloat(document.getElementById('unload-other-expenses')?.value) || 0;
+    const roundOff = parseFloat(document.getElementById('unload-round-off')?.value) || 0;
 
     const bagQty = parseInt(document.getElementById('unload-bag-qty')?.value) || 0;
     const bagRate = parseFloat(document.getElementById('unload-bag-rate')?.value) || 0;
@@ -1655,20 +2211,42 @@ function updateUnloadLiveBillSummary() {
     const seedGstAmt = (seedVal * seedGstPct) / 100;
     const bagGstAmt = (bagVal * bagGstPct) / 100;
     const totalGst = seedGstAmt + bagGstAmt;
+    const money = value => `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const bagAmountEl = document.getElementById('unload-bag-amount');
+    const bagGstAmountEl = document.getElementById('unload-bag-gst-amount');
+    const bagTotalEl = document.getElementById('unload-bag-total');
+    if (bagAmountEl) bagAmountEl.value = money(bagVal);
+    if (bagGstAmountEl) bagGstAmountEl.value = money(bagGstAmt);
+    if (bagTotalEl) bagTotalEl.value = money(bagVal + bagGstAmt);
 
-    const grandTotal = seedVal + bagVal + totalGst + otherExpenses;
+    let additionalSubtotal = 0;
+    let additionalGst = 0;
+    document.querySelectorAll('#unload-additional-materials .additional-material-row').forEach(row => {
+        const qty = parseFloat(row.querySelector('.additional-material-qty')?.value) || 0;
+        const rate = parseFloat(row.querySelector('.additional-material-rate')?.value) || 0;
+        const gst = parseFloat(row.querySelector('.additional-material-gst')?.value) || 0;
+        const amount = qty * rate;
+        additionalSubtotal += amount;
+        additionalGst += amount * gst / 100;
+        const amountEl = row.querySelector('.additional-material-amount');
+        if (amountEl) amountEl.value = money(amount);
+    });
+
+    const grandTotal = seedVal + bagVal + totalGst + additionalSubtotal + additionalGst + lorryAdvance + otherExpenses + roundOff;
 
     const seedValEl = document.getElementById('live-seed-val');
     const bagValEl = document.getElementById('live-bardan-val');
     const gstValEl = document.getElementById('live-gst-val');
+    const lorryAdvValEl = document.getElementById('live-lorry-adv-val');
     const otherValEl = document.getElementById('live-other-val');
     const totalValEl = document.getElementById('unload-live-grand-total');
 
     if (seedValEl) seedValEl.textContent = `₹${seedVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
     if (bagValEl) bagValEl.textContent = `₹${bagVal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
     if (gstValEl) gstValEl.textContent = `₹${totalGst.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-    if (otherValEl) otherValEl.textContent = `₹${otherExpenses.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
-    if (totalValEl) totalValEl.textContent = `Total Bill: ₹${grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (lorryAdvValEl) lorryAdvValEl.textContent = `₹${lorryAdvance.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (otherValEl) otherValEl.textContent = `₹${(otherExpenses + roundOff + additionalSubtotal + additionalGst).toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
+    if (totalValEl) totalValEl.textContent = `Total Purchase Bill: ₹${grandTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
 }
 
 function deleteUnload(id) {
@@ -1772,8 +2350,22 @@ function removeUnloadFromStockLedger(unload) {
     }
 }
 
+// Register custom raw seed products before stock calculations/rendering.
+function ensureCustomSeedProductsRegistered() {
+    if (!Array.isArray(state.customSeedTypes)) return;
+    state.customSeedTypes.forEach(custom => {
+        const cleanName = String(custom.name || '').trim();
+        if (!cleanName) return;
+        const prodId = 'seed-' + cleanName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        if (!PRODUCTS.some(p => p.id === prodId || p.name.toLowerCase() === cleanName.toLowerCase())) {
+            PRODUCTS.push({ id: prodId, name: cleanName, category: 'Seed' });
+        }
+    });
+}
+
 // --- 3. STOCK STATEMENT CONTROLLER ---
 function renderStockStatement() {
+    ensureCustomSeedProductsRegistered();
     const monthKey = document.getElementById('stock-month-selector').value;
     const daysInMonth = getDaysInMonth(monthKey);
     
@@ -1911,6 +2503,7 @@ function getProductClosingStock(prodId, monthKey) {
 }
 
 function getDayLog(prodId, monthKey, day) {
+    ensureCustomSeedProductsRegistered();
     let receipt = 0;
     let issue = 0;
 
@@ -2883,7 +3476,7 @@ function compileInvoiceBill() {
     document.getElementById('preview-supplier-name').textContent = party;
     document.getElementById('preview-party-type-label').textContent = mode === 'inward' ? 'Supplier' : 'Customer';
     document.getElementById('preview-invoice-subtitle').textContent = mode === 'inward'
-        ? "Supplier Purchase Tax Invoice & calculations"
+        ? "Cotton Seed Purchase Settlement & Weighment Slip"
         : "Finished Goods Outward Tax Invoice (Manufacturer)";
 
     const partyGSTIN = document.getElementById('preview-party-gstin-row');
@@ -2935,6 +3528,8 @@ function compileInvoiceBill() {
         const itemRate = !isNaN(cRateOverride) && cRateOverride > 0 ? cRateOverride : (mode === 'inward' ? (item.forRate - discountVal) : item.rate);
         const billWeight = mode === 'inward' ? (item.invoiceWeight !== undefined ? item.invoiceWeight : item.weight) : item.weight;
         const lineTotal = billWeight * itemRate;
+        const displayQtyKg = mode === 'inward' ? billWeight * 100 : billWeight;
+        const displayRate = mode === 'inward' ? itemRate / 100 : itemRate;
         totalQty += billWeight;
         subtotalAmount += lineTotal;
 
@@ -2947,9 +3542,9 @@ function compileInvoiceBill() {
             tr.innerHTML = `
                 <td><code>${item.lorryNo}</code></td>
                 <td>${formatDateString(item.date)}</td>
-                <td>${seedLabel}</td>
-                <td>${billWeight.toFixed(2)} Qtl</td>
-                <td>${rateDetail}</td>
+                <td><strong>${seedLabel}</strong><br><small>HSN/SAC: 120720</small></td>
+                <td>${displayQtyKg.toLocaleString('en-IN', {maximumFractionDigits: 2})} kg</td>
+                <td>₹${displayRate.toFixed(2)} / kg</td>
                 <td class="text-right font-bold">₹${lineTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
             `;
             itemTbody.appendChild(tr);
@@ -2965,7 +3560,7 @@ function compileInvoiceBill() {
                 bagTr.innerHTML = `
                     <td><code>${item.lorryNo}</code></td>
                     <td>${formatDateString(item.date)}</td>
-                    <td>${bagName} (Packaging)</td>
+                    <td><strong>${bagName} (Packaging)</strong><br><small>HSN/SAC: 630510</small></td>
                     <td>${item.bagQty} Bags</td>
                     <td>₹${(item.bagRate || 0).toFixed(2)}</td>
                     <td class="text-right font-bold">₹${bagTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
@@ -2988,6 +3583,40 @@ function compileInvoiceBill() {
                     <td class="text-right font-bold">₹${expTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
                 `;
                 itemTbody.appendChild(expTr);
+            }
+
+            // Add separate row for Lorry Advance if present
+            if (item.lorryAdvance > 0) {
+                const advTr = document.createElement('tr');
+                const advTotal = parseFloat(item.lorryAdvance);
+                subtotalAmount += advTotal;
+                
+                advTr.innerHTML = `
+                    <td><code>${item.lorryNo}</code></td>
+                    <td>${formatDateString(item.date)}</td>
+                    <td>Lorry Advance (Driver Advance)</td>
+                    <td>1 Trip</td>
+                    <td>₹${advTotal.toFixed(2)}</td>
+                    <td class="text-right font-bold">₹${advTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+                `;
+                itemTbody.appendChild(advTr);
+            }
+
+            // Add separate row for Round Off if present
+            if (item.roundOff && Math.abs(item.roundOff) > 0) {
+                const roTr = document.createElement('tr');
+                const roTotal = parseFloat(item.roundOff);
+                subtotalAmount += roTotal;
+                
+                roTr.innerHTML = `
+                    <td><code>${item.lorryNo}</code></td>
+                    <td>${formatDateString(item.date)}</td>
+                    <td>Round Off</td>
+                    <td>-</td>
+                    <td>₹${roTotal.toFixed(2)}</td>
+                    <td class="text-right font-bold">₹${roTotal.toLocaleString('en-IN', {maximumFractionDigits: 2})}</td>
+                `;
+                itemTbody.appendChild(roTr);
             }
         } else {
             const prodObj = PRODUCTS.find(p => p.id === item.product);
@@ -3070,7 +3699,7 @@ function compileInvoiceBill() {
     const effectiveTaxRate = taxBaseAmount > 0 ? ((taxAmount / taxBaseAmount) * 100).toFixed(2) : 0;
     const grandTotal = subtotalAmount + taxAmount + adjustment;
 
-    document.getElementById('preview-total-weight').textContent = `${totalQty.toFixed(2)} units`;
+    document.getElementById('preview-total-weight').textContent = `${(mode === 'inward' ? totalQty * 100 : totalQty).toLocaleString('en-IN', {maximumFractionDigits: 2})} ${mode === 'inward' ? 'kg' : 'units'}`;
     document.getElementById('preview-subtotal').textContent = `₹${subtotalAmount.toLocaleString('en-IN', {maximumFractionDigits: 2})}`;
 
     const cgstRow = document.getElementById('cgst-row');
@@ -4214,7 +4843,7 @@ function reprintArchivedInvoice(id) {
     document.getElementById('preview-bill-date').textContent = formatDateString(inv.date);
     document.getElementById('preview-supplier-name').textContent = inv.partyName;
     document.getElementById('preview-party-type-label').textContent = inv.type === 'inward' ? 'Supplier' : 'Customer';
-    document.getElementById('preview-invoice-subtitle').textContent = inv.type === 'inward' ? "Seed Unloading & Calculations Receipt Log" : "Finished Goods Outward Tax Invoice";
+    document.getElementById('preview-invoice-subtitle').textContent = inv.type === 'inward' ? "Cotton Seed Purchase Settlement & Weighment Slip" : "Finished Goods Outward Tax Invoice";
     document.getElementById('preview-bill-period').textContent = inv.period;
 
     const partyGSTIN = document.getElementById('preview-party-gstin-row');
@@ -4701,7 +5330,54 @@ function handleBrokerSubmit(e) {
     document.getElementById('broker-form').reset();
     populateLedgerPartyDropdown();
     populateAutocompleteDatalists();
+    populateSalesBrokersDropdown();
     alert(`Broker Account "${name}" saved successfully!`);
+}
+
+function addUnloadMaterialRow(values = {}) {
+    const container = document.getElementById('unload-additional-materials');
+    if (!container) return;
+    const row = document.createElement('div');
+    row.className = 'additional-material-row mt-3';
+    const materialOptions = ['__same_primary__', 'OMS', 'MS', 'Kandi', 'Hulls MS', 'Hulls OMS', 'Cotton Cake', 'Cotton Oil'];
+    const customMaterialOptions = Array.isArray(state.customSeedTypes)
+        ? state.customSeedTypes.map(seed => seed.name).filter(Boolean)
+        : [];
+    customMaterialOptions.forEach(name => {
+        if (!materialOptions.includes(name)) materialOptions.push(name);
+    });
+    materialOptions.push('Other Material');
+    const selectedMaterial = values.material || '';
+    if (selectedMaterial && !materialOptions.includes(selectedMaterial)) materialOptions.push(selectedMaterial);
+    const materialSelect = materialOptions.map(name => {
+        const labels = { OMS: 'OMS (Out of State Cotton Seed)', MS: 'MS (Maharashtra Cotton Seed)', Kandi: 'Kandi (Cotton Seed Kandi)', 'Hulls MS': 'Cotton Hulls (MS)', 'Hulls OMS': 'Cotton Hulls (OMS)' };
+        const label = name === '__same_primary__' ? 'Same as Primary Seed (Homogeneous)' : (labels[name] || name);
+        return `<option value="${escapeHtml(name)}" ${name === selectedMaterial || (!selectedMaterial && name === '__same_primary__') ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
+    row.innerHTML = `
+        <div class="form-group mb-2"><label class="text-xs">Material / Raw Material</label><select class="form-control text-xs additional-material-name">${materialSelect}</select></div>
+        <div class="form-row">
+            <div class="form-group mb-2 col-4"><label class="text-xs">Quantity (kg)</label><input type="number" step="0.01" class="form-control text-xs additional-material-qty" placeholder="e.g. 24,210" value="${values.quantityKg || ''}" oninput="updateUnloadLiveBillSummary()"></div>
+            <div class="form-group mb-2 col-4"><label class="text-xs">Rate per kg (₹)</label><input type="number" step="0.01" class="form-control text-xs additional-material-rate" placeholder="e.g. 51.24" value="${values.ratePerKg || ''}" oninput="updateUnloadLiveBillSummary()"></div>
+            <div class="form-group mb-2 col-4"><label class="text-xs">Amount (₹)</label><input readonly class="form-control text-xs additional-material-amount" value="₹0.00" style="font-weight:700; color:var(--accent-primary);"></div>
+        </div>
+        <input type="hidden" class="additional-material-gst" value="${values.gstRate ?? 5}">
+        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.additional-material-row').remove(); updateUnloadLiveBillSummary();">× Remove Material</button>`;
+    container.appendChild(row);
+}
+
+function syncSeedKgInputs() {
+    const kg = parseFloat(document.getElementById('unload-seed-kg')?.value) || 0;
+    const rateKg = parseFloat(document.getElementById('unload-seed-rate-kg')?.value) || 0;
+    const invoiceQtl = document.getElementById('unload-invoice-weight');
+    const receivedQtl = document.getElementById('unload-weight');
+    const rateQtl = document.getElementById('unload-rate');
+    if (invoiceQtl) invoiceQtl.value = kg ? (kg / 100).toFixed(2) : '';
+    if (receivedQtl) receivedQtl.value = kg ? (kg / 100).toFixed(2) : '';
+    if (rateQtl) rateQtl.value = rateKg ? (rateKg * 100).toFixed(2) : '';
+    const amount = document.getElementById('unload-seed-amount');
+    if (amount) amount.value = `₹${(kg * rateKg).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (typeof updateUnloadLiveBillSummary === 'function') updateUnloadLiveBillSummary();
 }
 
 function populateSupplierDropdowns() {
@@ -4781,6 +5457,16 @@ function promptAddNewSeedType() {
         
         saveState();
         populateSeedTypeDropdown(cleanName);
+        document.querySelectorAll('.additional-material-name').forEach(select => {
+            if (![...select.options].some(option => option.value === cleanName)) {
+                const option = document.createElement('option');
+                option.value = cleanName;
+                option.textContent = cleanName;
+                const otherOption = [...select.options].find(option => option.value === 'Other Material');
+                if (otherOption) select.insertBefore(option, otherOption);
+                else select.appendChild(option);
+            }
+        });
         alert(`New Seed Product "${cleanName}" added successfully!`);
     }
 }
@@ -5969,9 +6655,16 @@ function getPartyBalance(partyName, role) {
         state.unloads.forEach(u => {
             if (u.supplier === partyName && u.status !== 'Rejected' && u.status !== 'Returned') {
                 const discount = parseFloat(u.discount) || 0;
-                const seedVal = parseFloat(u.weight) * (parseFloat(u.forRate) - discount);
+                const billQty = (parseFloat(u.invoiceWeight) > 0) ? parseFloat(u.invoiceWeight) : (parseFloat(u.weight) || 0);
+                const rate = parseFloat(u.rate) || parseFloat(u.forRate) || 0;
+                const seedVal = billQty * Math.max(0, rate - discount);
                 const bagVal = (parseInt(u.bagQty) || 0) * (parseFloat(u.bagRate) || 0);
-                billed += (seedVal + bagVal);
+                const seedGst = (seedVal * (parseFloat(u.gstRate) || 0)) / 100;
+                const bagGst = (bagVal * (parseFloat(u.bagGst) || 0)) / 100;
+                const lorryAdv = parseFloat(u.lorryAdvance) || 0;
+                const otherExp = parseFloat(u.otherExpenses) || 0;
+                const roundOff = parseFloat(u.roundOff) || 0;
+                billed += (seedVal + bagVal + seedGst + bagGst + lorryAdv + otherExp + roundOff);
             }
         });
         state.payments.forEach(p => {
@@ -6143,20 +6836,28 @@ function renderPartyAccounts() {
         state.unloads.forEach(u => {
             if (u.supplier === name && u.status !== 'Rejected' && u.status !== 'Returned') {
                 const discount = parseFloat(u.discount) || 0;
-                const seedVal = parseFloat(u.weight) * (parseFloat(u.forRate) - discount);
+                const billQty = (parseFloat(u.invoiceWeight) > 0) ? parseFloat(u.invoiceWeight) : (parseFloat(u.weight) || 0);
+                const rate = parseFloat(u.rate) || parseFloat(u.forRate) || 0;
+                const seedVal = billQty * Math.max(0, rate - discount);
                 const bagVal = (parseInt(u.bagQty) || 0) * (parseFloat(u.bagRate) || 0);
-                const totalVal = seedVal + bagVal;
+                const seedGst = (seedVal * (parseFloat(u.gstRate) || 0)) / 100;
+                const bagGst = (bagVal * (parseFloat(u.bagGst) || 0)) / 100;
+                const lorryAdv = parseFloat(u.lorryAdvance) || 0;
+                const otherExp = parseFloat(u.otherExpenses) || 0;
+                const roundOff = parseFloat(u.roundOff) || 0;
+                const totalVal = seedVal + bagVal + seedGst + bagGst + lorryAdv + otherExp + roundOff;
                 totalBilledVal += totalVal;
-                totalWeight += parseFloat(u.weight);
+                totalWeight += billQty;
 
                 let desc = `Cotton Seed Load (${u.seedType || 'OMS'})`;
                 if (u.bagQty > 0) desc += ` + ${u.bagQty} Bags`;
+                if (lorryAdv > 0) desc += ` (Adv: ₹${lorryAdv.toLocaleString('en-IN')})`;
 
                 entries.push({
                     date: u.date,
                     description: desc,
                     ref: `${u.lorryNo}${u.location ? ' · ' + u.location : ''}`,
-                    weight: parseFloat(u.weight),
+                    weight: billQty,
                     debit: 0,
                     credit: totalVal,
                     type: 'purchase',
@@ -7629,6 +8330,14 @@ function populateSalesBrokersDropdown() {
     const dl = document.getElementById('brokers-datalist');
     if (!dl) return;
     const brokersList = new Set();
+    // Include brokers registered in Party Accounts, not only brokers used
+    // previously on gate passes or sales entries.
+    if (Array.isArray(state.brokers)) {
+        state.brokers.forEach(b => {
+            const name = typeof b === 'string' ? b : b?.name;
+            if (name && name.trim()) brokersList.add(name.trim());
+        });
+    }
     if (Array.isArray(state.gatePasses)) {
         state.gatePasses.forEach(g => { if (g.broker) brokersList.add(g.broker.trim()); });
     }

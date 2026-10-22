@@ -1028,6 +1028,22 @@ h1, h2, h3, h4, h5, h6 {
     align-items: flex-start;
 }
 
+.invoice-doc-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--accent-primary);
+    margin-bottom: 4px;
+}
+
+.invoice-original-copy {
+    margin-top: 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #475569;
+    letter-spacing: 0.04em;
+}
+
 .ledger-brand h2 {
     color: #0f172a;
     font-size: 1.4rem;
@@ -1984,3 +2000,82 @@ body.role-no-delete .data-table .btn-danger { display: none !important; }
         width: 100% !important;
     }
 }
+
+/* ==========================================================================
+   MULTI-TENANT / CLIENT FEATURE TOGGLE STYLING (APPROACH 1)
+   ========================================================================== */
+.mill-switcher-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--accent-primary);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.mill-selector-input {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    max-width: 190px;
+    padding: 2px 4px;
+}
+
+.feature-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.feature-toggle-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.feature-toggle-card:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-card-hover);
+}
+
+.feature-toggle-card input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.feature-toggle-info {
+    flex: 1;
+}
+
+.feature-toggle-title {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.feature-toggle-desc {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+

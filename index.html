@@ -49,8 +49,8 @@
                     <i class="fa-solid fa-oil-well"></i>
                 </div>
                 <div class="brand-info">
-                    <h1>Vitthal Oil Mill</h1>
-                    <span>Management OS</span>
+                    <h1 id="sidebar-mill-name">Vitthal Oil Mill</h1>
+                    <span id="sidebar-mill-sub">Management OS</span>
                 </div>
             </div>
             
@@ -147,6 +147,19 @@
                     <button class="btn btn-secondary" id="seed-mock-btn" style="display: none;">
                         <i class="fa-solid fa-database"></i> Seed Mock Data
                     </button>
+                    <!-- Multi-Tenant Mill Switcher & Features Button -->
+                    <div class="mill-switcher-container" title="Active Client Mill Profile">
+                        <i class="fa-solid fa-industry text-primary" style="font-size: 0.9rem;"></i>
+                        <select id="active-mill-select" class="mill-selector-input" onchange="switchActiveMill(this.value)">
+                            <option value="vitthal_oil_mill">Vitthal Oil Mill</option>
+                            <option value="shree_ganesh_cotton">Shree Ganesh Cotton</option>
+                            <option value="mahalaxmi_agro">Mahalaxmi Agro</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="openMillSettingsModal()" title="Customize Features & Profile" style="padding: 2px 7px; font-size: 0.75rem;">
+                            <i class="fa-solid fa-sliders"></i> Features
+                        </button>
+                    </div>
+
                     <div class="dropdown" id="quick-action-dropdown" style="position: relative; display: inline-block;">
                         <button class="btn btn-primary" id="quick-action-btn" onclick="toggleQuickActionMenu()" style="display: inline-flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-plus"></i> New Entry <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 2px;"></i>
@@ -404,16 +417,17 @@
                                         <th style="width: 8%;">Date</th>
                                         <th style="width: 25%;">Supplier & Dalal Details</th>
                                         <th style="width: 10%;">Lorry No.</th>
-                                        <th style="width: 12%;">Weight (Inv / Rec)</th>
-                                        <th style="width: 12%;">Rate & FOR (₹)</th>
+                                        <th style="width: 12%;">Seed Qty (kg)</th>
+                                        <th style="width: 12%;">Rate / kg (₹)</th>
+                                        <th style="width: 14%;">Bill Amount (₹)</th>
                                         <th style="width: 6%;">Silo</th>
-                                        <th style="width: 14%;">Quality & Remarks</th>
+                                        <th style="width: 12%;">Quality & Remarks</th>
                                         <th style="width: 7%; text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="unload-tbody">
                                     <tr>
-                                        <td colspan="10" class="text-center text-muted py-4">No unload records found. Click "Add Lorry Load" or seed mock data.</td>
+                                        <td colspan="11" class="text-center text-muted py-4">No unload records found. Click "Add Lorry Load" or seed mock data.</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1001,13 +1015,17 @@
                                 <div class="invoice-ledger" id="invoice-ledger-content" style="display:none;">
                                     <div class="invoice-logo-header">
                                         <div class="ledger-brand">
-                                            <h2>VITTHAL OIL MILL</h2>
-                                            <p>Industrial Estate, Majalgaon Road, Maharashtra</p>
+                                            <div class="invoice-doc-title">TAX INVOICE / PURCHASE SLIP</div>
+                                            <h2 id="preview-invoice-brand-name">VITTHAL OIL MILL</h2>
+                                            <p id="preview-invoice-brand-addr1">1423, Vitthal Oil Mill, Newasa Road, Shevgaon</p>
+                                            <p id="preview-invoice-brand-addr2">Ahilyanagar, Maharashtra - 414502</p>
+                                            <p id="preview-invoice-brand-tax"><strong>GSTIN/UIN:</strong> <span id="preview-invoice-brand-gstin">27AAQFM8762P1Z4</span> &nbsp; <strong>State:</strong> <span id="preview-invoice-brand-state">Maharashtra (27)</span></p>
                                             <p id="preview-invoice-subtitle">Seed Unloading & Calculations Receipt Log</p>
                                         </div>
                                         <div class="ledger-meta-info text-right">
                                             <p><strong>Invoice/Receipt No:</strong> <span id="preview-receipt-id">#VOM-2026-001</span></p>
                                             <p><strong>Date:</strong> <span id="preview-bill-date">09/07/2026</span></p>
+                                            <p class="invoice-original-copy">ORIGINAL FOR RECIPIENT</p>
                                         </div>
                                     </div>
                                     <hr class="divider">
@@ -1088,6 +1106,10 @@
                                         </tfoot>
                                     </table>
                                     
+                                    
+                                        <div id="preview-invoice-bank-box" style="margin-top: 8px; margin-bottom: 8px; padding: 6px 10px; background: rgba(59, 130, 246, 0.05); border: 1px dashed #cbd5e1; border-radius: 4px; font-size: 0.72rem;">
+                                            <strong>Company Bank Details:</strong> <span id="preview-invoice-bank-name">Bank of Baroda, Shevgaon</span> &nbsp;|&nbsp; <strong>A/c No:</strong> <span id="preview-invoice-bank-acc">01234567890</span> &nbsp;|&nbsp; <strong>IFSC:</strong> <span id="preview-invoice-bank-ifsc">BARB0SHEVGA</span>
+                                        </div>
                                     <div class="invoice-footer">
                                         <p class="terms" id="preview-footer-terms">This calculation statement acts as an official internal voucher for lorry weighment reconciliation before payout disbursement.</p>
                                         <div class="signature-block">
@@ -2233,6 +2255,30 @@
                         <input type="text" id="unload-invoice-no" required placeholder="e.g. INV-8492 / B-104" class="form-control">
                     </div>
                 </div>
+                <div class="card mb-3 py-2 bg-dark-subtle" style="border-left: 3px solid var(--accent-primary);">
+                    <div class="mb-2">
+                        <h4 class="mb-0 text-sm font-bold">Cotton Seed Quantity & Rate</h4>
+                        <p class="text-xs text-muted mb-0">Enter the seed quantity in kilograms. The system converts it to Qtl for accounts and invoice calculations.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-4">
+                            <label for="unload-seed-kg" class="text-xs">Seed Quantity (kg) *</label>
+                            <input type="number" step="0.01" id="unload-seed-kg" required placeholder="e.g. 24,210" class="form-control" oninput="syncSeedKgInputs()">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label for="unload-seed-rate-kg" class="text-xs">Rate per kg (₹) *</label>
+                            <input type="number" step="0.01" id="unload-seed-rate-kg" required placeholder="e.g. 51.24" class="form-control" oninput="syncSeedKgInputs()">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs">Seed Amount (₹)</label>
+                            <input type="text" id="unload-seed-amount" readonly value="₹0.00" class="form-control" style="font-weight:700; color:var(--accent-primary);">
+                        </div>
+                    </div>
+                    <div id="unload-additional-materials"></div>
+                    <button type="button" class="btn btn-outline-primary btn-sm text-xs mt-2" onclick="addUnloadMaterialRow()">
+                        <i class="fa-solid fa-plus"></i> Add Another Material / Rate
+                    </button>
+                </div>
                 <div class="card mb-3 py-2 bg-dark-subtle">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;" class="mb-2">
                         <div>
@@ -2262,15 +2308,15 @@
                         </div>
                         <div class="form-group mb-2 col-3">
                             <label for="unload-bag-qty" class="text-xs">Bags Count (Qty)</label>
-                            <input type="number" id="unload-bag-qty" placeholder="e.g. 740" class="form-control text-xs">
+                            <input type="number" id="unload-bag-qty" placeholder="e.g. 740" class="form-control text-xs" oninput="updateUnloadLiveBillSummary()">
                         </div>
                         <div class="form-group mb-2 col-3">
                             <label for="unload-bag-rate" class="text-xs">Rate per Bag (₹)</label>
-                            <input type="number" step="0.01" id="unload-bag-rate" placeholder="e.g. 16.00" class="form-control text-xs">
+                            <input type="number" step="0.01" id="unload-bag-rate" placeholder="e.g. 16.00" class="form-control text-xs" oninput="updateUnloadLiveBillSummary()">
                         </div>
                         <div class="form-group mb-2 col-3">
                             <label for="unload-bag-gst" class="text-xs">Bags GST (%)</label>
-                            <select id="unload-bag-gst" class="form-control text-xs">
+                            <select id="unload-bag-gst" class="form-control text-xs" onchange="updateUnloadLiveBillSummary()">
                                 <option value="0" selected>0% (Nil)</option>
                                 <option value="5">5%</option>
                                 <option value="12">12%</option>
@@ -2278,13 +2324,18 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-row mt-2 text-xs" style="border-top:1px dashed rgba(148,163,184,.35); padding-top:8px;">
+                        <div class="form-group mb-0 col-4"><label class="text-xs">Bardan Amount</label><input id="unload-bag-amount" class="form-control text-xs" value="₹0.00" readonly></div>
+                        <div class="form-group mb-0 col-4"><label class="text-xs">Bardan GST Amount</label><input id="unload-bag-gst-amount" class="form-control text-xs" value="₹0.00" readonly></div>
+                        <div class="form-group mb-0 col-4"><label class="text-xs">Bardan Total</label><input id="unload-bag-total" class="form-control text-xs" value="₹0.00" readonly style="font-weight:700; color:var(--accent-primary);"></div>
+                    </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group mb-3 col-4">
+                    <div class="form-group mb-3 col-4" style="display:none;">
                         <label for="unload-invoice-weight">Invoice Weight (Qtl)</label>
                         <input type="number" step="0.01" id="unload-invoice-weight" placeholder="e.g. 105.00" class="form-control">
                     </div>
-                    <div class="form-group mb-3 col-4">
+                    <div class="form-group mb-3 col-4" style="display:none;">
                         <label for="unload-weight">Received Weight (Qtl)</label>
                         <input type="number" step="0.01" id="unload-weight" placeholder="e.g. 102.85" class="form-control">
                     </div>
@@ -2295,38 +2346,48 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group mb-3 col-4">
+                    <div class="form-group mb-3 col-4" style="display:none;">
                         <label for="unload-rate">Base Rate (₹/Qtl or Lot) *</label>
-                        <input type="number" step="1" id="unload-rate" required placeholder="e.g. 4591" class="form-control">
+                        <input type="number" step="0.01" id="unload-rate" required placeholder="e.g. 5123.81" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
                         <label for="unload-freight">Freight Charges (₹/Qtl)</label>
                         <input type="number" step="0.01" id="unload-freight" value="0" placeholder="e.g. 100" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-4">
-                        <label for="unload-for">FOR Rate (₹/Qtl)</label>
-                        <input type="number" step="1" id="unload-for" placeholder="Rate+Freight" class="form-control">
+                        <label for="unload-for">FOR / Spot Rate (₹/Qtl)</label>
+                        <input type="number" step="0.01" id="unload-for" placeholder="e.g. 5380 Spot" class="form-control">
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group mb-3 col-3">
+                    <div class="form-group mb-3 col-2">
                         <label for="unload-discount">Discount (₹/Qtl)</label>
                         <input type="number" step="0.01" id="unload-discount" value="0" placeholder="e.g. 50" class="form-control">
                     </div>
-                    <div class="form-group mb-3 col-3">
-                        <label for="unload-gst-rate">Seed GST Rate (%) *</label>
+                    <div class="form-group mb-3 col-2">
+                        <label for="unload-gst-rate">Seed GST (%) *</label>
                         <select id="unload-gst-rate" required class="form-control">
                             <option value="0">0% (Nil)</option>
-                            <option value="5" selected>5% (Cotton Seed)</option>
+                            <option value="5" selected>5% (Seed)</option>
                             <option value="12">12%</option>
                             <option value="18">18%</option>
                         </select>
                     </div>
                     <div class="form-group mb-3 col-3">
-                        <label for="unload-other-expenses">Other Expenses (₹)</label>
-                        <input type="number" step="0.01" id="unload-other-expenses" value="0" placeholder="e.g. 500 (Misc/Unloading)" class="form-control">
+                        <label for="unload-lorry-advance">Lorry Advance (₹)</label>
+                        <input type="number" step="0.01" id="unload-lorry-advance" value="0" placeholder="e.g. 10000 (Driver Adv)" class="form-control">
+                    </div>
+                    <div class="form-group mb-3 col-2">
+                        <label for="unload-other-expenses">Other Exp (₹)</label>
+                        <input type="number" step="0.01" id="unload-other-expenses" value="0" placeholder="e.g. 500" class="form-control">
                     </div>
                     <div class="form-group mb-3 col-3">
+                        <label for="unload-round-off">Round Off (₹)</label>
+                        <input type="number" step="0.01" id="unload-round-off" value="0" placeholder="e.g. 0.30 / -0.20" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group mb-3 col-6">
                         <label for="unload-status">Load Status *</label>
                         <select id="unload-status" required class="form-control">
                             <option value="Standard" selected>Standard / Accepted</option>
@@ -2341,11 +2402,12 @@
                         <h4 class="mb-0 text-sm font-bold text-primary" style="margin: 0;"><i class="fa-solid fa-calculator"></i> Live Purchase Bill Summary (पावती जुळवणी - Invoice Wt Based)</h4>
                         <span id="unload-live-grand-total" class="font-bold text-success" style="font-size: 1.05rem;">Total Purchase Bill: ₹0.00</span>
                     </div>
-                    <div class="form-row text-xs text-muted mt-2" id="unload-live-math-details" style="gap: 4px;">
-                        <div class="col-3">Seed (Inv Wt): <strong id="live-seed-val" class="text-primary">₹0.00</strong></div>
-                        <div class="col-3">Bardan Amount: <strong id="live-bardan-val" class="text-info">₹0.00</strong></div>
-                        <div class="col-3">GST Tax Amount: <strong id="live-gst-val" class="text-warning">₹0.00</strong></div>
-                        <div class="col-3">Other Expenses: <strong id="live-other-val" class="text-success">₹0.00</strong></div>
+                    <div class="form-row text-xs text-muted mt-2" id="unload-live-math-details" style="gap: 4px; display: flex; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 110px;">Seed: <strong id="live-seed-val" class="text-primary">₹0.00</strong></div>
+                        <div style="flex: 1; min-width: 110px;">Bardan: <strong id="live-bardan-val" class="text-info">₹0.00</strong></div>
+                        <div style="flex: 1; min-width: 110px;">GST Tax: <strong id="live-gst-val" class="text-warning">₹0.00</strong></div>
+                        <div style="flex: 1; min-width: 110px;">Lorry Adv: <strong id="live-lorry-adv-val" class="text-danger">₹0.00</strong></div>
+                        <div style="flex: 1; min-width: 110px;">Other/Round: <strong id="live-other-val" class="text-success">₹0.00</strong></div>
                     </div>
                 </div>
 
@@ -3305,6 +3367,280 @@
         </div>
     </div>
 
-    <script src="app.js?v=37.0"></script>
+    <script src="app.js?v=38.0"></script>
+
+    <!-- MULTI-TENANT: MILL PROFILE & FEATURE TOGGLE MODAL -->
+    <div id="mill-settings-modal" class="modal">
+        <div class="modal-content" style="max-width: 850px; padding: 20px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-sliders text-primary" style="font-size: 1.3rem;"></i>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem;">Client Mill Profile & Feature Manager</h3>
+                        <p class="text-xs text-muted" style="margin: 0;">Customize software modules, print templates, rates, and company details per client.</p>
+                    </div>
+                </div>
+                <button class="close-btn" type="button" onclick="closeModal('mill-settings-modal')">&times;</button>
+            </div>
+
+            <!-- Client Switcher / Selector in Modal Header -->
+            <div class="card p-2 mb-3" style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="text-xs font-bold text-primary"><i class="fa-solid fa-building-wheat"></i> Selected Client Mill:</span>
+                    <select id="modal-mill-select" class="form-control text-xs font-bold" onchange="loadMillProfileToModal(this.value)" style="padding: 4px 10px; width: auto; min-width: 200px;">
+                        <!-- populated via JS -->
+                    </select>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addNewClientMillPrompt()" style="font-size: 0.78rem; padding: 4px 10px;">
+                        <i class="fa-solid fa-plus"></i> Onboard New Mill
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" id="btn-delete-mill" onclick="deleteCurrentMillProfile()" style="font-size: 0.78rem; padding: 4px 10px;" title="Delete this custom mill profile">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            <!-- Inner Tabs -->
+            <div class="inner-tabs mb-3" style="display: flex; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+                <button type="button" class="inner-tab-btn active" id="tab-btn-mill-features" onclick="switchMillSettingsSubtab('features')" style="padding: 6px 14px; font-size: 0.82rem; font-weight: bold; border-radius: 6px; cursor: pointer;">
+                    <i class="fa-solid fa-puzzle-piece"></i> 1. Feature Modules (सुविधा चालू/बंद)
+                </button>
+                <button type="button" class="inner-tab-btn" id="tab-btn-mill-profile" onclick="switchMillSettingsSubtab('profile')" style="padding: 6px 14px; font-size: 0.82rem; font-weight: bold; border-radius: 6px; cursor: pointer;">
+                    <i class="fa-solid fa-id-card"></i> 2. Company & Bank Details (नाव व बँक)
+                </button>
+                <button type="button" class="inner-tab-btn" id="tab-btn-mill-prefs" onclick="switchMillSettingsSubtab('prefs')" style="padding: 6px 14px; font-size: 0.82rem; font-weight: bold; border-radius: 6px; cursor: pointer;">
+                    <i class="fa-solid fa-gear"></i> 3. Billing & Print Units (दर व पावती पर्याय)
+                </button>
+            </div>
+
+            <form id="mill-settings-form" onsubmit="handleSaveMillSettings(event)">
+                <input type="hidden" id="edit-mill-id" value="vitthal_oil_mill">
+
+                <!-- SUBTAB 1: FEATURE MODULES CHECKBOXES -->
+                <div id="subtab-mill-features" class="mill-subpane">
+                    <p class="text-xs text-muted mb-2"><i class="fa-solid fa-circle-info text-info"></i> Select which modules are enabled for this specific mill. Disabled modules will be hidden from their sidebar and menu.</p>
+                    
+                    <div class="feature-toggle-grid">
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-unloads" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-truck-ramp-box text-primary"></i> Raw Seed Unloading</span>
+                                <span class="feature-toggle-desc">Supplier purchase entries, seed weighment, spot rate, bardan & GST math.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-sales" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-cart-shopping text-success"></i> Outbound Sales Hub</span>
+                                <span class="feature-toggle-desc">Finished goods dispatches, client directory & sales register.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-gatePasses" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-ticket-simple text-warning"></i> Gate Pass & Weighbridge</span>
+                                <span class="feature-toggle-desc">Tare & gross weighment, driver slip & printable Marathi/English gate pass.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-stock" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-table-cells text-info"></i> Stock Ledger Statement</span>
+                                <span class="feature-toggle-desc">Daily receipts, production issues, sales dispatch & balance stock.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-production" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-industry text-danger"></i> Crushing & Production</span>
+                                <span class="feature-toggle-desc">Seed crushed, expeller runs, recovery yields % for wash oil & khal.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-refining" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-flask-vial text-purple" style="color: #a855f7;"></i> Oil Refinery Plant</span>
+                                <span class="feature-toggle-desc">Neutralizer, Bleacher, Deodorizer batches, Tank dip inches & refined recovery.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-partyAccounts" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-wallet text-success"></i> Party & Broker Accounts</span>
+                                <span class="feature-toggle-desc">Customer balances, supplier payouts, broker brokerage commissions & ledgers.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-invoices" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-file-invoice-dollar text-primary"></i> Tax Invoices & Billing</span>
+                                <span class="feature-toggle-desc">Compile inward purchase vouchers and outward GST sales tax invoices.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-transport" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-truck-moving text-info"></i> Transport & Logistics</span>
+                                <span class="feature-toggle-desc">Fleet vehicle tracking, driver advance, freight balances & trip logs.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-analytics" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-chart-pie text-warning"></i> Data Analytics & Margins</span>
+                                <span class="feature-toggle-desc">Gross margin, recovery yield trends, cost per quintal & revenue charts.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-spares" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-gears text-muted"></i> Spare Parts Inventory</span>
+                                <span class="feature-toggle-desc">Worm, collar, bearings, belts stock levels & reorder alerts.</span>
+                            </div>
+                        </label>
+
+                        <label class="feature-toggle-card">
+                            <input type="checkbox" id="feat-repairs" checked>
+                            <div class="feature-toggle-info">
+                                <span class="feature-toggle-title"><i class="fa-solid fa-wrench text-muted"></i> Machine Maintenance</span>
+                                <span class="feature-toggle-desc">Expeller welding, breakdown logs, oil changes & maintenance records.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 2: COMPANY PROFILE & BANK DETAILS -->
+                <div id="subtab-mill-profile" class="mill-subpane" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-6">
+                            <label class="text-xs font-bold">Mill / Company Name *</label>
+                            <input type="text" id="mill-name" required placeholder="e.g. VITTHAL OIL MILL" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-6">
+                            <label class="text-xs font-bold">Proprietor / Signatory Name</label>
+                            <input type="text" id="mill-proprietor" placeholder="e.g. R. V. Dhoot" class="form-control text-xs">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-6">
+                            <label class="text-xs font-bold">GSTIN Number *</label>
+                            <input type="text" id="mill-gstin" required placeholder="e.g. 27AAQFM8762P1Z4" class="form-control text-xs font-mono">
+                        </div>
+                        <div class="form-group mb-2 col-6">
+                            <label class="text-xs font-bold">Phone / WhatsApp *</label>
+                            <input type="text" id="mill-phone" required placeholder="e.g. +91 94222 12345" class="form-control text-xs">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="text-xs font-bold">Registered Mill Address *</label>
+                        <input type="text" id="mill-address" required placeholder="e.g. 1423, Newasa Road, Shevgaon" class="form-control text-xs">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">City / APMC *</label>
+                            <input type="text" id="mill-city" required placeholder="e.g. Shevgaon" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">State & Code *</label>
+                            <input type="text" id="mill-state" required placeholder="e.g. Maharashtra (27)" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">Pincode</label>
+                            <input type="text" id="mill-pincode" placeholder="e.g. 414502" class="form-control text-xs">
+                        </div>
+                    </div>
+
+                    <h5 class="font-bold text-xs text-primary mt-2 mb-2" style="border-top:1px dashed var(--border-color); padding-top:8px;">
+                        <i class="fa-solid fa-building-columns"></i> Bank Account (Printed on Tax Invoices for Buyer RTGS/NEFT):
+                    </h5>
+                    <div class="form-row">
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">Bank Name & Branch</label>
+                            <input type="text" id="mill-bank-name" placeholder="e.g. Bank of Baroda, Shevgaon" class="form-control text-xs">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">Account Number</label>
+                            <input type="text" id="mill-bank-acc" placeholder="e.g. 01234567890" class="form-control text-xs font-mono">
+                        </div>
+                        <div class="form-group mb-2 col-4">
+                            <label class="text-xs font-bold">IFSC Code</label>
+                            <input type="text" id="mill-bank-ifsc" placeholder="e.g. BARB0SHEVGA" class="form-control text-xs font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBTAB 3: BILLING & PRINT UNITS -->
+                <div id="subtab-mill-prefs" class="mill-subpane" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group mb-3 col-6">
+                            <label class="text-xs font-bold">Finished Oil Billing Unit *</label>
+                            <select id="pref-oil-unit" class="form-control text-xs">
+                                <option value="per_10kg">₹ per 10 kg (Standard Wholesale Oil Trade)</option>
+                                <option value="per_qtl">₹ per Quintal (100 kg)</option>
+                                <option value="per_tin">₹ per 15kg Tin / Jar</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3 col-6">
+                            <label class="text-xs font-bold">Cotton Cake (Pend) Billing Unit *</label>
+                            <select id="pref-cake-unit" class="form-control text-xs">
+                                <option value="per_qtl">₹ per Quintal (100 kg)</option>
+                                <option value="per_bag">₹ per Bag (Fixed Bag Rate)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group mb-3 col-6">
+                            <label class="text-xs font-bold">Invoice / Slip Print Format *</label>
+                            <select id="pref-print-template" class="form-control text-xs">
+                                <option value="e-invoice-a4">A4 Tax Invoice (GST e-Invoice Standard with QR & HSN)</option>
+                                <option value="marathi-gatepass">Traditional Marathi Gate Pass (॥ श्री ॥ शेवगांव)</option>
+                                <option value="both" selected>Dual Formats (A4 Tax Invoice + Gate Pass Slip)</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3 col-6">
+                            <label class="text-xs font-bold">Default Seed GST Rate (%)</label>
+                            <select id="pref-default-gst" class="form-control text-xs">
+                                <option value="5" selected>5% (Standard for Cotton Seed & Oil)</option>
+                                <option value="0">0% (Nil / Exempt)</option>
+                                <option value="12">12%</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card p-2 text-xs text-muted" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px;">
+                        <i class="fa-solid fa-shield-halved text-success"></i> <strong>Multi-Tenant Data Guarantee:</strong> All changes made here only affect the selected mill. Firebase Cloud automatically keeps each mill's accounts, seed unloads, and dispatches in their own isolated partitions.
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('mill-settings-modal')">Close</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="switchActiveMill(document.getElementById('edit-mill-id').value); closeModal('mill-settings-modal');">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i> Switch to this Mill
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Mill Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </body>
 </html>
